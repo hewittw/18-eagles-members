@@ -43,8 +43,11 @@ function strokeIndexes(pars: number[], yards: number[]): number[] {
 }
 
 const shorten = (name: string) => {
-  const s = name.replace(/\s+(golf course|golf club|golf links|country club|golf & country club|municipal golf course)$/i, "").trim();
-  return s.length <= 18 ? s : s.slice(0, 17).trimEnd() + "…";
+  const s = name.replace(/\s+(golf course|golf club|golf links|country club|golf & country club|municipal golf course|course)$/i, "").trim();
+  if (s.length <= 18) return s;
+  // Cut at a word, so sentences like "The next seven days at Torrey Pines North" never end in a half word.
+  const cut = s.slice(0, 19).replace(/\s+\S*$/, "").replace(/[\s,.&-]+$/, "");
+  return cut.length >= 6 && cut.length <= 18 ? cut : s.slice(0, 17).trimEnd() + "…";
 };
 
 const TEE_WORD_HEX = (t: string) => TEE_COLORS.find(([re]) => re.test(t))?.[1] ?? "#7d7566";
