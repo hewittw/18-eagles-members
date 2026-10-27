@@ -4,7 +4,7 @@
 // (3) RLS in Postgres decides which rows exist for them. Reads deliberately have no `.eq("user_id", …)`
 // filter: RLS is the single gatekeeper, and the two-user Playwright test proves it.
 import type { Course } from "../course-types";
-import type { Club, Goal, HoleEntry, Nine, Profile, Round, Store } from "../types";
+import type { Club, Goal, HoleEntry, Nine, Profile, Round, RoundWeather, Store } from "../types";
 import { supabaseForUser } from "./supabase";
 
 type ProfileRow = {
@@ -15,7 +15,7 @@ type ProfileRow = {
 type RoundRow = {
   id: string; course_slug: string; tee_name: string; played_on: string; holes: Nine; mode: Round["mode"];
   status: Round["status"]; entries: Record<number, HoleEntry>; total_only: number | null; last_hole: number;
-  note: string; created_at: number; finished_at: number | null;
+  note: string; created_at: number; finished_at: number | null; weather: RoundWeather | null;
 };
 
 export type Loaded = Pick<Store, "profile" | "bag" | "rounds" | "customCourses" | "honorsSeen" | "lastVisit"> & { hasProfile: boolean };
@@ -91,6 +91,7 @@ function toRow(r: Round): RoundRow {
     id: String(r.id), course_slug: String(r.courseSlug), tee_name: String(r.teeName), played_on: String(r.date), holes: r.holes,
     mode: r.mode, status: r.status, entries: r.entries ?? {}, total_only: num(r.totalOnly), last_hole: num(r.lastHole) ?? 1,
     note: typeof r.note === "string" ? r.note : "", created_at: num(r.createdAt) ?? Date.now(), finished_at: num(r.finishedAt),
+    weather: r.weather && typeof r.weather === "object" ? r.weather : null,
   };
 }
 function fromRow(x: RoundRow): Round {
@@ -98,5 +99,6 @@ function fromRow(x: RoundRow): Round {
     id: x.id, courseSlug: x.course_slug, teeName: x.tee_name, date: x.played_on, holes: x.holes, mode: x.mode, status: x.status,
     entries: x.entries ?? {}, totalOnly: x.total_only, lastHole: x.last_hole, note: x.note,
     createdAt: Number(x.created_at), finishedAt: x.finished_at == null ? null : Number(x.finished_at),
+    weather: x.weather ?? null,
   };
 }

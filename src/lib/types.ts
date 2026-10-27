@@ -24,6 +24,16 @@ export type HoleEntry = {
 
 export type Nine = "18" | "front" | "back";
 
+/** The conditions a round was played in (Open-Meteo, via /api/weather), shown on the card. */
+export type RoundWeather = {
+  tempF: number; // air temperature, °F
+  windMph: number;
+  windDir: number; // degrees the wind comes FROM
+  code: number; // WMO weather code
+  summary: string; // "Sunny", "Light rain"…
+  at: number; // epoch ms when captured
+};
+
 export type Round = {
   id: string;
   courseSlug: string;
@@ -38,6 +48,7 @@ export type Round = {
   note: string; // the round's note ("Work on lag putting")
   createdAt: number;
   finishedAt: number | null;
+  weather?: RoundWeather | null; // optional: older cards and logged rounds may have none
 };
 
 export type Goal = "100" | "90" | "80" | "scratch";
