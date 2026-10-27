@@ -1,12 +1,34 @@
 # 18 Eagles
 
-A personal golf round journal. Play a round hole by hole, keep every card, and watch your handicap move.
-Built for Design, Build, Ship (MPCS 51238, Autumn 2026), Assignment 3: Patterns & Flows.
+A personal golf round journal, now with your own account. Play a round hole by hole, keep every card, and watch your
+handicap move, on every device you sign in on. Built for Design, Build, Ship (MPCS 51238, Autumn 2026),
+**Assignment 4: Full Stack App**, extending Assignment 3.
 
-- **The tool:** https://18-eagles.vercel.app/clubhouse
-- **Progress hub** (research, mood board, design system, flows): https://18-eagles.vercel.app
+- **The tool:** https://18-eagles-members.vercel.app/clubhouse (make an account; your cards are private to you)
+- **Progress hub** (research, mood board, design system, flows): https://18-eagles-members.vercel.app
+- Assignment 3 (frozen, localStorage only): https://18-eagles.vercel.app · https://github.com/hewittw/18-eagles
 
-Everything is saved in your browser (localStorage). There are no accounts, no database, and no external APIs.
+## What's new in Week 4
+- **Accounts (Clerk).** Sign up, sign in, sign out. A signed-out visitor sees only the welcome page; every page under
+  `/clubhouse/*` requires sign-in (`src/proxy.ts`).
+- **Your journal in Supabase, private by Row Level Security.** Three tables (`profiles`, `rounds`, `custom_courses`),
+  each row owned by one Clerk user id, with RLS on every table (`supabase/migrations/`). The server talks to Supabase
+  with the publishable key + your Clerk token, never a secret key, so Postgres itself decides what you can see.
+- **Live course data (OpenGolfAPI) and conditions (Open-Meteo)**, called only from our own server routes
+  (`src/app/api/`), with designed loading, nothing-found and API-down states. See [`docs/apis.md`](docs/apis.md).
+- **The RLS test**: two golfers each save a card and neither sees the other's. Watched **failing** with RLS broken on
+  purpose, then passing: [`docs/rls-test/README.md`](docs/rls-test/README.md). Run: `npm run test:rls`.
+- **Security review** on the `full-stack` branch before merging: [`docs/security-review.md`](docs/security-review.md).
+- **Instructor feedback addressed:** the add-a-course form fills itself from a course search, with fewer required
+  fields; the course photos are graded into one sunlit set; the header recedes as you scroll.
+- How it all works, for class: [`docs/talking-points.md`](docs/talking-points.md). Decisions: [`DESIGN_LOG.md`](DESIGN_LOG.md).
+
+## Data model
+| table | one row is | owned by |
+|---|---|---|
+| `profiles` | a golfer's name, index, goal, home course, bag | `user_id` = Clerk `sub` |
+| `rounds` | one card (hole-by-hole entries as jsonb, note, weather) | `user_id` |
+| `custom_courses` | a course the golfer added | `user_id` |
 
 ## User flows
 
@@ -174,11 +196,15 @@ Still to do (recommendations in the doc): put Resume in the hero, put Tee off ah
 from Add a course to onboarding with the course picked.
 
 ## Stack
-Next.js 16 (App Router) · Tailwind CSS v4 · localStorage · Vercel Hobby. Charts are hand-built SVG, with no chart library.
-Course photos are freely licensed; credits are in [`docs/credits.md`](docs/credits.md).
+Next.js 16 (App Router) · Tailwind CSS v4 · Clerk (development instance) · Supabase (Postgres + RLS, Free) · OpenGolfAPI ·
+Open-Meteo · Playwright · Vercel Hobby. Charts are hand-built SVG, with no chart library. Course photos are freely
+licensed and colour-graded; credits are in [`docs/credits.md`](docs/credits.md). Nothing here costs money.
 
 ## Run it
 ```bash
 npm install
-npm run dev   # http://localhost:3000
+# .env.local (you create it; never committed, and the agent is denied reading it):
+#   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+npx next dev -p 3300   # http://localhost:3300/clubhouse
+npm run test:rls       # the two-user RLS test (Clerk test users, code 424242)
 ```
