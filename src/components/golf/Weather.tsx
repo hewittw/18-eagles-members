@@ -153,8 +153,8 @@ export function ForecastStrip({ hours, tone = "paper", count = 8, className }: F
   const list = hours.slice(1, count + 1);
   if (!list.length) return null;
   return (
-    <div className={cx("scroll-x relative border-t", green ? "border-white/20" : "border-rule", className)}>
-      <ol className="flex min-w-max sm:grid sm:min-w-0" style={{ gridTemplateColumns: `repeat(${list.length}, minmax(0, 1fr))` }} aria-label="The next hours">
+    <div role="region" aria-label="The next hours. Scrolls sideways on small screens." tabIndex={0} className={cx("scroll-x relative border-t", green ? "border-white/20" : "border-rule", className)}>
+      <ol className="flex min-w-max sm:grid sm:min-w-0" style={{ gridTemplateColumns: `repeat(${list.length}, minmax(0, 1fr))` }}>
         {list.map((h, i) => (
           <li key={h.time} className={cx("grid w-[4.6rem] justify-items-center gap-1 px-1 py-3 text-center sm:w-auto", i > 0 && (green ? "border-l border-white/15" : "border-l border-rule/70"))}>
             <span className={cx("caps text-[0.68rem]", green ? "text-gold" : "text-ink-2")}>{clock(h.time, { hourOnly: true })}</span>
