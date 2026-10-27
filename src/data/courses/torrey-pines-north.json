@@ -162,7 +162,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/torrey-pines-north/hero.jpg",
+    "src": "/courses/torrey-pines-north/graded/hero.jpg",
     "alt": "A golfer driving from the tee of the hole that was then the 1st on the Torrey Pines North Course, with the fairway rising toward Torrey pines and bunkers (photographed in 2013, before the 2016 renovation swapped the nines)",
     "credit": "Bernard Gagnon",
     "license": "CC BY-SA 3.0",
@@ -170,7 +170,7 @@
   },
   "gallery": [
     {
-      "src": "/courses/torrey-pines-north/g1.jpg",
+      "src": "/courses/torrey-pines-north/graded/g1.jpg",
       "alt": "The Torrey Pines Golf Course clubhouse and putting green, shared by the North and South courses",
       "credit": "Bernard Gagnon",
       "license": "CC BY-SA 3.0",

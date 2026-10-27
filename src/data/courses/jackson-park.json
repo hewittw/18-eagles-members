@@ -36,7 +36,7 @@
     { "name": "Red", "color": "#c62828", "par": 70, "yards": 5257, "rating": 63.5, "slope": 104, "source": "published" }
   ],
   "hero": {
-    "src": "/courses/jackson-park/hero.jpg",
+    "src": "/courses/jackson-park/graded/hero.jpg",
     "alt": "Early-1900s tinted postcard titled 'The Golf Links, Jackson Park, Chicago': golfers on an open fairway beside a gravel path, with spectators on benches near a red-roofed shelter",
     "credit": "Unknown author (Newberry Library postcard collection)",
     "license": "Public domain",
@@ -44,7 +44,7 @@
   },
   "gallery": [
     {
-      "src": "/courses/jackson-park/g1.jpg",
+      "src": "/courses/jackson-park/graded/g1.jpg",
       "alt": "Early-1900s tinted postcard of the red-roofed Golf Shelter at Jackson Park, Chicago, with a crowd gathered along its porch",
       "credit": "Unknown author (Newberry Library postcard collection)",
       "license": "Public domain",

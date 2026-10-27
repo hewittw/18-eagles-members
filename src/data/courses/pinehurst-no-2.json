@@ -153,7 +153,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/pinehurst-no-2/hero.jpg",
+    "src": "/courses/pinehurst-no-2/graded/hero.jpg",
     "alt": "Mid-century color postcard of the fourth hole on Pinehurst No. 2: golfers and onlookers on the tee, a fairway running between longleaf pines and sand",
     "credit": "State Archives of North Carolina (Massengill Postcard Collection)",
     "license": "No known copyright restrictions",
@@ -161,7 +161,7 @@
   },
   "gallery": [
     {
-      "src": "/courses/pinehurst-no-2/g1.jpg",
+      "src": "/courses/pinehurst-no-2/graded/g1.jpg",
       "alt": "Green-framed Pinehurst No. 2 sign quoting Donald Ross calling it the fairest test of championship golf he designed, with pines and turf behind",
       "credit": "Zhans33",
       "license": "Public domain",

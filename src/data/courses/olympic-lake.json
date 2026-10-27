@@ -163,7 +163,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/olympic-lake/hero.jpg",
+    "src": "/courses/olympic-lake/graded/hero.jpg",
     "alt": "A green on the Olympic Club's Lake Course during a 2012 U.S. Open practice round, framed by tall cypress trees, with San Francisco's hills in the distance",
     "credit": "Lisa Suender",
     "license": "CC BY-SA 2.0",
@@ -171,14 +171,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/olympic-lake/g1.jpg",
+      "src": "/courses/olympic-lake/graded/g1.jpg",
       "alt": "Looking down on the bunkered 18th green of the Lake Course, with the fairway climbing between cypress trees behind it",
       "credit": "Thomas Hawk",
       "license": "CC BY 2.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Olympic_Club_18th_hole_lakeside.jpg"
     },
     {
-      "src": "/courses/olympic-lake/g2.jpg",
+      "src": "/courses/olympic-lake/graded/g2.jpg",
       "alt": "A narrow, sloping Lake Course fairway lined with cypress and pine during 2012 U.S. Open week",
       "credit": "Lisa Suender",
       "license": "CC BY-SA 2.0",

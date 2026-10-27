@@ -154,7 +154,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/bethpage-black/hero.jpg",
+    "src": "/courses/bethpage-black/graded/hero.jpg",
     "alt": "Looking up the 18th fairway at Bethpage Black between rows of deep bunkers and fescue to the green and red Ryder Cup grandstands",
     "credit": "Bryan Berlin",
     "license": "CC BY-SA 4.0",
@@ -162,14 +162,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/bethpage-black/g1.jpg",
+      "src": "/courses/bethpage-black/graded/g1.jpg",
       "alt": "The red-and-white warning sign by the first tee: The Black Course is an extremely difficult course which we recommend only for highly skilled golfers",
       "credit": "E S Lee",
       "license": "CC BY 2.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bethpage_Black_Course_warning_sign.jpg"
     },
     {
-      "src": "/courses/bethpage-black/g2.jpg",
+      "src": "/courses/bethpage-black/graded/g2.jpg",
       "alt": "The par-3 17th green at Bethpage Black, surrounded by bunkers and fescue, with spectators and grandstands during 2025 Ryder Cup week",
       "credit": "Bryan Berlin",
       "license": "CC BY-SA 4.0",

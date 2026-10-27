@@ -37,7 +37,7 @@
     { "name": "Green", "color": "#2e7d32", "par": 72, "yards": 6032, "rating": 69.9, "slope": 125, "source": "published" }
   ],
   "hero": {
-    "src": "/courses/st-andrews-old/hero.jpg",
+    "src": "/courses/st-andrews-old/graded/hero.jpg",
     "alt": "The 18th tee sign on the Old Course looking up the Tom Morris fairway to the Swilcan Bridge, the R&A clubhouse and Hamilton Grand, with Open grandstands at left",
     "credit": "Iain Cameron",
     "license": "CC BY 2.0",
@@ -45,14 +45,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/st-andrews-old/g1.jpg",
+      "src": "/courses/st-andrews-old/graded/g1.jpg",
       "alt": "The 17th (Road) green on the Old Course with the Road Hole bunker and the stone wall behind the green",
       "credit": "Scott Cormie",
       "license": "CC BY-SA 2.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:St.Andrews_Old_Course,_17th_Hole,_Road_-_geograph.org.uk_-_5515227.jpg"
     },
     {
-      "src": "/courses/st-andrews-old/g2.jpg",
+      "src": "/courses/st-andrews-old/graded/g2.jpg",
       "alt": "Rolling fairway and hidden bunker on the 12th hole, Heathery (In), on the Old Course",
       "credit": "Scott Cormie",
       "license": "CC BY-SA 2.0",

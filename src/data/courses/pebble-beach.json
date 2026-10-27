@@ -38,7 +38,7 @@
     { "name": "Green", "color": "#2e7d32", "par": 72, "yards": 5547, "rating": 68.7, "slope": 126, "source": "published" }
   ],
   "hero": {
-    "src": "/courses/pebble-beach/hero.jpg",
+    "src": "/courses/pebble-beach/graded/hero.jpg",
     "alt": "The 18th green at Pebble Beach and its lone cypress, with the fairway curving along the seawall of Carmel Bay and the Santa Lucia hills behind",
     "credit": "Bernard Gagnon",
     "license": "CC BY-SA 3.0",
@@ -46,14 +46,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/pebble-beach/g1.jpg",
+      "src": "/courses/pebble-beach/graded/g1.jpg",
       "alt": "The tiny par-3 7th green at Pebble Beach, ringed by bunkers on a rocky point jutting into the Pacific",
       "credit": "Metallion",
       "license": "CC BY-SA 3.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pebble_Beach_Golf_Links,_hole_7.jpg"
     },
     {
-      "src": "/courses/pebble-beach/g2.jpg",
+      "src": "/courses/pebble-beach/graded/g2.jpg",
       "alt": "Golfers on top of the cliff at Pebble Beach's 6th hole, seen from across Stillwater Cove",
       "credit": "Bernard Gagnon",
       "license": "CC BY-SA 3.0",

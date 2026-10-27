@@ -163,7 +163,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/riviera/hero.jpg",
+    "src": "/courses/riviera/graded/hero.jpg",
     "alt": "Aerial view of the Riviera Country Club in its Santa Monica Canyon setting, with tree-lined fairways and white bunkers surrounded by Pacific Palisades homes and the clubhouse and tennis courts at the top",
     "credit": "Benoît Prieur",
     "license": "CC0",
@@ -171,14 +171,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/riviera/g1.jpg",
+      "src": "/courses/riviera/graded/g1.jpg",
       "alt": "The 18th green at Riviera below its hillside amphitheater, with the Spanish-style clubhouse at the top",
       "credit": "Dan (golfpro1) from Schaumburg, IL, USA",
       "license": "CC BY 2.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:RivieraCountryClub18th.jpg"
     },
     {
-      "src": "/courses/riviera/g2.jpg",
+      "src": "/courses/riviera/graded/g2.jpg",
       "alt": "Riviera's par-3 6th, seen from the tee: a bunker sits in the middle of the green",
       "credit": "Dan Perry from Chicago, USA",
       "license": "CC BY 2.0",

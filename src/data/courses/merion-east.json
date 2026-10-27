@@ -163,7 +163,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/merion-east/hero.jpg",
+    "src": "/courses/merion-east/graded/hero.jpg",
     "alt": "A spectator on a wooden footbridge over the stone-walled creek at Merion, reflected in the water, with bunkers and a green beyond during the 2022 Curtis Cup",
     "credit": "Michael Stokes",
     "license": "CC BY 2.0",
@@ -171,14 +171,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/merion-east/g1.jpg",
+      "src": "/courses/merion-east/graded/g1.jpg",
       "alt": "Bronze plaque set in the 18th fairway reading June 10, 1950, U.S. Open, fourth round, Ben Hogan, 1-iron",
       "credit": "Bert Stewart",
       "license": "Public domain",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:HoganMerion.jpg"
     },
     {
-      "src": "/courses/merion-east/g2.jpg",
+      "src": "/courses/merion-east/graded/g2.jpg",
       "alt": "Crowds ringing the 5th green on Merion's East Course under an overcast sky during the 2022 Curtis Cup",
       "credit": "Michael Stokes",
       "license": "CC BY 2.0",

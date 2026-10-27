@@ -36,7 +36,7 @@
     { "name": "Blue", "color": "#1f4e9c", "par": 71, "yards": 5983, "rating": 70.4, "slope": 132, "source": "published" }
   ],
   "hero": {
-    "src": "/courses/muirfield/hero.jpg",
+    "src": "/courses/muirfield/graded/hero.jpg",
     "alt": "The 18th green at Muirfield during the 2013 Open, with grandstands at left and the Honourable Company clubhouse behind the green",
     "credit": "alljengi",
     "license": "CC BY-SA 2.0",
@@ -44,7 +44,7 @@
   },
   "gallery": [
     {
-      "src": "/courses/muirfield/g1.jpg",
+      "src": "/courses/muirfield/graded/g1.jpg",
       "alt": "Muirfield's links seen from Gullane Hill, with the Firth of Forth and an island on the horizon",
       "credit": "Richard Webb",
       "license": "CC BY-SA 2.0",

@@ -37,7 +37,7 @@
     { "name": "Yellow", "color": "#f2c230", "par": 71, "yards": 6170, "rating": 71.5, "slope": 136, "source": "published" }
   ],
   "hero": {
-    "src": "/courses/royal-troon/hero.jpg",
+    "src": "/courses/royal-troon/graded/hero.jpg",
     "alt": "Royal Troon links looking south, with pot bunkers guarding a green, gorse in flower, the clubhouse buildings at left and the Firth of Clyde at right",
     "credit": "dave souza",
     "license": "CC BY-SA 4.0",
@@ -45,14 +45,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/royal-troon/g1.jpg",
+      "src": "/courses/royal-troon/graded/g1.jpg",
       "alt": "Golfers on a green at Royal Troon seen over flowering gorse, with the links and the Firth of Clyde stretching to the hills beyond",
       "credit": "Billy McCrorie",
       "license": "CC BY-SA 2.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Royal_Troon_Golf_Courses_-_geograph.org.uk_-_3829859.jpg"
     },
     {
-      "src": "/courses/royal-troon/g2.jpg",
+      "src": "/courses/royal-troon/graded/g2.jpg",
       "alt": "The red sandstone Royal Troon clubhouse lit at daybreak behind a white rail fence and bare trees",
       "credit": "Alan Reid",
       "license": "CC BY-SA 2.0",

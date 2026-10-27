@@ -42,3 +42,100 @@ Everything marked ✦ on the board (scorecard specimen, leaderboard tiles, type 
 drawing, nameplate, monogram, textures, sketches) was drawn in code for this project (SVG/CSS in
 `src/app/mood-board/`) and is original work. Fonts: Libre Caslon Display and Libre Caslon Text (Pablo Impallari,
 SIL OFL 1.1), Barlow and Barlow Condensed (Jeremy Tribby, SIL OFL 1.1), served with `next/font/google`.
+
+## Course photo treatment
+
+The app shows graded copies of the course photos, in `public/courses/<slug>/graded/`, made by
+`scripts/grade-photos.mjs`. The originals next to them are kept unchanged, and the table below credits them (a graded
+copy has the same file name). Each copy is cropped to 3:2 and resized to at most 1600px wide. Each one also gets one
+shared colour grade: levels, a warm white balance, a little more saturation in greens and blues, and a bluer sky where
+the original sky was grey. The grade is made with ordinary per-pixel adjustments, and no content is generated or
+added. The three vintage postcards (Jackson Park ×2, the Pinehurst No. 2 hero) are only cropped and get levels, with
+no sky or colour grade.
+
+- **Licences allow it.** Every course photo is CC BY, CC BY-SA, CC0, public domain, or "no known copyright
+  restrictions," and all of these allow changes. **The graded copies are modified versions.** Each one keeps its
+  original's author credit and licence. The CC BY-SA ones are shared under the same CC BY-SA licence as their
+  originals, and the CC BY ones note that they were changed (cropped and colour-graded).
+- **No "All rights reserved" photos are graded.** The two home clubs (Rancho Santa Fe, Fairbanks Ranch) have no photo
+  in the course library. They show the drawn illustration, so nothing of theirs was changed.
+
+## Courses
+
+Course photos in `public/courses/<slug>/`, generated from each course's JSON by `scripts/gen-credits.mjs`.
+All are freely licensed except where the license says "All rights reserved" (the user's home clubs; see DESIGN_LOG.md).
+Courses with no photo show a drawn yardage-book illustration instead.
+
+| Course | File | Author / owner | License | Source |
+|---|---|---|---|---|
+| Augusta National Golf Club | `hero.jpg` | Mbrooks (Wikimedia Commons) | Public domain | https://commons.wikimedia.org/wiki/File:Augusta_National_Golf_Club,_Hole_10_(Camellia)_-_cropped.jpg |
+| Augusta National Golf Club | `g1.jpg` | Florian Fritsch, assisted by Mark Anderson | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:AGNC-12.jpg |
+| Augusta National Golf Club | `g2.jpg` | Dan Perry from Atlanta, USA | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Masters_Tournament_-_2013_-_Eighteenth_hole,_Augusta_National_Golf_Club_(8688527211).jpg |
+| Bethpage State Park, Black Course | `hero.jpg` | Bryan Berlin | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Ryder_Cup_2025-163.jpg |
+| Bethpage State Park, Black Course | `g1.jpg` | E S Lee | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Bethpage_Black_Course_warning_sign.jpg |
+| Bethpage State Park, Black Course | `g2.jpg` | Bryan Berlin | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Ryder_Cup_2025-218.jpg |
+| Carnoustie Golf Links, Championship Course | `hero.jpg` | Jim Smillie | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:18th_Green_Championship_Course-Carnoustie-geograph-4747170-by-Jim-Smillie.jpg |
+| Carnoustie Golf Links, Championship Course | `g1.jpg` | Scott Cormie | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Carnoustie_Championship_Course,_6th_Hole,_Hogan%27s_Alley_-_geograph.org.uk_-_6813696.jpg |
+| Chambers Bay | `hero.jpg` | Atomic Taco from Seattle, WA, USA | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Chambers_Bay_Golf_Course_(17998751820).jpg |
+| Chambers Bay | `g1.jpg` | Atomic Taco from Seattle, WA, USA | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Chambers_Bay_during_the_US_Open_(19067123301).jpg |
+| Chambers Bay | `g2.jpg` | Rbirman | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Hickory_Golfer.jpg |
+| Fairbanks Ranch Country Club (Valley/Lakes) | (illustration) | n/a | n/a | n/a |
+| Harbour Town Golf Links | `hero.jpg` | Dan Perry (danperry.com) | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Harbour_Town_Golf,_Hilton_Head_-_5111146241.jpg |
+| Harbour Town Golf Links | `g1.jpg` | Dan Perry (danperry.com) | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Harbour_Town_Golf,_Hilton_Head_-_5111137869.jpg |
+| Harbour Town Golf Links | `g2.jpg` | Dan Perry (danperry.com) | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Harbour_Town_Golf_Links,_Hilton_Head_-_5111737496.jpg |
+| Jackson Park Golf Course | `hero.jpg` | Unknown author (Newberry Library postcard collection) | Public domain | https://commons.wikimedia.org/wiki/File:The_Golf_Links,_Jackson_Park,_Chicago_(NBY_416563).jpg |
+| Jackson Park Golf Course | `g1.jpg` | Unknown author (Newberry Library postcard collection) | Public domain | https://commons.wikimedia.org/wiki/File:Golf_Shelter,_Jackson_Park,_Chicago_(NBY_417059).jpg |
+| Kiawah Island Golf Resort, The Ocean Course | `hero.jpg` | N75746 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Ocean_course_18th_green.jpg |
+| Kiawah Island Golf Resort, The Ocean Course | `g1.jpg` | Pammymags (photo by Tim Marose) | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Kiawah_Island_South_Carolina_-_The_Ocean_Course.jpg |
+| Kingsbarns Golf Links | `hero.jpg` | Scott Cormie | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Kingsbarns_Golf_Links,_2nd_Hole,_Firth_-_geograph.org.uk_-_8163383.jpg |
+| Kingsbarns Golf Links | `g1.jpg` | Scott Cormie | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Kingsbarns_Golf_Links,_18th_Hole,_Cundie_Brig_-_geograph.org.uk_-_8163455.jpg |
+| Merion Golf Club, East Course | `hero.jpg` | Michael Stokes | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:2022_Curtis_Cup_-_Bridge_(52139765260).jpg |
+| Merion Golf Club, East Course | `g1.jpg` | Bert Stewart | Public domain | https://commons.wikimedia.org/wiki/File:HoganMerion.jpg |
+| Merion Golf Club, East Course | `g2.jpg` | Michael Stokes | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:2022_Curtis_Cup_-_5th_Green_(52139279501).jpg |
+| Muirfield (The Honourable Company of Edinburgh Golfers) | `hero.jpg` | alljengi | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:18th_Hole_at_Muirfield,_The_Open_2013_.jpg |
+| Muirfield (The Honourable Company of Edinburgh Golfers) | `g1.jpg` | Richard Webb | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Muirfield_golf_course_seen_from_Gullane_Hill_-geograph-5989355-by-Richard-Webb.jpg |
+| North Berwick Golf Club, West Links | `hero.jpg` | Robertaleotta2020 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:North_Berwick_West_Links.jpg |
+| North Berwick Golf Club, West Links | `g1.jpg` | Stuart Shepherd | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:West_Links_Golf_Course,_North_Berwick_(18th_Green)_-_geograph.org.uk_-_4596095.jpg |
+| Oakmont Country Club | `hero.jpg` | Lee Paxton | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:OakmontCountryClub.jpg |
+| The Olympic Club, Lake Course | `hero.jpg` | Lisa Suender | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:US_Open_2012_-_Olympic_Club_Golf_Course_(7181767803).jpg |
+| The Olympic Club, Lake Course | `g1.jpg` | Thomas Hawk | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Olympic_Club_18th_hole_lakeside.jpg |
+| The Olympic Club, Lake Course | `g2.jpg` | Lisa Suender | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:US_Open_2012_-_Narrow_fairways_at_Olympic_Course_(7181768113).jpg |
+| Pebble Beach Golf Links | `hero.jpg` | Bernard Gagnon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Pebble_Beach_18th_hole.jpg |
+| Pebble Beach Golf Links | `g1.jpg` | Metallion | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Pebble_Beach_Golf_Links,_hole_7.jpg |
+| Pebble Beach Golf Links | `g2.jpg` | Bernard Gagnon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Pebble_Beach_6th_hole.jpg |
+| Pinehurst No. 2 | `hero.jpg` | State Archives of North Carolina (Massengill Postcard Collection) | No known copyright restrictions | https://commons.wikimedia.org/wiki/File:4th,_Pinehurst_No_2_001_(22130096452).jpg |
+| Pinehurst No. 2 | `g1.jpg` | Zhans33 | Public domain | https://commons.wikimedia.org/wiki/File:Pinehurst_No._2.JPG |
+| Rancho Santa Fe Golf Club | (illustration) | n/a | n/a | n/a |
+| The Riviera Country Club | `hero.jpg` | Benoît Prieur | CC0 | https://commons.wikimedia.org/wiki/File:Aerial_view_of_Riviera_Country_Club_(Pacific_Palisades)_July_2022.jpg |
+| The Riviera Country Club | `g1.jpg` | Dan (golfpro1) from Schaumburg, IL, USA | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:RivieraCountryClub18th.jpg |
+| The Riviera Country Club | `g2.jpg` | Dan Perry from Chicago, USA | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Riviera_Country_Club,_Golf_Course_in_Pacific_Palisades,_California_(168829105).jpg |
+| Royal Dornoch Golf Club, Championship Course | `hero.jpg` | Julian Paren | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Fairway_and_bunkers_of_the_Royal_Dornoch_Golf_Links_-_geograph.org.uk_-_8272250.jpg |
+| Royal Dornoch Golf Club, Championship Course | `g1.jpg` | Craig Wallace | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Royal_Dornoch_Golf_Club_-_geograph.org.uk_-_7273513.jpg |
+| Royal Dornoch Golf Club, Championship Course | `g2.jpg` | David Dixon | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Royal_Dornoch_Golf_Club,_Dornoch_Links_-_geograph.org.uk_-_8078986.jpg |
+| Royal Troon Golf Club, Old Course | `hero.jpg` | dave souza | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Royal_Troon,_looking_south_with_Clyde_on_right.jpg |
+| Royal Troon Golf Club, Old Course | `g1.jpg` | Billy McCrorie | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Royal_Troon_Golf_Courses_-_geograph.org.uk_-_3829859.jpg |
+| Royal Troon Golf Club, Old Course | `g2.jpg` | Alan Reid | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Daybreak_at_Royal_Troon_Golf_Club_-_geograph.org.uk_-_7028729.jpg |
+| Shinnecock Hills Golf Club | `hero.jpg` | Peetlesnumber1 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Shinnecock_Hills_GC_03.jpg |
+| Shinnecock Hills Golf Club | `g1.jpg` | Peetlesnumber1 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Shinnecock_Hills_GC_02.jpg |
+| Shinnecock Hills Golf Club | `g2.jpg` | Michael O'Connor | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Shinnecock_Hills_Clubhouse_2021.jpg |
+| The Old Course, St Andrews | `hero.jpg` | Iain Cameron | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:The_18th_(Tom_Morris)_Hole_on_the_Old_Course_(St_Andrews).jpg |
+| The Old Course, St Andrews | `g1.jpg` | Scott Cormie | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:St.Andrews_Old_Course,_17th_Hole,_Road_-_geograph.org.uk_-_5515227.jpg |
+| The Old Course, St Andrews | `g2.jpg` | Scott Cormie | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:St.Andrews_Old_Course,_12th_Hole,_Heathery_in_(geograph_5515174).jpg |
+| Torrey Pines Golf Course, North Course | `hero.jpg` | Bernard Gagnon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Torrey_Pines_North_Course_First_hole.jpg |
+| Torrey Pines Golf Course, North Course | `g1.jpg` | Bernard Gagnon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Torrey_Pines_Golf_Course_clubhouse.jpg |
+| Torrey Pines Golf Course, South Course | `hero.jpg` | Flash and Mel from San Diego, CA, USA | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:US_Open_-_2008_-_The_3rd_hole_green_with_La_Jolla_in_the_background_(2578252099).jpg |
+| Torrey Pines Golf Course, South Course | `g1.jpg` | Dirk DBQ | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:US_Open_-_2008_-_Panorama_-18_at_Torrey_Pines_(2578787934).jpg |
+| TPC Sawgrass, THE PLAYERS Stadium Course | `hero.jpg` | Craig ONeal | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:TPC_Sawgrass_17.jpg |
+| TPC Sawgrass, THE PLAYERS Stadium Course | `g1.jpg` | St. Johns County Visitors & Conventions Bureau | Public domain | https://commons.wikimedia.org/wiki/File:TournamentPlayersClub_Sawgrass17thHole.jpg |
+| TPC Sawgrass, THE PLAYERS Stadium Course | `g2.jpg` | Philip Larson from McLean, VA, US | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:TPC_at_Sawgrass_(3423941155).jpg |
+| Turnberry, Ailsa Course | `hero.jpg` | Ian Dick | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Turnberry_Lighthouse_(29972057257).jpg |
+| Turnberry, Ailsa Course | `g1.jpg` | easylocum | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Turnberry_(Ailsa_course)_Holes_10_and_12.jpg |
+| Whistling Straits, Straits Course | `hero.jpg` | Specialkboyle | Public domain | https://commons.wikimedia.org/wiki/File:Whistling_Straits_golf_course,_far_shot.jpg |
+| Whistling Straits, Straits Course | `g1.jpg` | Baybay1901 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:WhistlingStraits-Shoreline-Par5.jpg |
+| Whistling Straits, Straits Course | `g2.jpg` | KevinTR | Public domain | https://commons.wikimedia.org/wiki/File:WhistlingStraits11Fairway.JPG |
+| Winged Foot Golf Club, West Course | `hero.jpg` | juan gomez (jgomez20), via Unsplash | CC0 | https://commons.wikimedia.org/wiki/File:Mamaroneck_golf_club_(Unsplash).jpg |
+| Winged Foot Golf Club, West Course | `g1.jpg` | Anthony22 (English Wikipedia) | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Winged_Foot_Golf_Club_main_entrance.jpg |
+
+## Research
+
+App screenshots in `public/research/<app>/` are store listing images, used as screenshot, for study. Sources are listed in each study in `docs/research/`.

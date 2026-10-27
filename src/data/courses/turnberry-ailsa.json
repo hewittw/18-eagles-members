@@ -37,7 +37,7 @@
     { "name": "Yellow", "color": "#f2c230", "par": 71, "yards": 6094, "rating": 70.0, "slope": 124, "source": "estimated" }
   ],
   "hero": {
-    "src": "/courses/turnberry-ailsa/hero.jpg",
+    "src": "/courses/turnberry-ailsa/graded/hero.jpg",
     "alt": "Aerial view at sunset of Turnberry lighthouse on its rocky point, with the Ailsa course's greens and bunkers running along the Firth of Clyde",
     "credit": "Ian Dick",
     "license": "CC BY 2.0",
@@ -45,7 +45,7 @@
   },
   "gallery": [
     {
-      "src": "/courses/turnberry-ailsa/g1.jpg",
+      "src": "/courses/turnberry-ailsa/graded/g1.jpg",
       "alt": "The 10th and 12th holes of the Ailsa course under grey skies, with the war memorial on its hill and Turnberry lighthouse by the sea",
       "credit": "easylocum",
       "license": "CC BY 2.0",

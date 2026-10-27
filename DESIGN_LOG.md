@@ -127,3 +127,28 @@ Append as decisions happen, newest at the bottom.
   hw3 stays frozen; `.env` deny rule; Supabase MCP read-only by the user's choice (migrations are pasted by the user);
   publishable key + Clerk token, so RLS (not our code alone) decides what each person sees; Open-Meteo weather first.
 - Started using Claude's persistent memory for preferences and status across sessions.
+
+## 2026-10-26 · Course photos graded into one sunlit set (instructor feedback)
+- **Feedback:** "I wonder if maybe the images of each course could be photo-treated, or 'normalized', so they all look
+  like part of the same set… as simple as ensuring they all have sunny/blue skies." The 26 courses mixed grey Scottish
+  overcast, hazy California, dusk, and over-saturated phone shots, so the Courses grid read as a collage.
+- **Chosen: one "sunlit clubhouse" grade** (`scripts/grade-photos.mjs`, using sharp, which was already installed). Every
+  photo gets the same 3:2 crop (sharp's attention crop) and at most 1600px width. Then it gets levels from its own
+  histogram and a gamma that brings the exposure up to one shared brightness. Dark photos get lifted and bright ones are
+  almost never darkened. A white balance is taken from the photo's bright near-neutral pixels (clouds, sand, white
+  walls) and pulled toward a slightly warm neutral, with each colour channel's gain capped at ±10%. Duller colours get
+  a little more saturation (more for grass greens and sky/water blues), and highlights get a touch of warmth.
+- **The sky:** a soft mask scores each pixel as sky-like: bright, grey or already blue, never green. Each column's sky
+  line is smoothed across neighbouring columns and fades with depth. Grey skies blend toward a clear late-morning blue
+  (deeper at the top, paler at the horizon), keeping the pixel's own brightness so the cloud texture survives.
+  Skies that are already blue barely change. Originals stay untouched; the app now points at `graded/` copies.
+- **Iterated on contact sheets (5 rounds).** Round 1 darkened most photos (its gamma aimed for a mid-grey mean), so the
+  target was raised and darkening capped. Round 2 turned clipped white skies cyan, so the sky colour is now capped
+  below clipping. Round 3 found two bugs. Sharp's blur returned three channels, which striped the sky. The per-column
+  mask also left hard blocks, plus a cut-out round Kiawah's sunlit cloud. Round 4 replaced it with the smoothed soft
+  mask and a fade with depth, so the ocean below a hazy horizon isn't painted. Round 5 capped darkening (gamma ≤ 1.04).
+- **Rejected:** replacing skies or generating them (fake, and out of keeping with credited photos). A strong filmic or
+  teal-orange look ("an Instagram filter"). A full gray-world white balance, which turns links grass magenta. Painting
+  sky into the three hand-tinted postcards (Jackson Park, Pinehurst): they get crop and levels only, and stay archival.
+- **Licences:** every course photo allows changes. CC BY-SA copies keep CC BY-SA, and this is noted in `docs/credits.md`.
+  The home clubs have no photos, so nothing "All rights reserved" was touched.
