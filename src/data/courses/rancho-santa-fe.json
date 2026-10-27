@@ -36,9 +36,23 @@
     { "name": "White", "color": "#f2f2f2", "par": 72, "yards": 6418, "rating": 71.9, "slope": 133, "source": "published" },
     { "name": "Gold", "color": "#d4a017", "par": 72, "yards": 5962, "rating": 69.7, "slope": 128, "source": "published" }
   ],
-  "hero": null,
-  "gallery": [],
-  "dataNotes": "The club's own scorecard is not public: rsfgolfclub.com puts golf pages behind member login, the old public scorecard page (view_document.asp?DN=SCORECARD) now returns 404, and the Wayback Machine was offline when checked. Hole pars, yards, men's stroke index, and men's rating/slope come from the current post-renovation card (7,090 yds Black) as published on Stymie; BlueGolf independently lists Black at 7,090 yds, 75.2/140. The USGA NCRDB blocked automated access, so ratings were not read from it directly. Greenskeeper and Offcourse still show the older 2002-layout card (7,035 yds, different stroke indexes, Black 74.7–75.0/142); that card predates the 2021–22 Kidd renovation and was not used. Hole 11 is a 461-yard par 5 on the current card. The course has no hole names. No freely licensed photo that clearly shows this course was found (the one Commons file tagged 'Rancho Santa Fe' traces to a Flickr photo of a different course), and club photos were not used, so hero is null.",
+  "hero": {
+    "src": "/courses/rancho-santa-fe/graded/hero.jpg",
+    "alt": "A stone cart bridge in the foreground, rippling fairway bunkers below the red-tiled Rancho Santa Fe clubhouse, under tall eucalyptus",
+    "credit": "Unattributed (web)",
+    "license": "All rights reserved",
+    "sourceUrl": "https://cdn.sanity.io/images/03mhssoh/production/fd22c4647f5b7d2f0161be5dc0361500d9b4ccb4-8256x5504.jpg"
+  },
+  "gallery": [
+    {
+      "src": "/courses/rancho-santa-fe/graded/g1.jpg",
+      "alt": "A green at Rancho Santa Fe Golf Club behind a stone-walled pond and reeds, with sycamores and eucalyptus in morning light",
+      "credit": "GolfPass",
+      "license": "All rights reserved",
+      "sourceUrl": "https://golf-pass.brightspotcdn.com/e3/ba/68efbfe6e0d647afec7d09a104a6/105043.jpg"
+    }
+  ],
+  "dataNotes": "The club's own scorecard is not public: rsfgolfclub.com puts golf pages behind member login, the old public scorecard page (view_document.asp?DN=SCORECARD) now returns 404, and the Wayback Machine was offline when checked. Hole pars, yards, men's stroke index, and men's rating/slope come from the current post-renovation card (7,090 yds Black) as published on Stymie; BlueGolf independently lists Black at 7,090 yds, 75.2/140. The USGA NCRDB blocked automated access, so ratings were not read from it directly. Greenskeeper and Offcourse still show the older 2002-layout card (7,035 yds, different stroke indexes, Black 74.7–75.0/142); that card predates the 2021–22 Kidd renovation and was not used. Hole 11 is a 461-yard par 5 on the current card. The course has no hole names. No freely licensed photo exists, so at the user's choice the photographs are web images credited to their sources and marked all rights reserved (class project use); the hero's purple-grey haze was neutralised before grading so the sky step could blue it.",
   "sources": [
     "https://www.rsfgolfclub.com/",
     "https://www.rsfgolfclub.com/guest-information/club-history",
