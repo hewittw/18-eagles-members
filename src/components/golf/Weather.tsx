@@ -3,6 +3,7 @@
 // src/lib/api/client.ts. Attribution (Open-Meteo) is the ApiCredit in ApiState.tsx.
 import type { ReactNode } from "react";
 import { cx } from "../ui/cx";
+import { LocalClock } from "./LocalClock";
 import { bestDay, clock, compass, compassWords, dayName, sky, windWord, type Daylight, type Read, type SkyKind } from "@/lib/api/conditions";
 import type { Forecast, WeatherDay, WeatherHour } from "@/lib/api/types";
 
@@ -99,7 +100,7 @@ export function WeatherNow({ forecast: f, place, read, light, tone = "paper", fo
       <div className="grid gap-5 p-5 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <H className={cx("caps text-label", green ? "text-gold" : "text-gold-ink")}>Conditions at {place}</H>
-          <p className={cx("font-numeral text-[0.9rem] tabular-nums", muted)}>Now · {clock(f.now.time)} local</p>
+          <p className={cx("font-numeral text-[0.9rem] tabular-nums", muted)}>Now · <LocalClock timeZone={f.timezone} fallback={f.now.time} /> local</p>
         </div>
 
         <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 @md:grid-cols-[auto_minmax(0,1fr)_auto]">

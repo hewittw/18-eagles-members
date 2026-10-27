@@ -40,6 +40,9 @@ export function Clubhouse() {
   const allHonors = useMemo(() => honorsOf(store.rounds, store.customCourses, handicap.history), [store.rounds, store.customCourses, handicap.history]);
   const freshHonors = allHonors.filter((h) => !store.honorsSeen.includes(h.id));
   const freshIds = freshHonors.map((h) => h.id).join(",");
+  // Saving the goal turns its question into a short confirmation in the same place (it used to vanish and send
+  // focus, and the page, back up to the top).
+  const [goalSaved, setGoalSaved] = useState(false);
   useEffect(() => {
     if (!ready) return;
     update((s) => ({ ...s, lastVisit: Date.now() }));
@@ -141,7 +144,7 @@ export function Clubhouse() {
 
         {step === 3 && <NextChallenge />}
 
-        {step === 3 && !store.profile.goal && <GoalQuestion />}
+        {step === 3 && (!store.profile.goal || goalSaved) && <GoalQuestion goal={goalSaved ? store.profile.goal : null} onSaved={() => setGoalSaved(true)} />}
 
         {caseLast && <TrophyCase />}
 
@@ -338,11 +341,23 @@ function IndexQuestion() {
   );
 }
 
-function GoalQuestion() {
+function GoalQuestion({ goal, onSaved }: { goal: Goal | null; onSaved: () => void }) {
+  const saved = useRef<HTMLHeadingElement>(null);
+  // Focus the confirmation where the question was, without scrolling: the golfer stays where they are.
+  useEffect(() => { if (goal) saved.current?.focus({ preventScroll: true }); }, [goal]);
   // Held locally until saved, so arrow keys can move through the choices without committing the first one.
   const [g, setG] = useState<Goal | null>(null);
   // Never a disabled button with no reason: Save stays enabled and says what's missing next to the choices.
   const [error, setError] = useState<string | undefined>();
+  if (goal) {
+    return (
+      <section aria-labelledby="goal-saved" className="max-w-2xl rounded-xl border border-rule/70 bg-paper-2 p-5 shadow-card sm:p-6 motion-safe:animate-fade">
+        <p className="caps text-label text-gold-ink">Goal saved</p>
+        <h2 id="goal-saved" ref={saved} tabIndex={-1} className="mt-1 font-serif text-xl font-bold text-ink outline-none">{GOALS.find((x) => x.value === goal)?.label}</h2>
+        <p className="mt-1 text-ink-2">Your stats measure against it from now on. Change it anytime in the <Link href="/clubhouse/locker" className="link">Locker</Link>.</p>
+      </section>
+    );
+  }
   return (
     <section aria-labelledby="goal-q">
       <SectionHeading id="goal-q" eyebrow="Optional" title="What are you playing for?" lede="Your stats will measure against it. Change it anytime in the Locker." />
@@ -350,7 +365,7 @@ function GoalQuestion() {
         <ChoiceGroup legend="Your goal" hideLegend layout="grid" size="lg" value={g} onChange={(v) => { setG(v); setError(undefined); }} options={GOALS} error={error} name="goal-q" />
         <Button variant="primary" size="md" className="mt-4" onClick={() => {
           if (!g) { setError("Choose a goal first. It's optional: you can leave this and set one in the Locker."); focusInvalid(document.querySelector<HTMLElement>("input[name=goal-q]")); return; }
-          patchProfile({ goal: g }); focusHeading("tee-off");
+          patchProfile({ goal: g }); onSaved();
         }}>
           Save my goal
         </Button>
