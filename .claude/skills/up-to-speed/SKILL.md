@@ -5,6 +5,9 @@ description: Loads the full Week 4 / Assignment 4 handoff (what the assignment a
 
 # Up to speed: Assignment 4, Full Stack 18 Eagles
 
+> **Update 2026-10-27:** setup and nearly all the build are DONE. The current status and what's left live in
+> `docs/HANDOFF.md`; read it first. The "Next steps" below are the original setup plan, kept for history.
+
 You are continuing a session that already did all of the setup. Read this whole file, then reply with a 5-line status
 (where we are, what's next) and ask for anything listed under "Waiting on the user". Don't redo finished steps.
 
