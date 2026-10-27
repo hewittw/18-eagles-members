@@ -1,0 +1,60 @@
+
+Running 3 tests using 1 worker
+
+  ✓  1 [chromium] › tests/rls-isolation.spec.ts:21:5 › a signed-out visitor sees no one's cards (609ms)
+  ✓  2 [chromium] › tests/rls-isolation.spec.ts:27:5 › the Data API gives a signed-out caller (publishable key, no token) no rows (257ms)
+  ✘  3 [chromium] › tests/rls-isolation.spec.ts:34:5 › two golfers each save a card, and neither can see the other's (18.2s)
+
+
+  1) [chromium] › tests/rls-isolation.spec.ts:34:5 › two golfers each save a card, and neither can see the other's 
+
+    Error: golfer-a must NOT see golfer-b's card
+
+    expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByText('Blake\'s private card mvq7bpzf')
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - golfer-a must NOT see golfer-b's card getByText('Blake\'s private card mvq7bpzf') with timeout 5000ms
+      - waiting for getByText('Blake\'s private card mvq7bpzf')
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      52 |     await page.goto("/clubhouse/rounds");
+      53 |     await expect(page.getByText(g.note), `${g.who} should see their own card`).toBeVisible({ timeout: 15_000 });
+    > 54 |     await expect(page.getByText(other.note), `${g.who} must NOT see ${other.who}'s card`).toHaveCount(0);
+         |                                                                                           ^
+      55 |     await page.context().close();
+      56 |   }
+      57 | });
+        at /Users/school/Documents/UChicago/designbuildship/week4/hw4/tests/rls-isolation.spec.ts:54:91
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/rls-isolation-two-golfers--f3cdd-neither-can-see-the-other-s-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/rls-isolation-two-golfers--f3cdd-neither-can-see-the-other-s-chromium/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/rls-isolation-two-golfers--f3cdd-neither-can-see-the-other-s-chromium/test-failed-3.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/rls-isolation-two-golfers--f3cdd-neither-can-see-the-other-s-chromium/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/rls-isolation-two-golfers--f3cdd-neither-can-see-the-other-s-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/rls-isolation-two-golfers--f3cdd-neither-can-see-the-other-s-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/rls-isolation.spec.ts:34:5 › two golfers each save a card, and neither can see the other's 
+  2 passed (20.0s)

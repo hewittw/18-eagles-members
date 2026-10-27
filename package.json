@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prebuild": "node scripts/gen-course-index.mjs"
+    "prebuild": "node scripts/gen-course-index.mjs",
+    "test:rls": "playwright test"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.21",
