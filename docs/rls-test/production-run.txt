@@ -1,0 +1,8 @@
+
+Running 3 tests using 1 worker
+
+  ✓  1 [chromium] › tests/rls-isolation.spec.ts:21:5 › a signed-out visitor sees no one's cards (2.4s)
+  ✓  2 [chromium] › tests/rls-isolation.spec.ts:27:5 › the Data API gives a signed-out caller (publishable key, no token) no rows (381ms)
+  ✓  3 [chromium] › tests/rls-isolation.spec.ts:34:5 › two golfers each save a card, and neither can see the other's (22.2s)
+
+  3 passed (25.8s)

@@ -252,3 +252,18 @@ Append as decisions happen, newest at the bottom.
 - Kiawah's sun had a ring around it. Two causes: the white balance turned the clipped disc cream inside a white glow,
   and the blue sky blend stopped at the disc's edge. Now the gains fade out on clipped pixels, and a soft halo around
   the brightest sky pixels is kept out of the blend.
+
+## 2026-10-27 (early) · Review, QA, merge, ship
+- **`/security-review`** on `full-stack` found no high- or medium-confidence issues. We applied its hardening notes anyway
+  (server-side enum checks, http(s)-only links in custom courses). We kept `/api` out of `auth.protect()` on purpose,
+  because our 401s carry a readable sentence and a protect() 404 doesn't (`docs/security-review.md`).
+- **Independent QA agent** (it didn't build anything): every flow, at four sizes, with keyboard and axe. It fixed four
+  bugs: the forecast strip couldn't be reached by keyboard, course names were cut off mid-word ("Torrey Pines Nort…"),
+  unknown URLs showed Next's bare default 404, and a console warning on the sign-in photo. I then fixed its legend note.
+  **Left as is:** a golfer who skipped the name question gets a nameless greeting, and new accounts now get their Clerk
+  first name prefilled.
+- **Photo follow-up:** four off-set heroes swapped for daylight shots. That silently changed the welcome page's photo,
+  under a caption promising a lighthouse. I caught it from the agent's note and pinned the welcome to the sunset
+  lighthouse photo.
+- Merged `full-stack` → `main` (no fast-forward, so the review point shows in the history), deployed, and the RLS test
+  passed 3/3 **against production**.
