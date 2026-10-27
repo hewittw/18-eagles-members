@@ -276,3 +276,8 @@ Append as decisions happen, newest at the bottom.
 - **Save my goal jumped to the top** (user): focus went to the tee-off heading at the top. The question now becomes a
   "Goal saved" note in the same place, focused without scrolling. Rejected: smooth-scrolling up to the challenge card,
   since it was already on screen and any movement reads as a jump.
+- **Course page: unclickable photos and a big white gap at MacBook width** (user). Thumbnails now swap into the big frame
+  (the credit follows the photo). The gap was measured, not guessed: the left column was ~945px against ~1450px on the right
+  at 1512. The 7-day forecast (~650px) moved under the photographs on wide screens using grid placement, so phones still
+  get Tee off first. Gaps are now 40-240px at every width. OpenGolfAPI facts run full width in two columns. Rejected: a
+  sticky right column (taller than the screen) and a lightbox modal (more to build and test than swapping the frame).
