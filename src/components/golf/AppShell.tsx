@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { SkipLink } from "../ui/SkipLink";
 import { cx } from "../ui/cx";
+import { AccountMenu } from "./AccountMenu";
 import { AppNav, type NavKey } from "./AppNav";
 import { CurrentNav, PhoneTabBar } from "./CurrentNav";
 import { HeaderRecede } from "./HeaderRecede";
@@ -62,7 +63,10 @@ export function AppShell({ children, current, preview, previewLayout = "phone" }
           <Link href="/clubhouse" className="-mx-1 flex min-h-tap shrink-0 items-center px-1" aria-label="18 Eagles, the clubhouse">
             <Wordmark tone="green" className="origin-left transition-transform duration-300 ease-hang condensed:scale-[0.84]" />
           </Link>
-          <div className="hidden md:block">{nav("bar")}</div>
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="hidden md:block">{nav("bar")}</div>
+            <AccountMenu />
+          </div>
         </div>
       </header>
       <Suspense fallback={null}>
