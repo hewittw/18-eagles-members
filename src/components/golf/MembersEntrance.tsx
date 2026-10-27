@@ -52,7 +52,10 @@ export function MembersEntrance({ eyebrow, title, lede, children }: MembersEntra
     <div className="flex min-h-dvh flex-col bg-paper lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(30rem,1fr)]">
       <SkipLink />
       <header className="tex-locker on-green relative isolate overflow-hidden lg:sticky lg:top-0 lg:h-dvh">
-        <Image src={photo.src} alt="" fill priority sizes="(min-width: 64rem) 55vw, 100vw" className="-z-20 object-cover object-[50%_35%]" />
+        {/* Its own positioned box: next/image's fill warns on a sticky parent (the header is sticky on large screens). */}
+        <div aria-hidden="true" className="absolute inset-0 -z-20">
+          <Image src={photo.src} alt="" fill priority sizes="(min-width: 64rem) 55vw, 100vw" className="object-cover object-[50%_35%]" />
+        </div>
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgb(0_64_43/0.72)_0%,rgb(0_80_54/0.55)_45%,rgb(0_64_43/0.94)_100%)]" />
         <div className="flex flex-col gap-12 px-5 pb-6 pt-4 sm:px-8 lg:h-full lg:px-12 lg:pb-14 lg:pt-8">
           <Link href="/clubhouse" className="-mx-1 flex min-h-tap w-fit items-center px-1" aria-label="18 Eagles, the clubhouse">
