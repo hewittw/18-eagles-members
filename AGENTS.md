@@ -18,6 +18,8 @@ One Next.js app with these parts:
 Details: `docs/brief.md`. Flows: `flows.md` (Mermaid, also shown in `README.md`).
 
 ## Hard Rules (every task)
+- **NEVER spend money.** Free tiers only (Clerk dev keys, Supabase free, Vercel Hobby). Never upgrade a plan, add a
+  payment method, or enable a paid or metered add-on. If an action could cost money, stop and ask.
 - Next.js App Router + Tailwind. Design tokens go in `@theme`, classes in the markup.
 - Data is saved only in the browser with **localStorage**. No database, accounts, backend, external APIs at runtime,
   or packages we don't need (no chart libraries: charts are hand-built SVG). Push back if one is suggested.
