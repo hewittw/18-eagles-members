@@ -19,6 +19,7 @@ import { NewGolferShowcase } from "./Showcase";
 import { TrophyCase } from "./TrophyCase";
 import { BagStep, focusHeading, HomeCourseStep, NameGate, setupStep, SetupSteps } from "./Onboarding";
 import { TeeOff } from "./TeeOff";
+import { CourseConditions } from "./Conditions";
 
 const GOALS: { value: Goal; label: string }[] = [
   { value: "100", label: "Break 100" },
@@ -132,7 +133,10 @@ export function Clubhouse() {
               <li><ActionTile href="/clubhouse/rounds/new" icon="pencil" title="Log a past round" detail="Already played it" /></li>
             </ul>
           </div>
-          <CoursePlate course={teeCourse} />
+          <div className="grid min-w-0 content-start gap-6">
+            <CoursePlate course={teeCourse} />
+            <CourseConditions course={teeCourse} />
+          </div>
         </section>}
 
         {step === 3 && <NextChallenge />}

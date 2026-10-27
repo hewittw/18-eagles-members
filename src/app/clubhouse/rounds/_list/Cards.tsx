@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useMemo } from "react";
-import { PageHeader, TeeSwatch, toParSpoken, toParText } from "@/components/golf";
+import { PageHeader, TeeSwatch, WeatherGlyph, toParSpoken, toParText } from "@/components/golf";
+import { weatherLine } from "@/lib/api/conditions";
 import { ButtonLink, Chevron, Icon, Tag, cx } from "@/components/ui";
 import { teeOf } from "@/lib/courses";
 import { keyOf } from "@/lib/handicap";
@@ -159,6 +160,7 @@ function CardRow({ s, counts }: { s: RoundSummary; counts: boolean }) {
             <span aria-hidden="true">·</span>
             <span><span className="sr-only">tees, </span>{s.holes.length === 9 && r.holes === "18" ? "9 holes" : NINE_LABEL[r.holes]}</span>
             {r.mode === "logged" && <><span aria-hidden="true">·</span><span>Logged</span></>}
+            {r.weather && <><span aria-hidden="true">·</span><span className="inline-flex items-center gap-1"><WeatherGlyph code={r.weather.code} isDay={!/clear/i.test(r.weather.summary)} className="size-5 text-green" /><span className="sr-only">Played in </span>{weatherLine(r.weather)}</span></>}
             {r.status === "playing" && <Tag className="ml-0.5">Through {s.played} of {s.holes.length}</Tag>}
             {counts && <Tag tone="gold" className="ml-0.5">Counts</Tag>}
           </span>

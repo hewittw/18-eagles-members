@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { Button, ChoiceGroup } from "@/components/ui";
 import type { Course } from "@/lib/course-types";
 import { holesFor } from "@/lib/courses";
-import { startRound } from "@/lib/round-actions";
+import { captureWeather, startRound } from "@/lib/round-actions";
+import { loadForecast } from "@/lib/api/client";
+import { toRoundWeather } from "@/lib/api/conditions";
+import { courseGeo } from "@/lib/courses";
 import { swallowStrayTap } from "@/lib/hooks";
 import type { Nine } from "@/lib/types";
 
@@ -63,6 +66,10 @@ export function TeeOff({ course, rememberedTee, tone = "paper", label }: { cours
             setBusy(true);
             swallowStrayTap(); // a double tap's second tap would land on the hole screen's controls
             const id = startRound(course, tee, nineHoles ? "18" : nine);
+            // The card keeps the conditions it was played in. Usually already loaded by the Conditions panel; if it
+            // fails, the hole screen tries again, and a card without weather is fine.
+            const geo = courseGeo(course);
+            if (geo) loadForecast(geo).then((r) => r.state === "ok" && captureWeather(id, toRoundWeather(r.data)));
             router.push(`/clubhouse/rounds/${id}/${first}`);
           }}
         >

@@ -3,7 +3,7 @@
 import type { Course } from "./course-types";
 import { holesFor } from "./courses";
 import { emptyEntry, newId, todayISO, update } from "./store";
-import type { HoleEntry, Nine, Round, Store } from "./types";
+import type { HoleEntry, Nine, Round, RoundWeather, Store } from "./types";
 
 export function activeRound(s: Store): Round | null {
   return [...s.rounds].filter((r) => r.status === "playing").sort((a, b) => b.createdAt - a.createdAt)[0] ?? null;
@@ -23,6 +23,11 @@ export function startRound(course: Course, teeName: string, nine: Nine): string 
     profile: { ...s.profile, lastTee: { ...s.profile.lastTee, [course.slug]: teeName }, homeCourse: s.profile.homeCourse ?? course.slug },
   }));
   return id;
+}
+
+/** Keep the conditions a live round was played in (from /api/weather), once: the first reading wins. */
+export function captureWeather(id: string, weather: RoundWeather) {
+  update((s) => (s.rounds.some((r) => r.id === id && !r.weather) ? { ...s, rounds: s.rounds.map((r) => (r.id === id && !r.weather ? { ...r, weather } : r)) } : s));
 }
 
 export function finishRound(id: string, note?: string) {

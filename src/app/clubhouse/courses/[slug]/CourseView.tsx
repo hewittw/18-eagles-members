@@ -8,6 +8,7 @@ import { useClub } from "@/lib/hooks";
 import { nextUnplayed } from "@/lib/round-actions";
 import { Page, Placeholder } from "../../_components/Placeholder";
 import { TeeOff } from "../../_components/TeeOff";
+import { CourseConditions, CourseFacts, CourseForecast } from "../../_components/Conditions";
 import { formatDay, recordAt } from "../_lib/record";
 
 const ACCESS = { public: "Public", resort: "Resort (guests and the public)", private: "Private (members and guests)" } as const;
@@ -138,7 +139,15 @@ export function CourseView({ slug }: { slug: string }) {
               <TeeOff course={c} rememberedTee={store.profile.lastTee[c.slug]} />
             </div>
           </Card>
+
+          <CourseConditions course={c} />
         </div>
+      </div>
+
+      {/* Outside data: the week's weather and OpenGolfAPI's facts (each hides itself when there's nothing to ask) */}
+      <div className="mt-14 grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-10">
+        <CourseForecast course={c} />
+        <CourseFacts course={c} />
       </div>
 
       <section aria-labelledby="card-h" className="mt-14">

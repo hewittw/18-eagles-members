@@ -17,3 +17,5 @@ export { scoreName, scoreShort, toParText, toParSpoken } from "./score";
 export * from "./charts";
 export { SaveProblem } from "./SaveProblem";
 export { StoreSync } from "./StoreSync";
+export { WeatherGlyph, WindArrow, WeatherNow, ForecastStrip, TeeSheetForecast, type WeatherGlyphProps, type WindArrowProps, type WeatherNowProps, type ForecastStripProps, type TeeSheetForecastProps } from "./Weather";
+export { ApiState, ApiCredit, type ApiStateProps, type ApiCreditProps } from "./ApiState";
