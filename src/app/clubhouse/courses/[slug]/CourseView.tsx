@@ -104,7 +104,7 @@ export function CourseView({ slug }: { slug: string }) {
         </div>
 
         {/* Your record, and the start */}
-        <div className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <div className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:flex-col">
           <section aria-labelledby="record-h">
             <SectionHeading id="record-h" title="Your record here" level={2} />
             {rec.rounds === 0 ? (
@@ -153,10 +153,10 @@ export function CourseView({ slug }: { slug: string }) {
             </div>
           </Card>
 
-          <CourseConditions course={c} />
+          <CourseConditions course={c} fill className="lg:flex-1" />
         </div>
 
-        <CourseForecast course={c} className="self-start max-lg:mt-6 lg:col-start-1 lg:row-start-2" />
+        <CourseForecast course={c} fill className="max-lg:mt-6 lg:col-start-1 lg:row-start-2" />
       </div>
 
       {/* OpenGolfAPI's facts, the full width (it hides itself when there's no OpenGolfAPI entry to ask) */}
