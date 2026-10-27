@@ -1,10 +1,13 @@
 {
-  "enabledMcpjsonServers": ["supabase"],
+  "enabledMcpjsonServers": [
+    "supabase"
+  ],
   "permissions": {
     "deny": [
       "mcp__chrome-devtools",
       "Read(./.env)",
-      "Read(./.env.*)"
+      "Read(./.env.*)",
+      "mcp__supabase__execute_sql"
     ]
   }
 }
