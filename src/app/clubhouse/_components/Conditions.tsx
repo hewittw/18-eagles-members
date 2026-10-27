@@ -35,11 +35,11 @@ export function CourseConditions({ course, headingLevel = 2 }: { course: Course;
 }
 
 /** The week as a tee sheet, with the best day to book. On every course page with a location. */
-export function CourseForecast({ course }: { course: Course }) {
+export function CourseForecast({ course, className }: { course: Course; className?: string }) {
   const res = useForecast(courseGeo(course));
   if (!res) return null;
   return (
-    <section aria-labelledby="forecast-h" className="min-w-0">
+    <section aria-labelledby="forecast-h" className={`min-w-0 ${className ?? ""}`}>
       <h2 id="forecast-h" className="font-display text-title text-ink">Tee sheet forecast</h2>
       <p className="mt-1 text-[0.95rem] text-ink-2">The next seven days at {course.shortName}, in the course&apos;s own time zone.</p>
       <div className="mt-4" aria-live="polite">
@@ -87,13 +87,13 @@ function factsOf(d: CourseDetail): [string, ReactNode][] {
 }
 
 /** "Course facts from OpenGolfAPI": architect, year, grasses, facilities, best months. Built-in courses map by id. */
-export function CourseFacts({ course }: { course: Course }) {
+export function CourseFacts({ course, className }: { course: Course; className?: string }) {
   const id = openGolfIdOf(course);
   const res = useCourseFacts(id);
   if (!res) return null;
   const facts = res.state === "ok" ? factsOf(res.data) : [];
   return (
-    <section aria-labelledby="facts-h" className="min-w-0">
+    <section aria-labelledby="facts-h" className={`min-w-0 ${className ?? ""}`}>
       <h2 id="facts-h" className="font-display text-title text-ink">Course facts from OpenGolfAPI</h2>
       <p className="mt-1 text-[0.95rem] text-ink-2">An open course database built on OpenStreetMap. It can differ from the club&apos;s own card.</p>
       <div className="mt-4" aria-live="polite">
@@ -110,13 +110,14 @@ export function CourseFacts({ course }: { course: Course }) {
           </ApiState>
         ) : (
           <>
-            <dl className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-rule/70 bg-rule/70 shadow-card">
+            <dl className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-rule/70 bg-rule/70 shadow-card lg:grid-cols-2">
               {facts.map(([k, v]) => (
                 <div key={k} className="grid gap-1 bg-paper-2 px-4 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
                   <dt className="text-ink">{k}</dt>
                   <dd className="min-w-0 text-ink-2">{v}</dd>
                 </div>
               ))}
+              {facts.length % 2 === 1 && <div aria-hidden="true" className="hidden bg-paper-2 lg:block" />}
             </dl>
             <ApiCredit source="opengolf" className="mt-2 px-1" />
           </>

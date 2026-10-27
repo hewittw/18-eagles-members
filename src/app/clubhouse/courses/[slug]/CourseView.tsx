@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { HoleIllustration, PageHeader, ScorecardTable, TeeSwatch, placeOf } from "@/components/golf";
 import { ActionList, ActionRow, ButtonLink, Callout, Card, SectionHeading } from "@/components/ui";
 import type { CourseImage } from "@/lib/course-types";
@@ -18,6 +18,8 @@ const ACCESS = { public: "Public", resort: "Resort (guests and the public)", pri
 export function CourseView({ slug }: { slug: string }) {
   const { ready, store, active, course } = useClub();
   const c = course(slug);
+  // Which photograph the big frame shows (null: the hero, or the drawing when there's no hero).
+  const [shownAt, setShownAt] = useState<number | null>(null);
 
   // Custom courses aren't known on the server, so their title is set here.
   useEffect(() => {
@@ -33,6 +35,8 @@ export function CourseView({ slug }: { slug: string }) {
   const activeCourse = active ? course(active.courseSlug) : undefined;
   const estimated = c.tees.filter((t) => t.source === "estimated");
   const photos = [c.hero, ...c.gallery].filter((p): p is CourseImage => !!p);
+  const shown = shownAt != null ? photos[shownAt] ?? c.hero : c.hero;
+  const pressedAt = shownAt ?? (c.hero ? 0 : -1);
 
   const facts: [string, string][] = [
     ["Par", String(back.par)],
@@ -47,38 +51,45 @@ export function CourseView({ slug }: { slug: string }) {
     <Page>
       <PageHeader back={{ href: "/clubhouse/courses", label: "Courses" }} eyebrow={placeOf(c)} title={c.name} lede={c.blurb} />
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(20rem,1fr)] lg:gap-10">
+      {/* Wide screens: photographs and facts, then the week's weather, beside Tee off and conditions (which span both rows),
+          so neither column leaves a long empty run. Phones: one column, with Tee off before the week. */}
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(20rem,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-10 lg:gap-y-12">
         {/* The hero: the photograph, or a drawing of the signature hole */}
-        <div className="min-w-0">
+        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
           <figure className="min-w-0 overflow-hidden rounded-2xl border border-rule/70 bg-paper-2 shadow-card">
-            {c.hero ? (
+            {shown ? (
               <div className="relative aspect-[3/2] overflow-hidden bg-paper-3">
-                <Image src={c.hero.src} alt={c.hero.alt} fill priority sizes="(max-width: 1024px) 100vw, 60vw" className="object-cover" />
+                <Image key={shown.src} src={shown.src} alt={shown.alt} fill priority={shown === c.hero} sizes="(max-width: 1024px) 100vw, 60vw" className="object-cover motion-safe:animate-fade" />
               </div>
             ) : (
               <HoleIllustration hole={sig} seed={c.slug} orientation="landscape" className="block h-auto w-full" />
             )}
             <figcaption className="caps flex flex-wrap justify-between gap-x-4 gap-y-1 px-4 py-2.5 text-[0.72rem] text-ink-2">
               <span>
-                {c.hero ? `${c.shortName} · photograph` : `Hole ${sig.n}${sig.name ? ` · ${sig.name}` : ""} · drawn, not surveyed`}
+                {shown ? `${c.shortName} · photograph${photos.length > 1 ? ` ${photos.indexOf(shown) + 1} of ${photos.length}` : ""}` : `Hole ${sig.n}${sig.name ? ` · ${sig.name}` : ""} · drawn, not surveyed`}
               </span>
-              <span className="text-ink">{c.hero ? `${c.hero.credit} · ${c.hero.license}` : `Par ${sig.par} · ${sig.yards} yds`}</span>
+              <span className="text-ink">{shown ? `${shown.credit} · ${shown.license}` : `Par ${sig.par} · ${sig.yards} yds`}</span>
             </figcaption>
           </figure>
 
-          {c.gallery.length > 0 && (
-            <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3" role="list" aria-label="More photographs">
-              {c.gallery.map((g) => (
+          {/* Every photograph as a thumbnail; choosing one shows it in the frame above, with its own credit. */}
+          {photos.length > 1 || (!c.hero && photos.length > 0) ? (
+            <ul className="mt-3 grid grid-cols-4 gap-2 sm:gap-3" role="list" aria-label="Photographs of the course">
+              {photos.map((g, i) => (
                 <li key={g.src} className="min-w-0">
-                  <figure className="overflow-hidden rounded-lg border border-rule/70 bg-paper-2">
-                    <div className="relative aspect-[4/3] overflow-hidden bg-paper-3">
-                      <Image src={g.src} alt={g.alt} fill sizes="(max-width: 640px) 50vw, 20vw" className="object-cover" />
-                    </div>
-                  </figure>
+                  <button
+                    type="button"
+                    aria-pressed={pressedAt === i}
+                    onClick={() => setShownAt(i)}
+                    className="group relative block aspect-[4/3] w-full cursor-pointer overflow-hidden rounded-lg border border-rule/70 bg-paper-3 transition outline-offset-2 hover:border-ink active:scale-[.98] aria-pressed:border-green aria-pressed:ring-2 aria-pressed:ring-green motion-reduce:transition-none"
+                  >
+                    <Image src={g.src} alt="" fill sizes="(max-width: 1024px) 25vw, 15vw" className="object-cover transition group-hover:brightness-105 group-aria-pressed:brightness-100 motion-reduce:transition-none" />
+                    <span className="sr-only">Show photograph {i + 1} of {photos.length}: {g.alt}</span>
+                  </button>
                 </li>
               ))}
             </ul>
-          )}
+          ) : null}
 
           <p className="caps mt-8 px-1 text-label text-ink-2">About the course</p>
           <dl className="mt-2 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-rule/70 bg-rule/70 shadow-card sm:grid-cols-2">
@@ -93,7 +104,7 @@ export function CourseView({ slug }: { slug: string }) {
         </div>
 
         {/* Your record, and the start */}
-        <div className="grid min-w-0 content-start gap-6">
+        <div className="grid min-w-0 content-start gap-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <section aria-labelledby="record-h">
             <SectionHeading id="record-h" title="Your record here" level={2} />
             {rec.rounds === 0 ? (
@@ -144,13 +155,12 @@ export function CourseView({ slug }: { slug: string }) {
 
           <CourseConditions course={c} />
         </div>
+
+        <CourseForecast course={c} className="self-start max-lg:mt-6 lg:col-start-1 lg:row-start-2" />
       </div>
 
-      {/* Outside data: the week's weather and OpenGolfAPI's facts (each hides itself when there's nothing to ask) */}
-      <div className="mt-14 grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-10">
-        <CourseForecast course={c} />
-        <CourseFacts course={c} />
-      </div>
+      {/* OpenGolfAPI's facts, the full width (it hides itself when there's no OpenGolfAPI entry to ask) */}
+      <CourseFacts course={c} className="mt-14" />
 
       <section aria-labelledby="card-h" className="mt-14">
         <SectionHeading id="card-h" title="The card" eyebrow={`${c.holes.length} holes · par ${back.par}`} lede={`Yards from the ${back.name} tees, the longest. Your score goes in the bottom row as you play.`} />
