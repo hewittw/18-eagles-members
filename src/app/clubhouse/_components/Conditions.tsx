@@ -13,7 +13,7 @@ import { captureWeather } from "@/lib/round-actions";
 import type { Round } from "@/lib/types";
 
 /** "Conditions at <course>": now, the next hours, and the light left. For the course you're about to play. */
-export function CourseConditions({ course, headingLevel = 2 }: { course: Course; headingLevel?: 2 | 3 }) {
+export function CourseConditions({ course, headingLevel = 2, className, fill }: { course: Course; headingLevel?: 2 | 3; className?: string; fill?: boolean }) {
   const geo = courseGeo(course);
   const res = useForecast(geo, true);
   if (!res) return null; // no location: nothing to show, and no empty box
@@ -28,28 +28,25 @@ export function CourseConditions({ course, headingLevel = 2 }: { course: Course;
   }
   const f = res.data;
   return (
-    <WeatherNow forecast={f} place={course.shortName} read={playability(f)} light={daylight(f)} headingLevel={headingLevel} footer={<ApiCredit source="open-meteo" />}>
+    <WeatherNow forecast={f} place={course.shortName} read={playability(f)} light={daylight(f)} headingLevel={headingLevel} className={className} fill={fill} footer={<ApiCredit source="open-meteo" />}>
       <ForecastStrip hours={f.hours} />
     </WeatherNow>
   );
 }
 
 /** The week as a tee sheet, with the best day to book. On every course page with a location. */
-export function CourseForecast({ course, className }: { course: Course; className?: string }) {
+export function CourseForecast({ course, className, fill }: { course: Course; className?: string; fill?: boolean }) {
   const res = useForecast(courseGeo(course));
   if (!res) return null;
   return (
-    <section aria-labelledby="forecast-h" className={`min-w-0 ${className ?? ""}`}>
+    <section aria-labelledby="forecast-h" className={`min-w-0 ${fill ? "lg:flex lg:flex-col" : ""} ${className ?? ""}`}>
       <h2 id="forecast-h" className="font-display text-title text-ink">Tee sheet forecast</h2>
       <p className="mt-1 text-[0.95rem] text-ink-2">The next seven days at {course.shortName}, in the course&apos;s own time zone.</p>
-      <div className="mt-4" aria-live="polite">
+      <div className={`mt-4 ${fill ? "lg:flex lg:flex-1 lg:flex-col" : ""}`} aria-live="polite">
         {res.state === "loading" ? (
           <ApiState kind="loading" shape="list" label="Loading the week's forecast" />
         ) : res.state === "ok" ? (
-          <>
-            <TeeSheetForecast days={res.data.days} todayDone={["late", "dark"].includes(daylight(res.data)?.phase ?? "")} />
-            <ApiCredit source="open-meteo" className="mt-2 px-1" />
-          </>
+          <TeeSheetForecast days={res.data.days} todayDone={["late", "dark"].includes(daylight(res.data)?.phase ?? "")} fill={fill} className={fill ? "lg:flex-1" : undefined} footer={<ApiCredit source="open-meteo" />} />
         ) : (
           <ApiState kind="down" title="The week's forecast is resting">
             The weather service isn&apos;t answering. Check back in a few minutes; everything else on this page works as usual.

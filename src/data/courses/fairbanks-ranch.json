@@ -36,9 +36,23 @@
     { "name": "White", "color": "#f2f2f2", "par": 72, "yards": 6395, "rating": 71.2, "slope": 124, "source": "published" },
     { "name": "Gold", "color": "#d4a017", "par": 72, "yards": 6127, "rating": 69.9, "slope": 121, "source": "published" }
   ],
-  "hero": null,
-  "gallery": [],
-  "dataNotes": "Fairbanks Ranch has 27 holes in three nines (Valley, Lakes, Ocean) played as three 18-hole combinations. This file is Valley (holes 1–9) + Lakes (holes 10–18): Ted Robinson's original 1984 championship 18, and the longest and highest-rated combination (Lakes/Ocean is about 7,071 yds and Ocean/Valley about 7,079 yds from the Black tees). Hole yards, pars, men's stroke indexes, and men's ratings/slopes come from the current card on Stymie. Greenskeeper's older nine-by-nine card has the same pars and the same stroke-index order, with yardages that differ by a few yards per hole (7,196 total) and Black at 74.9/131. Bay Club's site has no public scorecard, and the USGA NCRDB blocked automated access. Sources disagree on when the Ocean nine opened (2004 or 2005) and who designed it (Ted Robinson Jr. or John Harbottle), so the blurb leaves both out. The mailing address is Rancho Santa Fe, CA 92067. There are no hole names. No freely licensed photo of the course was found (Commons has only maps and hot-air balloons over the area), so hero is null.",
+  "hero": {
+    "src": "/courses/fairbanks-ranch/graded/hero.jpg",
+    "alt": "Tall, thin palms rising over a fairway at Fairbanks Ranch Country Club, with ponds beyond and long late-afternoon shadows across the grass",
+    "credit": "Hewitt Watkins (own photo)",
+    "license": "All rights reserved",
+    "sourceUrl": "https://github.com/hewittw/18-eagles-members/tree/main/public/courses/fairbanks-ranch"
+  },
+  "gallery": [
+    {
+      "src": "/courses/fairbanks-ranch/graded/g1.jpg",
+      "alt": "From a tee at Fairbanks Ranch, a lake curving between two fairways toward a line of palms in low evening sun",
+      "credit": "Hewitt Watkins (own photo)",
+      "license": "All rights reserved",
+      "sourceUrl": "https://github.com/hewittw/18-eagles-members/tree/main/public/courses/fairbanks-ranch"
+    }
+  ],
+  "dataNotes": "Fairbanks Ranch has 27 holes in three nines (Valley, Lakes, Ocean) played as three 18-hole combinations. This file is Valley (holes 1–9) + Lakes (holes 10–18): Ted Robinson's original 1984 championship 18, and the longest and highest-rated combination (Lakes/Ocean is about 7,071 yds and Ocean/Valley about 7,079 yds from the Black tees). Hole yards, pars, men's stroke indexes, and men's ratings/slopes come from the current card on Stymie. Greenskeeper's older nine-by-nine card has the same pars and the same stroke-index order, with yardages that differ by a few yards per hole (7,196 total) and Black at 74.9/131. Bay Club's site has no public scorecard, and the USGA NCRDB blocked automated access. Sources disagree on when the Ocean nine opened (2004 or 2005) and who designed it (Ted Robinson Jr. or John Harbottle), so the blurb leaves both out. The mailing address is Rancho Santa Fe, CA 92067. There are no hole names. The photographs are the user's own (iPhone, 2024 and 2026), with location metadata stripped.",
   "sources": [
     "https://stymie.golf/golf-courses/california/san-diego-county/rancho-santa-fe/fairbanks-ranch-country-club",
     "https://www.greenskeeper.org/southern_california/san_diego/fairbanks_ranch_country_club/scorecard.cfm",

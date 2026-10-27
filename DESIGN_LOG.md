@@ -281,3 +281,12 @@ Append as decisions happen, newest at the bottom.
   at 1512. The 7-day forecast (~650px) moved under the photographs on wide screens using grid placement, so phones still
   get Tee off first. Gaps are now 40-240px at every width. OpenGolfAPI facts run full width in two columns. Rejected: a
   sticky right column (taller than the screen) and a lightbox modal (more to build and test than swapping the frame).
+- **Photos for the two home clubs** (user supplied, `../golf-images/`). Fairbanks Ranch: the user's own iPhone photos,
+  resized with all metadata stripped (they carried GPS) and the driver head trimmed off one edge. Rancho Santa Fe: two
+  web images (GolfPass, and a Sanity CDN image). Asked the user, since every other photo is CC or their own; they chose
+  to use them, credited and marked all rights reserved. The Rancho hero's purple haze graded to a lime band, so the
+  haze is neutralised first and the sky step blues it.
+- **Weather cards end level** (user: conditions and forecast bottoms didn't line up). On wide screens both columns
+  stretch to the same bottom: the tee sheet's rows share any spare height, the conditions card spreads it between its
+  parts, and the tee sheet's key and credit move inside its card (like the conditions card). Measured 0px difference on
+  8 courses at 1024-2560. Phones unchanged.

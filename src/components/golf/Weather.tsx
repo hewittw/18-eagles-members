@@ -86,18 +86,21 @@ export type WeatherNowProps = {
   footer?: ReactNode; // the ApiCredit
   children?: ReactNode; // the ForecastStrip
   headingLevel?: 2 | 3;
+  className?: string;
+  /** Fill the height it's given (wide course pages): the extra space is shared between its parts, so it ends level with its neighbour. */
+  fill?: boolean;
 };
 
 /** "Conditions at <course>": temperature, sky, wind with a needle, rain, the golfer's read, and the light left. */
-export function WeatherNow({ forecast: f, place, read, light, tone = "paper", footer, children, headingLevel = 2 }: WeatherNowProps) {
+export function WeatherNow({ forecast: f, place, read, light, tone = "paper", footer, children, headingLevel = 2, className, fill = false }: WeatherNowProps) {
   const s = sky(f.now.code, f.now.isDay);
   const rain = Math.max(0, ...f.hours.slice(0, 4).map((h) => h.rainPct));
   const green = tone === "green";
   const H = headingLevel === 2 ? "h2" : "h3";
   const muted = green ? "text-paper-3" : "text-ink-2";
   return (
-    <section aria-label={`Conditions at ${place}`} className={cx("@container min-w-0 overflow-hidden rounded-xl", green ? "tex-locker on-green border border-green-3 [--glyph-bg:var(--color-green-3)]" : "border border-rule/70 bg-paper-2 text-ink shadow-card")}>
-      <div className="grid gap-5 p-5 sm:p-6">
+    <section aria-label={`Conditions at ${place}`} className={cx("@container min-w-0 overflow-hidden rounded-xl", fill && "lg:flex lg:flex-col", className, green ? "tex-locker on-green border border-green-3 [--glyph-bg:var(--color-green-3)]" : "border border-rule/70 bg-paper-2 text-ink shadow-card")}>
+      <div className={cx("grid gap-5 p-5 sm:p-6", fill && "lg:flex-1 lg:content-between")}>
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <H className={cx("caps text-label", green ? "text-gold" : "text-gold-ink")}>Conditions at {place}</H>
           <p className={cx("font-numeral text-[0.9rem] tabular-nums", muted)}>Now · <LocalClock timeZone={f.timezone} fallback={f.now.time} /> local</p>
@@ -172,19 +175,28 @@ export function ForecastStrip({ hours, tone = "paper", count = 8, className }: F
 const isDaytime = (iso: string) => { const h = +iso.slice(11, 13); return h >= 7 && h < 18; };
 
 // ───────── TeeSheetForecast ─────────
-export type TeeSheetForecastProps = { days: WeatherDay[]; className?: string; /** No light left today: the best day is picked from tomorrow on. */ todayDone?: boolean };
+export type TeeSheetForecastProps = {
+  days: WeatherDay[];
+  className?: string;
+  /** No light left today: the best day is picked from tomorrow on. */
+  todayDone?: boolean;
+  footer?: ReactNode; // the ApiCredit, inside the card under the key
+  /** Fill the height it's given (wide course pages): the seven rows share it evenly (lg and up), so the card ends level with its neighbour. */
+  fill?: boolean;
+};
 
 /** The week as a tee sheet: one line per day, the best day to book marked in words and with a flag. */
-export function TeeSheetForecast({ days, className, todayDone }: TeeSheetForecastProps) {
+export function TeeSheetForecast({ days, className, todayDone, footer, fill = false }: TeeSheetForecastProps) {
   const best = bestDay(days, todayDone ? 1 : 0);
   return (
-    <div className={cx("min-w-0", className)}>
+    <div className={cx("min-w-0", fill && "lg:flex lg:flex-col", className)}>
       {best && (
         <p className="mb-3 font-serif text-lede text-ink">
           Book <strong className="font-bold">{dayName(days[best.index].date, best.index, true)}</strong>: {best.why}.
         </p>
       )}
-      <ol className="divide-y divide-rule/80 overflow-hidden rounded-xl border border-rule/70 bg-paper-2 shadow-card">
+      <div className={cx("flex flex-col overflow-hidden rounded-xl border border-rule/70 bg-paper-2 shadow-card", fill && "lg:flex-1")}>
+      <ol className={cx("divide-y divide-rule/80", fill && "lg:grid lg:flex-1 lg:auto-rows-fr")}>
         {days.map((d, i) => {
           const s = sky(d.code);
           const isBest = best?.index === i;
@@ -214,7 +226,11 @@ export function TeeSheetForecast({ days, className, todayDone }: TeeSheetForecas
           );
         })}
       </ol>
-      <p className="mt-2 px-1 text-[0.85rem] text-ink-2">Highs and lows in °F, the day&apos;s strongest wind and where it comes from, and the highest chance of rain.</p>
+      <div className="grid gap-1 border-t border-rule px-3.5 py-2.5 sm:px-5">
+        <p className="text-[0.85rem] text-ink-2">Highs and lows in °F, the day&apos;s strongest wind and where it comes from, and the highest chance of rain.</p>
+        {footer}
+      </div>
+      </div>
     </div>
   );
 }

@@ -57,8 +57,10 @@ no sky or colour grade.
   restrictions," and all of these allow changes. **The graded copies are modified versions.** Each one keeps its
   original's author credit and licence. The CC BY-SA ones are shared under the same CC BY-SA licence as their
   originals, and the CC BY ones note that they were changed (cropped and colour-graded).
-- **No "All rights reserved" photos are graded.** The two home clubs (Rancho Santa Fe, Fairbanks Ranch) have no photo
-  in the course library. They show the drawn illustration, so nothing of theirs was changed.
+- **The two home clubs (Week 4) have "All rights reserved" photos, graded like the rest.** Fairbanks Ranch: the user's
+  own iPhone photos (location metadata stripped). Rancho Santa Fe: no freely licensed photo exists, so at the user's
+  choice two web images are used for this class project, credited to where they came from (GolfPass, and an
+  unattributed image on a Sanity CDN). The Rancho hero's purple-grey haze was neutralised before grading.
 
 ## Data sources (live APIs, Week 4)
 
@@ -88,7 +90,8 @@ Courses with no photo show a drawn yardage-book illustration instead.
 | Chambers Bay | `hero.jpg` | Atomic Taco from Seattle, WA, USA | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Chambers_Bay_Golf_Course_(17998751820).jpg |
 | Chambers Bay | `g1.jpg` | Atomic Taco from Seattle, WA, USA | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Chambers_Bay_during_the_US_Open_(19067123301).jpg |
 | Chambers Bay | `g2.jpg` | Rbirman | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Hickory_Golfer.jpg |
-| Fairbanks Ranch Country Club (Valley/Lakes) | (illustration) | n/a | n/a | n/a |
+| Fairbanks Ranch Country Club (Valley/Lakes) | `hero.jpg` | Hewitt Watkins (own photo) | All rights reserved | https://github.com/hewittw/18-eagles-members/tree/main/public/courses/fairbanks-ranch |
+| Fairbanks Ranch Country Club (Valley/Lakes) | `g1.jpg` | Hewitt Watkins (own photo) | All rights reserved | https://github.com/hewittw/18-eagles-members/tree/main/public/courses/fairbanks-ranch |
 | Harbour Town Golf Links | `hero.jpg` | Dan Perry (danperry.com) | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Harbour_Town_Golf,_Hilton_Head_-_5111146241.jpg |
 | Harbour Town Golf Links | `g1.jpg` | Dan Perry (danperry.com) | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Harbour_Town_Golf,_Hilton_Head_-_5111137869.jpg |
 | Harbour Town Golf Links | `g2.jpg` | Dan Perry (danperry.com) | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Harbour_Town_Golf_Links,_Hilton_Head_-_5111737496.jpg |
@@ -115,7 +118,8 @@ Courses with no photo show a drawn yardage-book illustration instead.
 | Pebble Beach Golf Links | `g2.jpg` | Bernard Gagnon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Pebble_Beach_6th_hole.jpg |
 | Pinehurst No. 2 | `hero-sign.jpg` | Zhans33 | Public domain | https://commons.wikimedia.org/wiki/File:Pinehurst_No._2.JPG |
 | Pinehurst No. 2 | `g2.jpg` | State Archives of North Carolina (Massengill Postcard Collection) | No known copyright restrictions | https://commons.wikimedia.org/wiki/File:4th,_Pinehurst_No_2_001_(22130096452).jpg |
-| Rancho Santa Fe Golf Club | (illustration) | n/a | n/a | n/a |
+| Rancho Santa Fe Golf Club | `hero.jpg` | Unattributed (web) | All rights reserved | https://cdn.sanity.io/images/03mhssoh/production/fd22c4647f5b7d2f0161be5dc0361500d9b4ccb4-8256x5504.jpg |
+| Rancho Santa Fe Golf Club | `g1.jpg` | GolfPass | All rights reserved | https://golf-pass.brightspotcdn.com/e3/ba/68efbfe6e0d647afec7d09a104a6/105043.jpg |
 | The Riviera Country Club | `hero-18th.jpg` | Dan (golfpro1) from Schaumburg, IL, USA | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:RivieraCountryClub18th.jpg |
 | The Riviera Country Club | `g2.jpg` | Dan Perry from Chicago, USA | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Riviera_Country_Club,_Golf_Course_in_Pacific_Palisades,_California_(168829105).jpg |
 | The Riviera Country Club | `g3.jpg` | Benoît Prieur | CC0 | https://commons.wikimedia.org/wiki/File:Aerial_view_of_Riviera_Country_Club_(Pacific_Palisades)_July_2022.jpg |
