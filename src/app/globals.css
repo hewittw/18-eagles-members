@@ -108,6 +108,15 @@
   &:where([data-force~="pressed"], [data-force~="pressed"] *) { @slot; }
 }
 
+/* The receding top bar (HeaderRecede.tsx): `condensed:` while it's slim, `recede:` while it's slim and nobody is
+   hovering or tabbing inside it (so focus always gets the full-strength labels back). */
+@custom-variant condensed {
+  &:where(.hdr[data-condensed] *, body:has(#hdr-deep) .hdr *) { @slot; }
+}
+@custom-variant recede {
+  &:where(.hdr[data-condensed]:not(:hover, :focus-within) *, body:has(#hdr-deep) .hdr:not(:hover, :focus-within) *) { @slot; }
+}
+
 @layer base {
   :root {
     --duration-press: 150ms;
@@ -157,6 +166,18 @@
 }
 
 @layer components {
+  /* The top bar: sticky a little above the edge, so its top tucks away as the page moves (no layout change). Slim, it
+     trades the brass rule (a utility on the header) for a soft shadow. On a deep task screen (the hole) it starts slim and flush. */
+  .hdr { top: -0.75rem; transition: box-shadow var(--duration-fade) ease-out, border-color var(--duration-fade) ease-out; }
+  .hdr:is([data-condensed], body:has(#hdr-deep) *) {
+    box-shadow: 0 1px 0 rgb(0 0 0 / 0.14), 0 10px 22px -14px rgb(0 0 0 / 0.45);
+  }
+  body:has(#hdr-deep) .hdr { margin-top: -0.75rem; }
+  @media (width >= 48rem) {
+    .hdr { top: -1.25rem; }
+    body:has(#hdr-deep) .hdr { margin-top: -1.25rem; }
+  }
+
   /* Surfaces */
   .on-green {
     --color-focus: var(--color-gold);
