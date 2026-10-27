@@ -206,3 +206,32 @@ Append as decisions happen, newest at the bottom.
 - **States:** a skeleton the shape of the answer, nothing found with next steps, and "resting" when the service is down
   (what still works + an action). Tested for real: `?api=down` in development makes our route call the real upstream
   with a 1 ms timeout.
+
+## 2026-10-27 · Accounts made native, and the header recedes (instructor feedback)
+- **Feedback: "the header is a little noisy once I dig into the mechanisms below."** Chose a bar that *recedes* rather
+  than leaves: it's sticky at a small negative top, so its first 12–20px tuck under the edge as you scroll; slim, the
+  wordmark shrinks, the tab icons fold away and the labels drop to 80% white (still 5:1), and the brass rule becomes a
+  soft shadow. Hover or keyboard focus inside the bar brings the labels back. Only transforms, opacity and colour
+  change, so nothing on the page moves; reduced motion gets the same two states with no tween. The hole screen starts
+  slim. **Rejected:** slide away on scroll down / back on scroll up (the bar "breathing" on every flick is the noise
+  the feedback named, it fights FocusClear and the skip link, and the way out of a round disappears); shrinking the
+  bar's real height (shifts the page under your thumb and can loop on short pages); hiding the tabs entirely.
+- Found on the keyboard pass (and already true in Week 3): Shift+Tab into the bar scrolled the page to the top,
+  because its controls sat inside `scroll-padding-top`. A negative scroll margin on the bar's controls fixed it.
+- **Account control: our own, not Clerk's `<UserButton/>`.** The golfer's initials on a brass-ringed tag (the
+  roundel's family) open a small card: who's signed in, Your locker, Your account (Clerk's profile modal), Sign out
+  back to `/clubhouse`. It's a disclosure (Tab through, Esc or click outside closes), not an ARIA menu.
+  **Rejected:** a themed `<UserButton/>` (Clerk's popover chrome and violet default avatar still read as Clerk).
+  Clerk is themed once on `<ClerkProvider>` from `tokens.ts` (green, Franklin/Oswald, our radius, a green-toned
+  default avatar), with its CSS in Tailwind's `base` layer so our classes win (the documented separate `clerk` layer
+  statement was dropped by the build).
+- **Signed out, the bar is just the wordmark and Sign in.** Every tab but the welcome needs an account, so showing
+  them would be five doors that bounce you to a sign-in. Before Clerk loads, the welcome reserves the tabs' space
+  invisibly (no flicker either way).
+- **Members' entrance** around Clerk's forms: Shinnecock's clubhouse, the wordmark back home, three plain lines on
+  what an account gives you. **Welcome** at `/clubhouse`: Turnberry hero with the two doors, the three things it does
+  beside a sample card (Turnberry's front nine, drawn and labelled as nobody's round), and a plain privacy note.
+  **Rejected:** the centred-hero + three-feature-cards + CTA-band SaaS layout (`docs/avoid.md`).
+- **Copy:** "this device / this browser" became "your account"; "Erase everything" became "Erase my journal", which
+  says it deletes the rows in your account on every device and that the sign-in stays. Export stays as a copy for
+  your own records, no longer the only backup. The first-run name is prefilled from the Clerk first name.
