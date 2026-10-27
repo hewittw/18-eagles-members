@@ -267,3 +267,12 @@ Append as decisions happen, newest at the bottom.
   lighthouse photo.
 - Merged `full-stack` → `main` (no fast-forward, so the review point shows in the history), deployed, and the RLS test
   passed 3/3 **against production**.
+
+### User testing, morning of the due date
+- **"Now · 6:30 AM" at 6:32** (user): the label showed the forecast's timestamp, which only moves every 10 minutes. The
+  clock now ticks each minute in the course's own timezone; the weather still refreshes every 10 minutes. The first
+  version read the time during render and failed the Vercel build on the prerendered design-system page (the old deploy
+  stayed live); the time is now read only in the browser.
+- **Save my goal jumped to the top** (user): focus went to the tee-off heading at the top. The question now becomes a
+  "Goal saved" note in the same place, focused without scrolling. Rejected: smooth-scrolling up to the challenge card,
+  since it was already on screen and any movement reads as a jump.
