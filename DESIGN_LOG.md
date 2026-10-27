@@ -115,3 +115,15 @@ Append as decisions happen, newest at the bottom.
   and actually Masters-like." The cream "Scorecard Paper" (#F5F0E4) plus Caslon read as the AI or Claude default. **Decision:**
   re-skin the tokens toward masters.com: white surfaces, Masters green, Masters yellow, and the closest licensable fonts. The
   components and flows stay as they are.
+
+---
+
+# Week 4 — Assignment 4: Full Stack (18 Eagles, continued)
+
+## 2026-10-26 · Carry Weeks 1–3 forward
+- Extending 18 Eagles rather than starting over: the user wants each week to build on the last. Kept the hw3 design
+  system, flows, accessibility bar, verify-ui skill, scripts, and this log.
+- Setup decisions so far (details in `.claude/skills/up-to-speed/SKILL.md`): new branch `full-stack` with no remote, so
+  hw3 stays frozen; `.env` deny rule; Supabase MCP read-only by the user's choice (migrations are pasted by the user);
+  publishable key + Clerk token, so RLS (not our code alone) decides what each person sees; Open-Meteo weather first.
+- Started using Claude's persistent memory for preferences and status across sessions.
