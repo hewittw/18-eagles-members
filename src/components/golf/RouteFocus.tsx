@@ -9,7 +9,7 @@ let movingToHeading = false;
 /**
  * After a client-side route change, focus moves to the new page's <h1>, so a keyboard user starts at the top of
  * the new page (not on a link that no longer exists) and a screen reader reads the new page's name.
- * Pages render after localStorage is read, so it waits briefly for the real <h1> (not the placeholder).
+ * Pages render after the journal has loaded, so it waits briefly for the real <h1> (not the placeholder).
  */
 export function RouteFocus() {
   const path = usePathname();

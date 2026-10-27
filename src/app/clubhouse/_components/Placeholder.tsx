@@ -1,4 +1,4 @@
-// What a page shows for the instant before localStorage is read: the page's frame, quietly, with no
+// What a page shows for the instant before the golfer's journal has loaded: the page's frame, quietly, with no
 // flash of the first-visit screen for a golfer who has been here before. A screen tall, so the footer below never
 // jumps when the page fills in (no layout shift).
 export function Placeholder({ label = "Opening your locker" }: { label?: string }) {

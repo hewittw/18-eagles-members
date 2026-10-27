@@ -10,6 +10,7 @@ import { Page, Placeholder } from "../../_components/Placeholder";
 import { TeeOff } from "../../_components/TeeOff";
 import { CourseConditions, CourseFacts, CourseForecast } from "../../_components/Conditions";
 import { formatDay, recordAt } from "../_lib/record";
+import { RemoveCourse } from "./RemoveCourse";
 
 const ACCESS = { public: "Public", resort: "Resort (guests and the public)", private: "Private (members and guests)" } as const;
 
@@ -204,6 +205,8 @@ export function CourseView({ slug }: { slug: string }) {
           )}
         </div>
       </details>
+
+      {c.tags.includes("yours") && <RemoveCourse slug={c.slug} name={c.name} />}
     </Page>
   );
 }
@@ -228,7 +231,7 @@ function NotFound({ slug }: { slug: string }) {
       <div className="mt-6 max-w-measure">
         <p className="font-serif text-lede text-ink-2">
           {custom
-            ? "That course was added on another device, or the data here was erased. Courses you add are saved in this browser only."
+            ? "It may have been removed, or it was added by another account. Courses you add are private to you."
             : "There's no course at this address. It may have been renamed."}
         </p>
         <div className="mt-6 flex flex-wrap gap-2">

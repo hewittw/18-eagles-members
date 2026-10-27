@@ -1,4 +1,4 @@
-// Everything 18 Eagles saves on this device. One versioned localStorage key (see store.ts).
+// Everything 18 Eagles saves for a golfer: synced to their own rows in Supabase (see store.ts, supabase/migrations).
 import type { Course } from "./course-types";
 
 export type ClubKind = "wood" | "hybrid" | "iron" | "wedge" | "putter";

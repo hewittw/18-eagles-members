@@ -269,9 +269,9 @@ export function HoleScreen({ id, holeParam }: { id: string; holeParam: string })
 function Missing({ what = "round", roundId }: { what?: "round" | "hole"; roundId?: string }) {
   return (
     <Page>
-      <h1 className="font-display text-display-2 text-ink">{what === "round" ? "This round isn't on this device" : "That hole isn't part of this round"}</h1>
+      <h1 className="font-display text-display-2 text-ink">{what === "round" ? "This round isn't in your journal" : "That hole isn't part of this round"}</h1>
       <p className="mt-4 max-w-measure font-serif text-lede text-ink-2">
-        {what === "round" ? "Rounds are saved in the browser where you played them. It may have been deleted, or played on another device." : "Pick a hole from the card."}
+        {what === "round" ? "It may have been deleted, or it belongs to another account. Rounds are private to the golfer who played them." : "Pick a hole from the card."}
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         {roundId && <ButtonLink href={`/clubhouse/rounds/${roundId}`} variant="primary">Open the card</ButtonLink>}

@@ -225,8 +225,8 @@ const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 =
 function Gone() {
   return (
     <Page>
-      <h1 className="font-display text-display-2 text-ink">This card isn&apos;t on this device</h1>
-      <p className="mt-4 max-w-measure font-serif text-lede text-ink-2">Cards are saved in the browser where they were made. It may have been deleted.</p>
+      <h1 className="font-display text-display-2 text-ink">This card isn&apos;t in your journal</h1>
+      <p className="mt-4 max-w-measure font-serif text-lede text-ink-2">It may have been deleted, or it belongs to another account. Cards are private to the golfer who saved them.</p>
       <div className="mt-8 flex flex-wrap gap-3">
         <ButtonLink href="/clubhouse/rounds" variant="primary">All cards</ButtonLink>
         <ButtonLink href="/clubhouse" variant="secondary">Back to the clubhouse</ButtonLink>

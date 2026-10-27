@@ -13,7 +13,7 @@ import { computeTrophies, isFresh, TIER_WORD, trophyDef, type EarnedTrophy, type
 /** The trophy state for the saved cards, the goal and the index history. */
 export function useTrophies(): TrophyState {
   const { ready, store, handicap } = useClub();
-  // "Now" is read only once localStorage is (on the client), never during the server render.
+  // "Now" is read only once the journal has loaded (on the client), never during the server render.
   return useMemo(
     () => computeTrophies(store.rounds, store.customCourses, store.profile.goal, handicap.history, ready ? new Date() : new Date(0), handicap.display),
     [ready, store.rounds, store.customCourses, store.profile.goal, handicap.history, handicap.display],
