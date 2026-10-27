@@ -37,11 +37,11 @@
     { "name": "Yellow", "color": "#f2c230", "par": 71, "yards": 6094, "rating": 70.0, "slope": 124, "source": "estimated" }
   ],
   "hero": {
-    "src": "/courses/turnberry-ailsa/graded/hero.jpg",
-    "alt": "Aerial view at sunset of Turnberry lighthouse on its rocky point, with the Ailsa course's greens and bunkers running along the Firth of Clyde",
-    "credit": "Ian Dick",
-    "license": "CC BY 2.0",
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Turnberry_Lighthouse_(29972057257).jpg"
+    "src": "/courses/turnberry-ailsa/graded/hero-green.jpg",
+    "alt": "Two groups putting out on a green of the Ailsa course at Turnberry on a bright summer day, with dune grass in front and the Firth of Clyde and the hills of Arran behind",
+    "credit": "Walter Baxter (Geograph)",
+    "license": "CC BY-SA 2.0",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Trump_Turnberry_Ailsa_Golf_Course_-_geograph.org.uk_-_6162985.jpg"
   },
   "gallery": [
     {
@@ -50,6 +50,13 @@
       "credit": "easylocum",
       "license": "CC BY 2.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Turnberry_(Ailsa_course)_Holes_10_and_12.jpg"
+    },
+    {
+      "src": "/courses/turnberry-ailsa/graded/g2.jpg",
+      "alt": "Aerial view at sunset of Turnberry lighthouse on its rocky point, with the Ailsa course's greens and bunkers running along the Firth of Clyde",
+      "credit": "Ian Dick",
+      "license": "CC BY 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Turnberry_Lighthouse_(29972057257).jpg"
     }
   ],
   "dataNotes": "Hole names are from Turnberry Golf Club's Ailsa page (2016 layout). Black-tee hole yards, pars (par 71) and men's stroke indexes are from the Golfify scorecard; the pars and stroke indexes match GolfPass, and the hole yards sum to the 7,489 total given by GolfPass and BlueGolf. Hole yardages vary between sources (Wikipedia gives 7,448, GolfPass's own hole rows sum to 7,536), and the club's course-guide PDF is offline. Ratings are marked estimated: GolfPass lists Black 77.0/139, White 72.0/130 and Yellow 70.0/124, but these round numbers look like placeholders, BlueGolf shows 70.0/113 placeholders, and I found no Scottish Golf certificate for the post-2016 course. Treat them as approximate.",

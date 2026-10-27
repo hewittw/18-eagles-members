@@ -153,22 +153,22 @@
     }
   ],
   "hero": {
-    "src": "/courses/pinehurst-no-2/graded/hero.jpg",
-    "alt": "Mid-century color postcard of the fourth hole on Pinehurst No. 2: golfers and onlookers on the tee, a fairway running between longleaf pines and sand",
-    "credit": "State Archives of North Carolina (Massengill Postcard Collection)",
-    "license": "No known copyright restrictions",
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:4th,_Pinehurst_No_2_001_(22130096452).jpg"
+    "src": "/courses/pinehurst-no-2/graded/hero-sign.jpg",
+    "alt": "Green-framed Pinehurst No. 2 sign quoting Donald Ross calling it the fairest test of championship golf he designed, with pines and turf behind",
+    "credit": "Zhans33",
+    "license": "Public domain",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pinehurst_No._2.JPG"
   },
   "gallery": [
     {
-      "src": "/courses/pinehurst-no-2/graded/g1.jpg",
-      "alt": "Green-framed Pinehurst No. 2 sign quoting Donald Ross calling it the fairest test of championship golf he designed, with pines and turf behind",
-      "credit": "Zhans33",
-      "license": "Public domain",
-      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pinehurst_No._2.JPG"
+      "src": "/courses/pinehurst-no-2/graded/g2.jpg",
+      "alt": "From the archive: a mid-century colour postcard of the fourth hole on Pinehurst No. 2, golfers and onlookers on the tee and a fairway running between longleaf pines and sand",
+      "credit": "State Archives of North Carolina (Massengill Postcard Collection)",
+      "license": "No known copyright restrictions",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:4th,_Pinehurst_No_2_001_(22130096452).jpg"
     }
   ],
-  "dataNotes": "Hole pars, yardages and stroke indexes are from Pinehurst's official 2026 No. 2 scorecard (PDF). The longest tee here is the par-72 Blue tee: the U.S. Open tee (7,588 yds) plays to par 70 with holes 8 and 16 as par 4s, and the schema allows only one par per hole, so it is left out. Ratings and slopes are the men's figures listed by BlueGolf, 18Birdies and AllGolfHoles (Blue 75.4/143, White 72.0/139, Green 69.1/135). GolfPass shows older, lower figures (Blue 73.7/133, White 70.7/126, Green 68.0/123); the more widely repeated set is used. BlueGolf rates these tees at 6,966 / 6,324 / 5,782 yds, a few yards off the 2026 card; the USGA database blocks automated access, so it was not checked directly. Few freely licensed modern photos of No. 2 exist on Wikimedia Commons, so the hero is a mid-century postcard of the 4th hole (the routing has been altered since).",
+  "dataNotes": "Hole pars, yardages and stroke indexes are from Pinehurst's official 2026 No. 2 scorecard (PDF). The longest tee here is the par-72 Blue tee: the U.S. Open tee (7,588 yds) plays to par 70 with holes 8 and 16 as par 4s, and the schema allows only one par per hole, so it is left out. Ratings and slopes are the men's figures listed by BlueGolf, 18Birdies and AllGolfHoles (Blue 75.4/143, White 72.0/139, Green 69.1/135). GolfPass shows older, lower figures (Blue 73.7/133, White 70.7/126, Green 68.0/123); the more widely repeated set is used. BlueGolf rates these tees at 6,966 / 6,324 / 5,782 yds, a few yards off the 2026 card; the USGA database blocks automated access, so it was not checked directly. Few freely licensed modern photos of No. 2 exist on Wikimedia Commons (the other modern Pinehurst photos there are of No. 4 or an unnamed course), so the hero is the Donald Ross sign by the course, shot in daylight, and the mid-century postcard of the 4th hole is kept in the gallery as an archival piece (the routing has been altered since).",
   "sources": [
     "https://www.pinehurst.com/golf/courses/no-2/",
     "https://www.pinehurst.com/wp-content/uploads/2025/10/Scorecard_No2_yardage26-1.pdf",

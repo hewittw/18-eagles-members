@@ -83,9 +83,10 @@ Courses with no photo show a drawn yardage-book illustration instead.
 | Harbour Town Golf Links | `hero.jpg` | Dan Perry (danperry.com) | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Harbour_Town_Golf,_Hilton_Head_-_5111146241.jpg |
 | Harbour Town Golf Links | `g1.jpg` | Dan Perry (danperry.com) | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Harbour_Town_Golf,_Hilton_Head_-_5111137869.jpg |
 | Harbour Town Golf Links | `g2.jpg` | Dan Perry (danperry.com) | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Harbour_Town_Golf_Links,_Hilton_Head_-_5111737496.jpg |
-| Jackson Park Golf Course | `hero.jpg` | Unknown author (Newberry Library postcard collection) | Public domain | https://commons.wikimedia.org/wiki/File:The_Golf_Links,_Jackson_Park,_Chicago_(NBY_416563).jpg |
+| Jackson Park Golf Course | `hero-park.jpg` | JulDer Wiki | CC BY 4.0 | https://commons.wikimedia.org/wiki/File:Jackson_Park_Chicago_12.jpg |
+| Jackson Park Golf Course | `g2.jpg` | Unknown author (Newberry Library postcard collection) | Public domain | https://commons.wikimedia.org/wiki/File:The_Golf_Links,_Jackson_Park,_Chicago_(NBY_416563).jpg |
 | Jackson Park Golf Course | `g1.jpg` | Unknown author (Newberry Library postcard collection) | Public domain | https://commons.wikimedia.org/wiki/File:Golf_Shelter,_Jackson_Park,_Chicago_(NBY_417059).jpg |
-| Kiawah Island Golf Resort, The Ocean Course | `hero.jpg` | N75746 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Ocean_course_18th_green.jpg |
+| Kiawah Island Golf Resort, The Ocean Course | `hero-18th.jpg` | N75746 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Ocean_course_18th_green.jpg |
 | Kiawah Island Golf Resort, The Ocean Course | `g1.jpg` | Pammymags (photo by Tim Marose) | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Kiawah_Island_South_Carolina_-_The_Ocean_Course.jpg |
 | Kingsbarns Golf Links | `hero.jpg` | Scott Cormie | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Kingsbarns_Golf_Links,_2nd_Hole,_Firth_-_geograph.org.uk_-_8163383.jpg |
 | Kingsbarns Golf Links | `g1.jpg` | Scott Cormie | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Kingsbarns_Golf_Links,_18th_Hole,_Cundie_Brig_-_geograph.org.uk_-_8163455.jpg |
@@ -103,12 +104,12 @@ Courses with no photo show a drawn yardage-book illustration instead.
 | Pebble Beach Golf Links | `hero.jpg` | Bernard Gagnon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Pebble_Beach_18th_hole.jpg |
 | Pebble Beach Golf Links | `g1.jpg` | Metallion | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Pebble_Beach_Golf_Links,_hole_7.jpg |
 | Pebble Beach Golf Links | `g2.jpg` | Bernard Gagnon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Pebble_Beach_6th_hole.jpg |
-| Pinehurst No. 2 | `hero.jpg` | State Archives of North Carolina (Massengill Postcard Collection) | No known copyright restrictions | https://commons.wikimedia.org/wiki/File:4th,_Pinehurst_No_2_001_(22130096452).jpg |
-| Pinehurst No. 2 | `g1.jpg` | Zhans33 | Public domain | https://commons.wikimedia.org/wiki/File:Pinehurst_No._2.JPG |
+| Pinehurst No. 2 | `hero-sign.jpg` | Zhans33 | Public domain | https://commons.wikimedia.org/wiki/File:Pinehurst_No._2.JPG |
+| Pinehurst No. 2 | `g2.jpg` | State Archives of North Carolina (Massengill Postcard Collection) | No known copyright restrictions | https://commons.wikimedia.org/wiki/File:4th,_Pinehurst_No_2_001_(22130096452).jpg |
 | Rancho Santa Fe Golf Club | (illustration) | n/a | n/a | n/a |
-| The Riviera Country Club | `hero.jpg` | Benoît Prieur | CC0 | https://commons.wikimedia.org/wiki/File:Aerial_view_of_Riviera_Country_Club_(Pacific_Palisades)_July_2022.jpg |
-| The Riviera Country Club | `g1.jpg` | Dan (golfpro1) from Schaumburg, IL, USA | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:RivieraCountryClub18th.jpg |
+| The Riviera Country Club | `hero-18th.jpg` | Dan (golfpro1) from Schaumburg, IL, USA | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:RivieraCountryClub18th.jpg |
 | The Riviera Country Club | `g2.jpg` | Dan Perry from Chicago, USA | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Riviera_Country_Club,_Golf_Course_in_Pacific_Palisades,_California_(168829105).jpg |
+| The Riviera Country Club | `g3.jpg` | Benoît Prieur | CC0 | https://commons.wikimedia.org/wiki/File:Aerial_view_of_Riviera_Country_Club_(Pacific_Palisades)_July_2022.jpg |
 | Royal Dornoch Golf Club, Championship Course | `hero.jpg` | Julian Paren | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Fairway_and_bunkers_of_the_Royal_Dornoch_Golf_Links_-_geograph.org.uk_-_8272250.jpg |
 | Royal Dornoch Golf Club, Championship Course | `g1.jpg` | Craig Wallace | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Royal_Dornoch_Golf_Club_-_geograph.org.uk_-_7273513.jpg |
 | Royal Dornoch Golf Club, Championship Course | `g2.jpg` | David Dixon | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Royal_Dornoch_Golf_Club,_Dornoch_Links_-_geograph.org.uk_-_8078986.jpg |
@@ -128,8 +129,9 @@ Courses with no photo show a drawn yardage-book illustration instead.
 | TPC Sawgrass, THE PLAYERS Stadium Course | `hero.jpg` | Craig ONeal | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:TPC_Sawgrass_17.jpg |
 | TPC Sawgrass, THE PLAYERS Stadium Course | `g1.jpg` | St. Johns County Visitors & Conventions Bureau | Public domain | https://commons.wikimedia.org/wiki/File:TournamentPlayersClub_Sawgrass17thHole.jpg |
 | TPC Sawgrass, THE PLAYERS Stadium Course | `g2.jpg` | Philip Larson from McLean, VA, US | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:TPC_at_Sawgrass_(3423941155).jpg |
-| Turnberry, Ailsa Course | `hero.jpg` | Ian Dick | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Turnberry_Lighthouse_(29972057257).jpg |
+| Turnberry, Ailsa Course | `hero-green.jpg` | Walter Baxter (Geograph) | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Trump_Turnberry_Ailsa_Golf_Course_-_geograph.org.uk_-_6162985.jpg |
 | Turnberry, Ailsa Course | `g1.jpg` | easylocum | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Turnberry_(Ailsa_course)_Holes_10_and_12.jpg |
+| Turnberry, Ailsa Course | `g2.jpg` | Ian Dick | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Turnberry_Lighthouse_(29972057257).jpg |
 | Whistling Straits, Straits Course | `hero.jpg` | Specialkboyle | Public domain | https://commons.wikimedia.org/wiki/File:Whistling_Straits_golf_course,_far_shot.jpg |
 | Whistling Straits, Straits Course | `g1.jpg` | Baybay1901 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:WhistlingStraits-Shoreline-Par5.jpg |
 | Whistling Straits, Straits Course | `g2.jpg` | KevinTR | Public domain | https://commons.wikimedia.org/wiki/File:WhistlingStraits11Fairway.JPG |

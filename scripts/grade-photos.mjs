@@ -12,7 +12,7 @@ const base = path.join(root, "public/courses");
 const WIDTH = 1600; // never enlarged past the original
 const ASPECT = 3 / 2;
 // Vintage colour postcards: crop and levels only. Painting a blue sky into a hand-tinted card would fake it.
-const ARCHIVAL = new Set(["jackson-park/hero.jpg", "jackson-park/g1.jpg", "pinehurst-no-2/hero.jpg"]);
+const ARCHIVAL = new Set(["jackson-park/g1.jpg", "jackson-park/g2.jpg", "pinehurst-no-2/g2.jpg"]);
 
 const clamp = (v, lo = 0, hi = 1) => (v < lo ? lo : v > hi ? hi : v);
 const lum = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -58,7 +58,12 @@ async function grade(src, out, archival) {
     const m = (sr + sg + sb) / 3 / cnt, warm = [1.025, 1.0, 0.955], k = archival ? 0.3 : 0.6;
     gain = [sr, sg, sb].map((s, c) => clamp(1 + ((m * warm[c]) / (s / cnt) - 1) * k, 0.9, 1.1));
   } else gain = archival ? [1, 1, 1] : [1.015, 1, 0.975];
-  for (let i = 0; i < n; i++) for (let c = 0; c < 3; c++) px[i * 3 + c] *= gain[c];
+  // Clipped highlights (a sun disc, a blown cloud) carry no colour to correct: fade the gains out near white, or a
+  // pure-white sun turns cream inside a white glow and reads as a ring.
+  for (let i = 0; i < n; i++) {
+    const keep = smooth(0.9, 0.99, Math.min(px[i * 3], px[i * 3 + 1], px[i * 3 + 2]));
+    for (let c = 0; c < 3; c++) px[i * 3 + c] *= 1 + (gain[c] - 1) * (1 - keep);
+  }
 
   // 2 · Levels: black and white points from the luminance histogram, then a gamma that brings the mean to one
   // shared exposure, so dark and washed-out photos meet in the middle.
@@ -104,6 +109,17 @@ async function grade(src, out, archival) {
     }
   }
   const soft = archival ? mask : await sharp(Buffer.from(mask), { raw: { width: w, height: h, channels: 1 } }).blur(2.5).extractChannel(0).raw().toBuffer();
+  // A sun in the frame: protect the near-white disc and its glow from the blue blend, or the sky tint stops at the
+  // disc's edge and draws a ring around it. A wide blur of the brightest sky pixels gives a soft halo to keep as shot.
+  let sun = null;
+  if (!archival) {
+    const bright = new Uint8Array(n);
+    let hits = 0;
+    for (let i = 0; i < w * Math.round(h * 0.62); i++) if (lum(px[i * 3], px[i * 3 + 1], px[i * 3 + 2]) > 0.95) { bright[i] = 255; hits++; }
+    if (hits > 0 && hits < n * 0.02) {
+      sun = await sharp(Buffer.from(bright), { raw: { width: w, height: h, channels: 1 } }).blur(Math.max(4, w / 80)).extractChannel(0).raw().toBuffer();
+    }
+  }
 
   // 4 · Per pixel: tone, sky, then colour.
   const outBuf = Buffer.alloc(n * 3);
@@ -111,7 +127,7 @@ async function grade(src, out, archival) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
       let r = tone(px[i * 3]), g = tone(px[i * 3 + 1]), b = tone(px[i * 3 + 2]);
-      const m = soft[i] / 255;
+      const m = (soft[i] / 255) * (sun ? 1 - smooth(0.01, 0.2, sun[i] / 255) : 1);
       if (m > 0) {
         // Blend toward a clear late-morning sky: deeper at the top, paler at the horizon. Keep the pixel's own
         // brightness (cloud texture survives), keep bright clouds mostly white, and lift a dull grey a touch.
@@ -134,7 +150,7 @@ async function grade(src, out, archival) {
       const boost = archival ? 1.04 : 1 + (0.1 + 0.08 * green + 0.08 * blue) * (1 - s);
       s = Math.min(s * boost, Math.max(s, 0.78));
       [r, g, b] = hslToRgb(hh, s, l);
-      if (!archival) { const hl = smooth(0.55, 1, l) * 0.018; r += hl; b -= hl; }
+      if (!archival) { const hl = smooth(0.55, 1, l) * (1 - smooth(0.93, 0.99, l)) * 0.018; r += hl; b -= hl; }
       outBuf[i * 3] = Math.round(clamp(r) * 255);
       outBuf[i * 3 + 1] = Math.round(clamp(g) * 255);
       outBuf[i * 3 + 2] = Math.round(clamp(b) * 255);

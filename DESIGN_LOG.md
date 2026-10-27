@@ -235,3 +235,20 @@ Append as decisions happen, newest at the bottom.
 - **Copy:** "this device / this browser" became "your account"; "Erase everything" became "Erase my journal", which
   says it deletes the rows in your account on every device and that the sign-in stays. Export stays as a copy for
   your own records, no longer the only backup. The first-run name is prefilled from the Clerk first name.
+
+## 2026-10-27 · Four off-set course heroes replaced (instructor feedback, second pass)
+- After grading, four heroes still broke the sunny set: Pinehurst No. 2 (a halftone postcard), Riviera (an aerial over
+  houses), Jackson Park (a tinted postcard) and Turnberry (a deep orange sunset). **Chosen:** use a daylight,
+  ground-level photo as each hero, and move the old one into the gallery instead of deleting it.
+  Riviera: its own gallery already had one (the 18th green below the clubhouse). Pinehurst: the Donald Ross sign by
+  No. 2. Turnberry: a new Commons photo, Walter Baxter's Ailsa green with Arran behind (CC BY-SA 2.0). Jackson Park: a
+  new Commons photo of open Jackson Park parkland (JulDer Wiki, CC BY 4.0), captioned honestly as the park and not as a
+  hole. The two postcards now hang in the galleries, captioned "From the archive".
+- **Rejected:** Pinehurst No. 4 photos and an unnamed "golf course in Pinehurst" (both are the wrong course); the
+  Seattle "Jackson Park golf course" photo; Riviera Country Club photos of the course in Ormond Beach, Florida; and
+  painting skies into the postcards (it would fake them).
+- The changed heroes got new file names (`hero-18th.jpg`, `hero-sign.jpg`, `hero-green.jpg`, `hero-park.jpg`). If we
+  reused `hero.jpg`, the Next image optimizer, and later a CDN, would keep serving the old picture for that URL.
+- Kiawah's sun had a ring around it. Two causes: the white balance turned the clipped disc cream inside a white glow,
+  and the blue sky blend stopped at the disc's edge. Now the gains fade out on clipped pixels, and a soft halo around
+  the brightest sky pixels is kept out of the blend.

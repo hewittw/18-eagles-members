@@ -36,22 +36,29 @@
     { "name": "Red", "color": "#c62828", "par": 70, "yards": 5257, "rating": 63.5, "slope": 104, "source": "published" }
   ],
   "hero": {
-    "src": "/courses/jackson-park/graded/hero.jpg",
-    "alt": "Early-1900s tinted postcard titled 'The Golf Links, Jackson Park, Chicago': golfers on an open fairway beside a gravel path, with spectators on benches near a red-roofed shelter",
-    "credit": "Unknown author (Newberry Library postcard collection)",
-    "license": "Public domain",
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:The_Golf_Links,_Jackson_Park,_Chicago_(NBY_416563).jpg"
+    "src": "/courses/jackson-park/graded/hero-park.jpg",
+    "alt": "Open, close-mown parkland in Chicago's Jackson Park under a clear spring sky, ringed by a line of mature trees (the Olmsted park the course is laid out in)",
+    "credit": "JulDer Wiki",
+    "license": "CC BY 4.0",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Jackson_Park_Chicago_12.jpg"
   },
   "gallery": [
     {
+      "src": "/courses/jackson-park/graded/g2.jpg",
+      "alt": "From the archive: an early-1900s tinted postcard titled 'The Golf Links, Jackson Park, Chicago', golfers on an open fairway beside a gravel path and spectators on benches near a red-roofed shelter",
+      "credit": "Unknown author (Newberry Library postcard collection)",
+      "license": "Public domain",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:The_Golf_Links,_Jackson_Park,_Chicago_(NBY_416563).jpg"
+    },
+    {
       "src": "/courses/jackson-park/graded/g1.jpg",
-      "alt": "Early-1900s tinted postcard of the red-roofed Golf Shelter at Jackson Park, Chicago, with a crowd gathered along its porch",
+      "alt": "From the archive: an early-1900s tinted postcard of the red-roofed Golf Shelter at Jackson Park, Chicago, with a crowd gathered along its porch",
       "credit": "Unknown author (Newberry Library postcard collection)",
       "license": "Public domain",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Golf_Shelter,_Jackson_Park,_Chicago_(NBY_417059).jpg"
     }
   ],
-  "dataNotes": "Current playable layout, from the official Chicago Park District scorecard (Golf ScoreCards Inc., 10/2020, posted on jacksonpark.cpdgolf.com). Men's par is 70 (women's par is 72: hole 1 and hole 17 are par 5 and par 4 for women). Yards and stroke indexes are from the card, and men's ratings/slopes come from the card's rating box (Blue 65.7/109, White 65.1/108, Red 63.5/104; women's Blue 70.4/113, White 69.7/112, Red 67.8/108). Redesign: in 2016–18 the Park District and the Obama Foundation proposed merging Jackson Park and the 9-hole South Shore course into one Tiger Woods/TGR Design championship course. It has stalled because of funding problems and community opposition over the South Shore Nature Sanctuary, and the Obama Foundation stepped back. As of the latest coverage found (2024), no construction had started, and the Park District's 2025–26 site still describes the existing 18-hole course, so this file is the current layout. Most sources credit Tom Bendelow with the original design, though some say the Olmsted Brothers guided the 1900 expansion. No freely licensed modern photo of the course was found (the Commons file named 'Jackson Park golf course, 2020' is the Seattle course), so both images are public-domain early-1900s postcards. The holes have no names.",
+  "dataNotes": "Current playable layout, from the official Chicago Park District scorecard (Golf ScoreCards Inc., 10/2020, posted on jacksonpark.cpdgolf.com). Men's par is 70 (women's par is 72: hole 1 and hole 17 are par 5 and par 4 for women). Yards and stroke indexes are from the card, and men's ratings/slopes come from the card's rating box (Blue 65.7/109, White 65.1/108, Red 63.5/104; women's Blue 70.4/113, White 69.7/112, Red 67.8/108). Redesign: in 2016–18 the Park District and the Obama Foundation proposed merging Jackson Park and the 9-hole South Shore course into one Tiger Woods/TGR Design championship course. It has stalled because of funding problems and community opposition over the South Shore Nature Sanctuary, and the Obama Foundation stepped back. As of the latest coverage found (2024), no construction had started, and the Park District's 2025–26 site still describes the existing 18-hole course, so this file is the current layout. Most sources credit Tom Bendelow with the original design, though some say the Olmsted Brothers guided the 1900 expansion. No freely licensed modern photo of the course itself was found (the Commons file named 'Jackson Park golf course, 2020' is the Seattle course), so the hero is a 2024 photo of open parkland in Jackson Park (not a confirmed view of a hole), and the two public-domain early-1900s postcards of the links are kept in the gallery as archival pieces. The holes have no names.",
   "sources": [
     "https://jacksonpark.cpdgolf.com/",
     "https://jacksonpark.cpdgolf.com/the-course/",
