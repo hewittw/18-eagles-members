@@ -70,7 +70,7 @@ export function AppShell({ children, current, preview, previewLayout = "phone" }
       <footer className="border-t border-rule pb-[calc(var(--tabbar)+env(safe-area-inset-bottom))] md:pb-0">
         <div className="mx-auto flex max-w-ledger flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-6 text-[0.92rem] text-ink-2 sm:px-6 lg:px-8">
           <p className="caps text-[0.72rem] text-gold-ink">18 Eagles · A golf journal</p>
-          <p>Your rounds are saved in this browser only, on this device. Clearing the browser&apos;s data erases them, so export a copy from the Locker.</p>
+          <p>Your rounds are saved to your own account, private to you, on every device you sign in on.</p>
         </div>
       </footer>
       {/* Phones only; left out on the hole screen, where the hole's action bar takes the bottom edge. */}

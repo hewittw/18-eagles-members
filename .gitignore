@@ -42,3 +42,8 @@ next-env.d.ts
 
 # screenshots from checks
 /screenshots
+
+# playwright: signed-in session cookies for the Clerk test users, never commit
+/playwright/.auth/
+/test-results/
+/playwright-report/

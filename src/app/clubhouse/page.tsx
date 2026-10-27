@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Clubhouse } from "./_components/Clubhouse";
+import { ClubhouseGate } from "./_components/ClubhouseGate";
 
 export const metadata: Metadata = { title: "Clubhouse" };
 
 export default function ClubhousePage() {
-  return <Clubhouse />;
+  return <ClubhouseGate />;
 }

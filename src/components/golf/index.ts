@@ -16,3 +16,4 @@ export { TeeSwatch, type TeeSwatchProps } from "./TeeSwatch";
 export { scoreName, scoreShort, toParText, toParSpoken } from "./score";
 export * from "./charts";
 export { SaveProblem } from "./SaveProblem";
+export { StoreSync } from "./StoreSync";

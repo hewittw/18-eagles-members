@@ -5,7 +5,7 @@ import { Button } from "../ui/Button";
 import { ErrorIcon } from "../ui/Field";
 
 /**
- * "Couldn't save" with Try again, whenever a change can't be written to this device (storage full or blocked).
+ * "Couldn't save" with Try again, whenever a change can't be saved to the golfer's account (offline, or the server didn't answer).
  * The change is still on screen (kept in memory), so nothing typed is lost while this tab stays open.
  * An alert, so it's announced the moment it appears; it stays until a save works.
  */
@@ -19,11 +19,11 @@ export function SaveProblem() {
           <p className="flex min-w-0 flex-1 items-start gap-2 text-[0.95rem] leading-snug">
             <span className="text-error"><ErrorIcon /></span>
             <span>
-              <strong className="font-semibold">Couldn&apos;t save on this device.</strong> Your latest change is kept while this tab stays open.
-              {tried ? " Still not saving: the browser's storage may be full or blocked. Export a copy from the Locker." : ""}
+              <strong className="font-semibold">Couldn&apos;t save to your account.</strong> Your latest change is kept while this tab stays open.
+              {tried ? " Still not saving: check your connection, then try again. You can also export a copy from the Locker." : ""}
             </span>
           </p>
-          <Button size="sm" variant="secondary" onClick={() => { setTried(true); retrySave(); }}>Try again</Button>
+          <Button size="sm" variant="secondary" onClick={() => { setTried(true); void retrySave(); }}>Try again</Button>
         </div>
       )}
     </div>
