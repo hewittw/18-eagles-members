@@ -173,6 +173,13 @@
     box-shadow: 0 1px 0 rgb(0 0 0 / 0.14), 0 10px 22px -14px rgb(0 0 0 / 0.45);
   }
   body:has(#hdr-deep) .hdr { margin-top: -0.75rem; }
+  /* The bar's controls sit inside html's scroll-padding-top, so the browser "scrolled them into view" on focus, all
+     the way to the top of the page (a stuck bar never moves). A negative scroll margin cancels that: Shift+Tab into
+     the bar keeps your place. (FocusClear already skips controls inside a pinned bar.) */
+  .hdr :is(a, button) { scroll-margin-top: -6rem; }
+  /* Slim, the bar's controls fill its visible height, so their ring is drawn just inside them (not cut by the edge). */
+  .hdr[data-condensed] :focus-visible,
+  body:has(#hdr-deep) .hdr :focus-visible { outline-offset: -2px; }
   @media (width >= 48rem) {
     .hdr { top: -1.25rem; }
     body:has(#hdr-deep) .hdr { margin-top: -1.25rem; }
