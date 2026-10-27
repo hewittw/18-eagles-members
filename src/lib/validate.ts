@@ -45,38 +45,60 @@ export function puttsError(putts: number | null, strokes: number | null): string
 }
 
 // ---------- add a course ----------
+/** What "Find your course" brought back from OpenGolfAPI, kept in the draft so a reload keeps it too. */
+export type ImportedCourse = {
+  id: string; // OpenGolfAPI id
+  name: string; // as OpenGolfAPI names it
+  region: string | null; // "CA"
+  geo: { lat: number; lng: number } | null;
+  architect: string | null;
+  yearBuilt: number | null;
+  tees: { name: string; color: string | null; rating: number | null; slope: number | null; par: number | null; yards: number | null }[];
+  hcps: number[] | null; // stroke index per hole, from the club's card
+  holeYards: Record<string, number[]>; // tee name, lowercase → yards per hole
+};
+
 export type CourseDraft = {
   name: string;
   city: string;
   holes: "18" | "9";
-  pars: number[]; // per hole, default 4
+  pars: number[]; // per hole, a standard par-72 (or 36) layout until changed
   teeName: string;
   rating: string;
   slope: string;
   yards: string;
+  imported?: ImportedCourse | null;
 };
 
 export type CourseField = "name" | "city" | "pars" | "teeName" | "rating" | "slope" | "yards";
 
+/**
+ * Only the name is required (par per hole starts as a standard layout). Everything else is optional: blank rating
+ * and slope become par and 113, marked estimated, and blank yards use typical lengths. What's typed must make sense.
+ */
 export function validateCourse(d: CourseDraft, takenNames: string[]): Errors<CourseField> {
   const e: Errors<CourseField> = {};
   const par = d.pars.reduce((a, b) => a + b, 0);
   if (!d.name.trim()) e.name = "Enter the course name, like “Balboa Park Golf Course”.";
   else if (takenNames.some((n) => n.toLowerCase() === d.name.trim().toLowerCase())) e.name = "You already have a course with this name. Add the tees or a nickname to tell them apart.";
-  if (!d.city.trim()) e.city = "Enter the city, like “San Diego, CA”.";
   if (d.pars.some((p) => p < 3 || p > 6)) e.pars = "Each hole's par must be 3, 4, 5, or 6.";
-  if (!d.teeName.trim()) e.teeName = "Name the tees you play, like “White” or “Blue”.";
-  const r = Number(d.rating);
-  if (!d.rating.trim()) e.rating = "Enter the course rating from the scorecard, like 71.3.";
-  else if (!Number.isFinite(r) || r < par - 10 || r > par + 8) e.rating = `For a par ${par} course the rating is between ${par - 10} and ${par + 8}. Check the number on the scorecard.`;
+  const r = Number(d.rating.trim().replace(",", "."));
+  if (d.rating.trim() && (!Number.isFinite(r) || r < par - 10 || r > par + 8)) e.rating = `For a par ${par} course the rating is between ${par - 10} and ${par + 8}. Check the scorecard, or leave it blank.`;
   const s = Number(d.slope);
-  if (!d.slope.trim()) e.slope = "Enter the slope from the scorecard, like 128.";
-  else if (!Number.isInteger(s) || s < 55 || s > 155) e.slope = "Slope is a whole number from 55 to 155. 113 is average.";
+  if (d.slope.trim() && (!Number.isInteger(s) || s < 55 || s > 155)) e.slope = "Slope is a whole number from 55 to 155 (113 is average). Check the scorecard, or leave it blank.";
   if (d.yards.trim()) {
     const y = Number(d.yards);
     const lo = d.holes === "9" ? 1000 : 2500, hi = d.holes === "9" ? 4200 : 8200;
     if (!Number.isInteger(y) || y < lo || y > hi) e.yards = `Enter total yards between ${lo.toLocaleString()} and ${hi.toLocaleString()}, or leave it blank.`;
   }
+  return e;
+}
+
+/** "Find your course": what the search fields need before we ask OpenGolfAPI. */
+export function validateFind(q: string, state: string): { q?: string; state?: string } {
+  const e: { q?: string; state?: string } = {};
+  if (q.trim().length < 2) e.q = "Type at least two letters of the course name, like “Torrey”.";
+  if (state.trim() && !/^[A-Za-z]{2}$/.test(state.trim())) e.state = "Use the two-letter state code, like CA, or leave it blank to search everywhere.";
   return e;
 }
 
