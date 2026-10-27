@@ -182,3 +182,27 @@ Append as decisions happen, newest at the bottom.
 - **The RLS test** failed with RLS broken (Avery saw Blake's card), then passed once fixed: `docs/rls-test/README.md`.
 - **Advisors:** security flagged Supabase's own `rls_auto_enable()` as callable by anyone (revoked); performance
   flagged per-row `auth.jwt()` (rewritten as `(select auth.jwt())`). Both are clean now.
+
+## 2026-10-26 (night) · Outside data: OpenGolfAPI and Open-Meteo, made into golf features
+- **Where the calls happen:** only in our route handlers (`/api/golf/search`, `/api/golf/course/[id]`, `/api/weather`).
+  Each checks Clerk, validates input, times out at 6 s, caches on the server (`"use cache"`: a day for courses, 10 min
+  for weather on a ~1 km grid), and returns only the fields we show. **Rejected:** calling the APIs from the browser
+  (both allow CORS): no auth check, no shared cache, and every golfer would spend OpenGolfAPI's per-IP daily limit
+  (the live header says 500, not the 1,000 in the docs).
+- **Instructor feedback on Add a course ("a lot of required fields… speed it up"):** "Find your course" at the top
+  fills par, stroke index, every tee's rating/slope, the card's hole yards and the location. Only the name is required
+  now; par starts as a standard layout and is folded until changed. Blank rating/slope become par and 113, saved as
+  `source: "estimated"`, so the handicap math still runs and the course page and tee choice say "est.".
+  **Rejected:** keeping rating/slope required (the reason the form felt slow), and guessing a rating from yardage
+  (looks exact, isn't).
+- **Weather where a golfer wants it, not a widget:** "Conditions at <course>" beside Tee off (sky, wind needle with a
+  club adjustment, rain in the next 4 hours, a one-line read, and "enough light for 18 if you tee off by 1:45 PM":
+  sunset − 4 h 15 m, 2 h 10 m for 9); a 7-day "Tee sheet forecast" with a best-day call on course pages; a quiet wind
+  needle on the hole screen; and each live card keeps "Played in 62°F, 9 mph W, Sunny" (`round.weather`).
+  **Rejected:** an icon-and-temperature badge in the nav (decoration), emoji weather icons (`docs/avoid.md`).
+- **Built-in courses match by a static file** (`src/data/course-geo.ts`: slug → OpenGolfAPI id + coordinates, looked
+  up once), not a fuzzy runtime search. Three Scottish courses aren't in OpenGolfAPI; several are pins only, so
+  "Course facts" says "OpenGolfAPI only knows where Carnoustie is" instead of an empty box.
+- **States:** a skeleton the shape of the answer, nothing found with next steps, and "resting" when the service is down
+  (what still works + an action). Tested for real: `?api=down` in development makes our route call the real upstream
+  with a 1 ms timeout.
