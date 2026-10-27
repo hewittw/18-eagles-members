@@ -1,4 +1,5 @@
 {
+  "enabledMcpjsonServers": ["supabase"],
   "permissions": {
     "deny": [
       "mcp__chrome-devtools",
