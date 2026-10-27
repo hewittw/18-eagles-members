@@ -5,6 +5,7 @@
 // filter: RLS is the single gatekeeper, and the two-user Playwright test proves it.
 import type { Course } from "../course-types";
 import type { Club, Goal, HoleEntry, Nine, Profile, Round, RoundWeather, Store } from "../types";
+import { httpUrl } from "../safe-url";
 import { supabaseForUser } from "./supabase";
 
 type ProfileRow = {
@@ -58,6 +59,15 @@ export type SyncPayload = {
 /** Writes one batch of changes (debounced in the browser). Throws on any failure so the app shows "Couldn't save". */
 export async function syncClub(change: SyncPayload): Promise<{ ok: true }> {
   const { userId, db } = await supabaseForUser();
+  // Defense in depth (security review): reject malformed rounds here with a clear error, before Postgres's own
+  // check constraints would, and keep only http(s) links inside a custom course so none can become a javascript: link.
+  for (const r of change.upsertRounds ?? []) {
+    if (!HOLES.has(r.holes) || !MODES.has(r.mode) || !STATUSES.has(r.status) || !/^\d{4}-\d{2}-\d{2}$/.test(String(r.date))) {
+      throw new Error("Couldn't save (that card isn't valid).");
+    }
+  }
+  if (change.profile && change.profile.profile.goal != null && !GOALS.has(change.profile.profile.goal)) throw new Error("Couldn't save (that goal isn't valid).");
+  if (change.upsertCourses) change.upsertCourses = change.upsertCourses.map(cleanCourse);
   const tasks: PromiseLike<{ error: { code?: string; message: string } | null }>[] = [];
 
   if (change.profile) {
@@ -81,6 +91,21 @@ export async function syncClub(change: SyncPayload): Promise<{ ok: true }> {
   const failed = results.find((x) => x.error);
   if (failed?.error) throw new Error(`Couldn't save (${failed.error.code ?? "db"}).`);
   return { ok: true };
+}
+
+const HOLES = new Set(["18", "front", "back"]);
+const MODES = new Set(["live", "logged"]);
+const STATUSES = new Set(["playing", "complete"]);
+const GOALS = new Set(["100", "90", "80", "scratch"]);
+
+function cleanCourse(c: Course): Course {
+  const img = <T extends { sourceUrl: string } | null>(i: T): T => (i ? { ...i, sourceUrl: httpUrl(i.sourceUrl) ?? "" } : i);
+  return {
+    ...c,
+    sources: Array.isArray(c.sources) ? c.sources.map(httpUrl).filter((u): u is string => !!u) : [],
+    hero: img(c.hero),
+    gallery: Array.isArray(c.gallery) ? c.gallery.map(img) : [],
+  };
 }
 
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : null);

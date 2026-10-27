@@ -11,6 +11,7 @@ import { TeeOff } from "../../_components/TeeOff";
 import { CourseConditions, CourseFacts, CourseForecast } from "../../_components/Conditions";
 import { formatDay, recordAt } from "../_lib/record";
 import { RemoveCourse } from "./RemoveCourse";
+import { httpUrl } from "@/lib/safe-url";
 
 const ACCESS = { public: "Public", resort: "Resort (guests and the public)", private: "Private (members and guests)" } as const;
 
@@ -185,7 +186,7 @@ export function CourseView({ slug }: { slug: string }) {
                 {photos.map((p) => (
                   <li key={p.src}>
                     {p.credit}, {p.license}.{" "}
-                    <a className="link inline-flex min-h-6 items-center" href={p.sourceUrl} target="_blank" rel="noreferrer">Source<span className="sr-only"> for the photo by {p.credit} (opens in a new tab)</span></a>
+                    {httpUrl(p.sourceUrl) && <a className="link inline-flex min-h-6 items-center" href={httpUrl(p.sourceUrl)!} target="_blank" rel="noreferrer">Source<span className="sr-only"> for the photo by {p.credit} (opens in a new tab)</span></a>}
                   </li>
                 ))}
               </ul>
@@ -195,7 +196,7 @@ export function CourseView({ slug }: { slug: string }) {
             <div>
               <p className="font-medium text-ink">Sources</p>
               <ul className="mt-1 grid gap-1" role="list">
-                {c.sources.map((s) => (
+                {c.sources.filter((s) => httpUrl(s)).map((s) => (
                   <li key={s} className="min-w-0 break-words">
                     <a className="link inline-flex min-h-6 items-center" href={s} target="_blank" rel="noreferrer">{s.replace(/^https?:\/\/(www\.)?/, "")}</a>
                   </li>
