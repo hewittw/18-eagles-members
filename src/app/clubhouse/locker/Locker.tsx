@@ -1,4 +1,5 @@
 "use client";
+import { useClerk, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
@@ -45,6 +46,10 @@ export function Locker() {
   const [importError, setImportError] = useState<string>();
   const [dialog, setDialog] = useState<"sample" | "erase" | null>(null);
   const trophies = useTrophies();
+  const { user } = useUser();
+  const { openUserProfile, signOut } = useClerk();
+  const [leaving, setLeaving] = useState(false);
+  const email = user?.primaryEmailAddress?.emailAddress;
 
   if (!ready) return <Placeholder label="Opening your locker" />;
 
@@ -319,21 +324,31 @@ export function Locker() {
         <ActionRow href="/clubhouse/trophies" icon="trophy" title="Trophy Room" detail={`${trophies.wonCount} of ${trophies.total} won · see this week's case`} />
       </ActionList>
 
-      {/* Your data */}
+      {/* Your account and data */}
       <section aria-labelledby="data-h" className="mt-14">
-        <SectionHeading id="data-h" title="Your data" lede="Saved in this browser on this device only. There's no account, and clearing the browser's data (history, cookies and site data) erases every card, so keep a copy if they matter to you." />
+        <SectionHeading id="data-h" title="Your account and data" lede="Your journal is saved to your account as you play: on every device you sign in on, and private to you. A downloaded copy is yours to keep as well." />
         <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-10">
-          <Group caption="Backup">
-            <SettingRow title="Keep a copy" detail="Download every card, your bag, and your settings as one file.">
-              <Button onClick={exportData} variant="secondary" size="sm">Export my data</Button>
-            </SettingRow>
-            <div className="grid gap-2 p-4 sm:p-5">
-              <h3 className="font-semibold text-ink">Bring a copy back</h3>
-              <Field id="l-import" label="Import a saved file" hint="Choose a .json file exported from the Locker. It replaces what's here; you can undo right after." error={importError}>
-                {(a) => <TextInput {...a} type="file" accept="application/json,.json" onChange={importData} className="cursor-pointer py-2.5 file:mr-3 file:min-h-8 file:cursor-pointer file:rounded-full file:border-0 file:bg-tint file:px-4 file:font-semibold file:text-green is-hover:file:bg-tint-2" />}
-              </Field>
-            </div>
-          </Group>
+          <div className="grid content-start gap-8">
+            <Group caption="Account" footer="Your cards are stored against this account, and no one else's sign-in can read them.">
+              <SettingRow title="Signed in" detail={email ? <span className="[overflow-wrap:anywhere]">{email}</span> : "Your 18 Eagles account"}>
+                <Button variant="secondary" size="sm" onClick={() => openUserProfile()}>Manage account</Button>
+              </SettingRow>
+              <SettingRow title="Sign out" detail="Your journal stays in your account, ready when you sign back in.">
+                <Button variant="secondary" size="sm" loading={leaving} loadingLabel="Signing out" onClick={() => { setLeaving(true); void signOut({ redirectUrl: "/clubhouse" }); }}>Sign out</Button>
+              </SettingRow>
+            </Group>
+            <Group caption="Backup">
+              <SettingRow title="Keep a copy" detail="Download every card, your bag, and your settings as one file, for your own records.">
+                <Button onClick={exportData} variant="secondary" size="sm">Export my data</Button>
+              </SettingRow>
+              <div className="grid gap-2 p-4 sm:p-5">
+                <h3 className="font-semibold text-ink">Bring a copy back</h3>
+                <Field id="l-import" label="Import a saved file" hint="Choose a .json file exported from the Locker. It replaces the journal in your account; you can undo right after." error={importError}>
+                  {(a) => <TextInput {...a} type="file" accept="application/json,.json" onChange={importData} className="cursor-pointer py-2.5 file:mr-3 file:min-h-8 file:cursor-pointer file:rounded-full file:border-0 file:bg-tint file:px-4 file:font-semibold file:text-green is-hover:file:bg-tint-2" />}
+                </Field>
+              </div>
+            </Group>
+          </div>
 
           <div className="grid content-start gap-8">
             <Group caption="Try it out">
@@ -342,8 +357,8 @@ export function Locker() {
               </SettingRow>
             </Group>
             <Group caption="Start fresh">
-              <SettingRow title="Erase everything" detail="Removes every card, your index, goal, bag, honors, and any courses you added, and starts fresh.">
-                <Button variant="danger" size="sm" onClick={() => setDialog("erase")}>Erase everything</Button>
+              <SettingRow title="Erase my journal" detail="Deletes every card, your index, goal, bag, honors, and any courses you added from your account, on every device, and starts fresh. Your sign-in stays; to close the account itself, use Manage account.">
+                <Button variant="danger" size="sm" onClick={() => setDialog("erase")}>Erase my journal</Button>
               </SettingRow>
             </Group>
           </div>
@@ -353,7 +368,7 @@ export function Locker() {
       <ConfirmDialog
         open={dialog === "sample"}
         title="Replace your data with a sample season?"
-        body={<p>Your {store.rounds.length === 1 ? "1 card" : `${store.rounds.length} cards`}, bag, and settings are replaced by 13 sample rounds. Courses you added are kept. Export a copy first if you want to come back to your own.</p>}
+        body={<p>Your {store.rounds.length === 1 ? "1 card" : `${store.rounds.length} cards`}, bag, and settings are replaced in your account by 13 sample rounds. Courses you added are kept. Export a copy first if you want to come back to your own.</p>}
         confirmLabel="Load the sample"
         cancelLabel="Keep my data"
         onCancel={() => setDialog(null)}
@@ -368,9 +383,9 @@ export function Locker() {
       <ConfirmDialog
         open={dialog === "erase"}
         danger
-        title="Erase everything?"
-        body={<p>Every card, your index and goal, your bag, honors, and added courses are deleted from this device. This can’t be undone.</p>}
-        confirmLabel="Erase everything"
+        title="Erase your journal?"
+        body={<p>Every card, your index and goal, your bag, honors, and added courses are deleted from your account, on every device. This can’t be undone. Your sign-in itself stays.</p>}
+        confirmLabel="Erase my journal"
         cancelLabel="Keep my data"
         onCancel={() => setDialog(null)}
         onConfirm={() => {
