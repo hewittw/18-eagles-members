@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist_Mono, Libre_Franklin, Newsreader, Oswald } from "next/font/google";
 import "./globals.css";
@@ -22,7 +23,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${newsreader.variable} ${franklin.variable} ${oswald.variable} ${geistMono.variable} h-full bg-paper text-ink antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-paper font-sans text-ink">{children}</body>
+      <body className="flex min-h-full flex-col bg-paper font-sans text-ink">
+        <ClerkProvider>
+          {children}
+        </ClerkProvider>
+      </body>
     </html>
   );
 }
