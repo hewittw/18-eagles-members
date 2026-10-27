@@ -25,7 +25,7 @@ export const week4: Part[] = [
   { n: "W4.2", title: "Row Level Security", href: "/clubhouse", status: "done", note: "Postgres refuses any read or write of another golfer's rows: the policies check the Clerk user on every request, not just the app." },
   { n: "W4.3", title: "Live course data and weather", href: "/clubhouse/courses", status: "done", note: "Search real courses (OpenStreetMap via OpenGolfAPI) to fill the add-a-course card, course facts, and conditions from Open-Meteo: now, a 7-day tee sheet, wind on the hole, kept on the card." },
   { n: "W4.4", title: "Feedback addressed", href: "/clubhouse/stats", status: "done", note: "\u201cToo many required fields\u201d: find your course and the card fills itself; only the name is required. \u201cThe header is a little noisy\u201d: it recedes as you scroll. \u201cNormalize the images\u201d: one sunlit set." },
-  { n: "W4.5", title: "Security review", href: "/clubhouse", status: "in progress", note: "Secrets kept server-side, every Server Action checks the session, inputs size-checked, no service-role key anywhere." },
+  { n: "W4.5", title: "Security review", href: "/clubhouse", status: "done", note: "Secrets kept server-side, every Server Action checks the session, inputs size-checked, no service-role key anywhere." },
   { n: "W4.6", title: "The RLS test", href: "/clubhouse", status: "done", note: "Two test golfers each save a card; neither sees the other's. Watched it fail with RLS broken on purpose (Avery saw Blake's card), then pass." },
 ];
 
@@ -38,6 +38,6 @@ export const checklist: { item: string; status: Status }[] = [
   { item: "What you save, still there after signing out and back in", status: "done" },
   { item: "Keys kept out of the code and the repository, with a deny rule for .env files", status: "done" },
   { item: "One Playwright test you watched fail before it passed", status: "done" },
-  { item: "/security-review run on a branch", status: "in progress" },
+  { item: "/security-review run on a branch", status: "done" },
   { item: "A GitHub repository with commits that show your progress", status: "done" },
 ];
