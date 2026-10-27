@@ -152,3 +152,33 @@ Append as decisions happen, newest at the bottom.
   sky into the three hand-tinted postcards (Jackson Park, Pinehurst): they get crop and levels only, and stay archival.
 - **Licences:** every course photo allows changes. CC BY-SA copies keep CC BY-SA, and this is noted in `docs/credits.md`.
   The home clubs have no photos, so nothing "All rights reserved" was touched.
+
+## 2026-10-26 (night) · Accounts and data: the main session's decisions
+- **The user's answers up front** (so the rest could run unattended): run Clerk's checklist; the agent "can write
+  schema rules, but never actually write data"; new public repo + Vercel project `18-eagles-members`; every account
+  **starts fresh** (no import of hw3 localStorage); APIs: OpenGolfAPI + Open-Meteo.
+- **Making "never write data" mechanical, not a promise:** dropped `read_only` from the Supabase MCP (so
+  `apply_migration` works) and added `mcp__supabase__execute_sql` to the deny list, the only tool that could insert
+  rows. When the MCP later refused a `drop policy` (destructive DDL needs a human), the agent used `alter policy`
+  rather than asking for the rule to be loosened.
+- **Keys:** the agent can't read `.env.local`, so moving keys to Vercel was a user-run script (`scripts/push-env.sh`,
+  values piped, never printed, `CLERK_SECRET_KEY` as sensitive). **User pushback:** "why can't you just use vercel like
+  in the past?" Past weeks had no secrets. After the script was explained, the user told the agent to run it itself;
+  only names were printed.
+- **Tables:** three (`profiles`, `rounds`, `custom_courses`), shaped like the hw3 Store, so `store.ts` kept its API and
+  no page changed. Hole entries stay jsonb inside a round (always read and written whole). **Rejected:** a `holes`
+  child table (18× rows, nothing queries a single hole server-side); one jsonb blob per user (it would make RLS and
+  the "two users" test meaningless at row level).
+- **Sync:** the in-memory Store is diffed against the last server-confirmed state and sent in one debounced Server
+  Action. **Rejected:** writing from the browser with supabase-js (it would work with RLS, but the server-side path
+  gives one place to check Clerk and clamp input); the service-role key (it bypasses RLS).
+- **Reads have no `user_id` filter on purpose**, so RLS alone keeps journals apart and the test can actually fail.
+- **Caught while checking:** (1) the Clerk app forced Organizations, so every new session was "pending" and the app
+  treated signed-in golfers as signed out. Found by logging Clerk's console warning, fixed with `clerk config patch`.
+  (2) `<Show>` in a server component rendered signed out under cacheComponents, so the gate became a client component
+  reading `useAuth()`. (3) The Vercel project, created from an empty temp dir (so `vercel link` couldn't overwrite
+  `.env.local`), had its framework set to "Other" and served `public/` as a static site (404). Pinned `nextjs` in
+  `vercel.json`. (4) The dev server was serving stale code, so screenshots looked wrong until it was restarted.
+- **The RLS test** failed with RLS broken (Avery saw Blake's card), then passed once fixed: `docs/rls-test/README.md`.
+- **Advisors:** security flagged Supabase's own `rls_auto_enable()` as callable by anyone (revoked); performance
+  flagged per-row `auth.jwt()` (rewritten as `(select auth.jwt())`). Both are clean now.
