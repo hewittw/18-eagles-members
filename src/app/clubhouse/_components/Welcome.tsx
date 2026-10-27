@@ -7,7 +7,8 @@ import turnberry from "@/data/courses/turnberry-ailsa.json";
 import type { Hole } from "@/lib/course-types";
 import type { HoleEntry } from "@/lib/types";
 
-const photo = turnberry.hero;
+// The lighthouse at sunset: the welcome's mood photo (the course page leads with a daylight green, to match the set).
+const photo = turnberry.gallery.find((g) => /sunset/i.test(g.alt)) ?? turnberry.hero;
 
 // The sample card: Turnberry's front nine as a drawing of what a card looks like. Nobody's round: no name, no date.
 const front = (turnberry.holes as Hole[]).slice(0, 9);
