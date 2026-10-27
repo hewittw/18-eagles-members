@@ -14,7 +14,8 @@ function timeIn(timeZone: string): string | null {
 }
 
 export function LocalClock({ timeZone, fallback }: { timeZone: string; fallback: string }) {
-  const [now, setNow] = useState(() => timeIn(timeZone));
+  // Read the time only in the browser (an effect): reading it while rendering would freeze it into a prerendered page.
+  const [now, setNow] = useState<string | null>(null);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     const tick = () => {
@@ -24,5 +25,5 @@ export function LocalClock({ timeZone, fallback }: { timeZone: string; fallback:
     tick();
     return () => clearTimeout(timer);
   }, [timeZone]);
-  return <time suppressHydrationWarning>{now ?? clock(fallback)}</time>;
+  return <time>{now ?? clock(fallback)}</time>;
 }
