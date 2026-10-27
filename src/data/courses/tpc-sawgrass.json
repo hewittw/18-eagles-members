@@ -162,7 +162,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/tpc-sawgrass/hero.jpg",
+    "src": "/courses/tpc-sawgrass/graded/hero.jpg",
     "alt": "The island green of the par-3 17th at TPC Sawgrass, ringed by railroad-tie bulkheads and reflected in the lake at dusk",
     "credit": "Craig ONeal",
     "license": "CC BY-SA 2.0",
@@ -170,14 +170,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/tpc-sawgrass/g1.jpg",
+      "src": "/courses/tpc-sawgrass/graded/g1.jpg",
       "alt": "Aerial view of the 17th island green on its narrow walkway, with the lake, a small tree island and the 16th hole beside it",
       "credit": "St. Johns County Visitors & Conventions Bureau",
       "license": "Public domain",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:TournamentPlayersClub_Sawgrass17thHole.jpg"
     },
     {
-      "src": "/courses/tpc-sawgrass/g2.jpg",
+      "src": "/courses/tpc-sawgrass/graded/g2.jpg",
       "alt": "The 18th hole bending left along the lake toward the Mediterranean-style clubhouse and white hospitality tents",
       "credit": "Philip Larson from McLean, VA, US",
       "license": "CC BY-SA 2.0",

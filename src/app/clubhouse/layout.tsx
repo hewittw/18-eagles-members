@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { AppShell, FocusClear, RouteFocus, SaveProblem } from "@/components/golf";
+import { AppShell, FocusClear, RouteFocus, SaveProblem, StoreSync } from "@/components/golf";
 import { ToastProvider } from "@/components/ui";
 
 export const metadata: Metadata = {
@@ -17,6 +17,7 @@ export default function ClubhouseLayout({ children }: LayoutProps<"/clubhouse">)
         <RouteFocus />
       </Suspense>
       <FocusClear />
+      <StoreSync />
       <SaveProblem />
       <AppShell>{children}</AppShell>
     </ToastProvider>

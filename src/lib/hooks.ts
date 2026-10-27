@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { allCourses, findCourse } from "./courses";
 import { computeHandicap } from "./handicap";
 import { activeRound } from "./round-actions";
-import { useStore } from "./store";
+import { currentOwner, useStore } from "./store";
 
 /** Everything most pages need: the saved data, the derived handicap, and any round in progress. */
 export function useClub() {
@@ -19,11 +19,12 @@ export function useClub() {
 }
 
 /**
- * Form state that survives leaving the page and coming back (saved to localStorage as you type),
+ * Form state that survives leaving the page and coming back (a draft in localStorage as you type, per account),
  * so nothing a golfer typed is ever lost. `clear()` after a successful save.
  */
 export function useDraft<T>(key: string, initial: T): [T, (next: T | ((p: T) => T)) => void, (opts?: { keepShown?: boolean }) => void, boolean] {
-  const full = `18eagles:draft:${key}`;
+  // Keyed by the signed-in account, so a shared computer never shows one golfer's half-typed form to another.
+  const full = `18eagles:draft:${currentOwner() ?? "anon"}:${key}`;
   const [value, setValue] = useState<T>(initial);
   const [restored, setRestored] = useState(false);
   const loaded = useRef(false);

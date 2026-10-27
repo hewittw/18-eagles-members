@@ -90,11 +90,12 @@ export function AppNav({ current, variant = "bar", label = "18 Eagles", classNam
                 aria-current={on ? "page" : undefined}
                 onClick={(e) => toTopIfHere(e, n.href)}
                 className={cx(
-                  "caps relative flex min-h-tile items-center gap-2 px-2.5 text-[0.85rem] tracking-[0.14em] transition-colors duration-150 lg:px-4 lg:tracking-[0.16em]",
-                  on ? "text-gold" : "text-paper-3 is-hover:text-on-green",
+                  "caps relative flex min-h-tap items-center gap-2 px-2.5 condensed:gap-0 text-[0.85rem] tracking-[0.14em] transition-[color,gap] duration-200 lg:px-4 lg:tracking-[0.16em]",
+                  on ? "text-gold" : "text-paper-3 is-hover:text-on-green recede:text-on-green/80",
                 )}
               >
-                <NavIcon k={n.key} className="hidden size-5 lg:block" />
+                {/* Slim bar: the icons fold away (lg up, where they show) and the labels go quiet. */}
+                <NavIcon k={n.key} className="hidden size-5 transition-[width,opacity] duration-300 ease-hang lg:block condensed:w-0 condensed:opacity-0" />
                 <span>{n.label}</span>
                 <span aria-hidden="true" className={cx("absolute inset-x-2.5 bottom-2 h-px transition-all lg:inset-x-4", on ? "bg-gold" : "bg-transparent")} />
               </Link>

@@ -182,7 +182,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/chambers-bay/hero.jpg",
+    "src": "/courses/chambers-bay/graded/hero.jpg",
     "alt": "Panorama over Chambers Bay's dunes, fairways and sandy waste areas down to Puget Sound and its wooded islands, with 2015 U.S. Open grandstands going up",
     "credit": "Atomic Taco from Seattle, WA, USA",
     "license": "CC BY-SA 2.0",
@@ -190,14 +190,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/chambers-bay/g1.jpg",
+      "src": "/courses/chambers-bay/graded/g1.jpg",
       "alt": "Fescue-brown Chambers Bay during the 2015 U.S. Open, seen from the hilltop above the course, with spectators lining the holes and Puget Sound beyond",
       "credit": "Atomic Taco from Seattle, WA, USA",
       "license": "CC BY-SA 2.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Chambers_Bay_during_the_US_Open_(19067123301).jpg"
     },
     {
-      "src": "/courses/chambers-bay/g2.jpg",
+      "src": "/courses/chambers-bay/graded/g2.jpg",
       "alt": "A golfer in plus-fours hitting from the 14th fairway at Chambers Bay, with large sand bunkers and grassy dunes ahead",
       "credit": "Rbirman",
       "license": "CC BY-SA 4.0",

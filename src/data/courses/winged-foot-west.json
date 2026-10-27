@@ -162,7 +162,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/winged-foot-west/hero.jpg",
+    "src": "/courses/winged-foot-west/graded/hero.jpg",
     "alt": "A deep greenside bunker and rolling fairways under large shade trees at Winged Foot on a clear summer evening, flagstick to the right",
     "credit": "juan gomez (jgomez20), via Unsplash",
     "license": "CC0",
@@ -170,7 +170,7 @@
   },
   "gallery": [
     {
-      "src": "/courses/winged-foot-west/g1.jpg",
+      "src": "/courses/winged-foot-west/graded/g1.jpg",
       "alt": "The stone gate tower at Winged Foot's main entrance, with a tree-lined drive leading into the club",
       "credit": "Anthony22 (English Wikipedia)",
       "license": "CC BY-SA 3.0",

@@ -1,4 +1,5 @@
 import { BUILT_IN } from "@/data/courses";
+import { COURSE_GEO } from "@/data/course-geo";
 import type { Course, Hole, Tee } from "./course-types";
 import type { Nine, Round } from "./types";
 
@@ -11,6 +12,15 @@ export function findCourse(slug: string, custom: Course[] = []): Course | undefi
 }
 
 export const allCourses = (custom: Course[] = []) => [...custom, ...BUILT_IN];
+
+/** Where a course is (for the weather), or null for a course added by hand without a location. */
+export function courseGeo(c: Course): { lat: number; lng: number } | null {
+  const g = c.geo ?? COURSE_GEO[c.slug];
+  return g && Number.isFinite(g.lat) && Number.isFinite(g.lng) ? { lat: g.lat, lng: g.lng } : null;
+}
+
+/** The course's OpenGolfAPI id, when we know it. */
+export const openGolfIdOf = (c: Course): string | null => c.openGolfId ?? COURSE_GEO[c.slug]?.openGolfId ?? null;
 
 export function teeOf(course: Course, name: string): Tee {
   return course.tees.find((t) => t.name === name) ?? course.tees[0];

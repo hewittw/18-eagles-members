@@ -11,7 +11,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/clubhouse/courses/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const c = builtInBySlug.get(slug);
-  // Custom courses live only in this browser; the page sets their title once it has read them.
+  // Custom courses load with the golfer's journal (Supabase); the page sets their title once they have.
   if (!c) return { title: slug.startsWith("custom-") ? "Your course" : "Course not found" };
   return { title: c.name, description: c.blurb };
 }

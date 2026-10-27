@@ -38,7 +38,7 @@
     { "name": "Blue", "color": "#1f63b5", "par": 72, "yards": 6057, "rating": 70.0, "slope": 128, "source": "published" }
   ],
   "hero": {
-    "src": "/courses/kingsbarns/hero.jpg",
+    "src": "/courses/kingsbarns/graded/hero.jpg",
     "alt": "The 2nd green at Kingsbarns, Firth, during the Alfred Dunhill Links Championship, with spectators, revetted bunkers and the North Sea behind",
     "credit": "Scott Cormie",
     "license": "CC BY-SA 2.0",
@@ -46,7 +46,7 @@
   },
   "gallery": [
     {
-      "src": "/courses/kingsbarns/g1.jpg",
+      "src": "/courses/kingsbarns/graded/g1.jpg",
       "alt": "The 18th green at Kingsbarns, Cundie Brig, raised above the burn with its stone bridge, and spectators on the dunes behind",
       "credit": "Scott Cormie",
       "license": "CC BY-SA 2.0",

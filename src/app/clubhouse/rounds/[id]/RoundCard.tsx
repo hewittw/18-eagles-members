@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
-import { BigNumber, PageHeader, ScorecardTable, scoreShort, toParText } from "@/components/golf";
+import { ApiCredit, BigNumber, PageHeader, ScorecardTable, WeatherGlyph, scoreShort, toParText } from "@/components/golf";
+import { weatherLine, weatherSpoken } from "@/lib/api/conditions";
 import { fmtDate } from "@/components/golf/charts";
 import { Button, ButtonLink, Callout, Field, SectionHeading, TextArea, useToast } from "@/components/ui";
 import type { Course, Hole } from "@/lib/course-types";
@@ -10,7 +11,7 @@ import { formatIndex, keyOf } from "@/lib/handicap";
 import { swallowStrayTap, useClub } from "@/lib/hooks";
 import { deleteRound, nextUnplayed, setRoundNote } from "@/lib/round-actions";
 import { honors as honorsOf, summarize, type RoundSummary } from "@/lib/stats";
-import type { Round } from "@/lib/types";
+import type { Round, RoundWeather } from "@/lib/types";
 import { useVerdict, VerdictMark } from "../../_components/Challenge";
 import { Page, Placeholder } from "../../_components/Placeholder";
 import { DocTitle } from "./[hole]/HoleScreen";
@@ -56,7 +57,10 @@ export function RoundCard({ id }: { id: string }) {
         back={{ href: "/clubhouse/rounds", label: "Cards" }}
         eyebrow={`${fmtDate(round.date, { weekday: "long", month: "long", day: "numeric", year: "numeric" })} · ${round.teeName} tees · ${nineLabel}`}
         title={c.name}
-        lede={round.mode === "logged" ? (round.totalOnly != null ? "Logged after the round, as a total score." : "Logged after the round, hole by hole.") : undefined}
+        lede={
+          round.mode === "logged" ? (round.totalOnly != null ? "Logged after the round, as a total score." : "Logged after the round, hole by hole.")
+            : round.weather ? <PlayedIn w={round.weather} /> : undefined
+        }
         actions={<ButtonLink href={`/clubhouse/courses/${c.slug}`} variant="secondary">Play here again</ButtonLink>}
       />
 
@@ -221,12 +225,25 @@ const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 =
 function Gone() {
   return (
     <Page>
-      <h1 className="font-display text-display-2 text-ink">This card isn&apos;t on this device</h1>
-      <p className="mt-4 max-w-measure font-serif text-lede text-ink-2">Cards are saved in the browser where they were made. It may have been deleted.</p>
+      <h1 className="font-display text-display-2 text-ink">This card isn&apos;t in your journal</h1>
+      <p className="mt-4 max-w-measure font-serif text-lede text-ink-2">It may have been deleted, or it belongs to another account. Cards are private to the golfer who saved them.</p>
       <div className="mt-8 flex flex-wrap gap-3">
         <ButtonLink href="/clubhouse/rounds" variant="primary">All cards</ButtonLink>
         <ButtonLink href="/clubhouse" variant="secondary">Back to the clubhouse</ButtonLink>
       </div>
     </Page>
+  );
+}
+
+/** The conditions the card was played in, captured from Open-Meteo when the round started. */
+function PlayedIn({ w }: { w: RoundWeather }) {
+  return (
+    <span className="grid gap-1">
+      <span className="flex items-center gap-2.5">
+        <WeatherGlyph code={w.code} isDay={!/clear/i.test(w.summary)} className="size-7 text-green" />
+        <span className="min-w-0"><span className="sr-only">Played in {weatherSpoken(w)}.</span><span aria-hidden="true">Played in {weatherLine(w)}</span></span>
+      </span>
+      <ApiCredit source="open-meteo" live={false} as="span" />
+    </span>
   );
 }

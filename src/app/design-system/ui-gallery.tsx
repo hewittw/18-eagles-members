@@ -19,7 +19,7 @@ export function ButtonSpec() {
   const [saving, setSaving] = useState(false);
   const save = () => {
     setSaving(true);
-    window.setTimeout(() => { setSaving(false); toast({ message: "Round saved to this device." }); }, 1400);
+    window.setTimeout(() => { setSaving(false); toast({ message: "Round saved to your journal." }); }, 1400);
   };
   const variants = ["primary", "secondary", "quiet", "danger"] as const;
   return (
@@ -327,7 +327,7 @@ export function FeedbackSpecs() {
         use={["Undo over confirm: do the thing, then offer to take it back.", "Say what happened in plain words, with the name of the thing.", "One at a time; a newer message replaces the last."]}
       >
         <States label="States" cols="2">
-          <State label="Message"><Toast message="Round saved to this device." onDismiss={noop} /></State>
+          <State label="Message"><Toast message="Round saved to your journal." onDismiss={noop} /></State>
           <State label="With Undo"><Toast message="Deleted the round at Rancho Santa Fe." action={{ label: "Undo", onClick: noop }} onDismiss={noop} /></State>
           <State label="Undo focused" force="focus"><Toast message="Removed the 3-iron from your bag." action={{ label: "Undo", onClick: noop }} /></State>
           <State label="Undo hovered" force="hover"><Toast message="Cleared 4 shots." action={{ label: "Undo", onClick: noop }} /></State>
@@ -349,7 +349,7 @@ export function FeedbackSpecs() {
         name="ConfirmDialog"
         from="ui"
         summary={<>A native <code>&lt;dialog&gt;</code> opened as a modal: the page behind goes inert, focus starts on Cancel, Esc cancels, and focus returns to the button that opened it.</>}
-        use={["Only for what can't be undone: \"Erase everything on this device\".", "Name the consequence in the title, and the thing in the confirm button."]}
+        use={["Only for what can't be undone: \"Erase my journal\".", "Name the consequence in the title, and the thing in the confirm button."]}
       >
         <States label="At rest (as drawn when open)" cols="2">
           <State label="danger">
@@ -357,7 +357,7 @@ export function FeedbackSpecs() {
               <p className="caps text-label text-gold-ink">Can&apos;t be undone</p>
               <p className="mt-1 font-display text-title">Erase everything?</p>
               <div className="rule-double mt-3 text-ink" />
-              <p className="mt-3 text-ink-2">13 rounds, your bag, and your courses leave this device.</p>
+              <p className="mt-3 text-ink-2">13 rounds, your bag, and your courses leave your account.</p>
               <div className="mt-5 flex flex-wrap justify-end gap-2"><Button size="sm">Keep my rounds</Button><Button size="sm" variant="danger">Erase everything</Button></div>
             </div>
           </State>
@@ -370,8 +370,8 @@ export function FeedbackSpecs() {
           <ConfirmDialog
             open={open}
             danger
-            title="Erase everything on this device?"
-            body="Your 13 rounds, your bag, and the courses you added will be deleted from this browser. Export them from the Locker first if you want a copy."
+            title="Erase your journal?"
+            body="Your 13 rounds, your bag, and the courses you added will be deleted from your account on every device. Export them from the Locker first if you want a copy."
             confirmLabel="Erase everything"
             cancelLabel="Keep my rounds"
             onConfirm={() => { setOpen(false); setErased(true); }}

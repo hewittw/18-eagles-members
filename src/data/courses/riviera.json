@@ -163,29 +163,29 @@
     }
   ],
   "hero": {
-    "src": "/courses/riviera/hero.jpg",
-    "alt": "Aerial view of the Riviera Country Club in its Santa Monica Canyon setting, with tree-lined fairways and white bunkers surrounded by Pacific Palisades homes and the clubhouse and tennis courts at the top",
-    "credit": "Benoît Prieur",
-    "license": "CC0",
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_Riviera_Country_Club_(Pacific_Palisades)_July_2022.jpg"
+    "src": "/courses/riviera/graded/hero-18th.jpg",
+    "alt": "The 18th green at Riviera below its hillside amphitheater, with the Spanish-style clubhouse at the top",
+    "credit": "Dan (golfpro1) from Schaumburg, IL, USA",
+    "license": "CC BY 2.0",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:RivieraCountryClub18th.jpg"
   },
   "gallery": [
     {
-      "src": "/courses/riviera/g1.jpg",
-      "alt": "The 18th green at Riviera below its hillside amphitheater, with the Spanish-style clubhouse at the top",
-      "credit": "Dan (golfpro1) from Schaumburg, IL, USA",
-      "license": "CC BY 2.0",
-      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RivieraCountryClub18th.jpg"
-    },
-    {
-      "src": "/courses/riviera/g2.jpg",
+      "src": "/courses/riviera/graded/g2.jpg",
       "alt": "Riviera's par-3 6th, seen from the tee: a bunker sits in the middle of the green",
       "credit": "Dan Perry from Chicago, USA",
       "license": "CC BY 2.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Riviera_Country_Club,_Golf_Course_in_Pacific_Palisades,_California_(168829105).jpg"
+    },
+    {
+      "src": "/courses/riviera/graded/g3.jpg",
+      "alt": "Aerial view of the Riviera Country Club in its Santa Monica Canyon setting, with tree-lined fairways and white bunkers surrounded by Pacific Palisades homes and the clubhouse and tennis courts at the top",
+      "credit": "Benoît Prieur",
+      "license": "CC0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_Riviera_Country_Club_(Pacific_Palisades)_July_2022.jpg"
     }
   ],
-  "dataNotes": "Riviera is private and publishes no scorecard. Hole pars, men's stroke indexes, Blue-tee yards, and the men's ratings/slopes come from the USGA-derived card on Stymie. BlueGolf and Stymie also list a 7,400-yd Black tee (75.6/137), but Stymie's per-hole Black yardages are exactly Blue + 20 on every hole, including 335 on the 10th, which can't be right because the hole maxed out at 315 for the 2026 Genesis Invitational. That tee was left out, so Blue (7,040) is the first tee here. All Golf Holes lists different stroke indexes for holes 3, 4, 5, and 7 and different ratings (Black 76.3/144, Blue 74.7/139); those could not be verified against an official source. Tournament setup for the 2026 Genesis was 7,383 yds, par 71. The USGA NCRDB blocked automated access. The aerial is a portrait photo, and the two gallery photos are only 640 px wide. The holes have no names. The club website says the course opened in 1927, and Wikipedia gives 1926 (as the Los Angeles Athletic Club Golf Course); the club's year is used. Upcoming: 2028 Olympic golf and the 2031 U.S. Open.",
+  "dataNotes": "Riviera is private and publishes no scorecard. Hole pars, men's stroke indexes, Blue-tee yards, and the men's ratings/slopes come from the USGA-derived card on Stymie. BlueGolf and Stymie also list a 7,400-yd Black tee (75.6/137), but Stymie's per-hole Black yardages are exactly Blue + 20 on every hole, including 335 on the 10th, which can't be right because the hole maxed out at 315 for the 2026 Genesis Invitational. That tee was left out, so Blue (7,040) is the first tee here. All Golf Holes lists different stroke indexes for holes 3, 4, 5, and 7 and different ratings (Black 76.3/144, Blue 74.7/139); those could not be verified against an official source. Tournament setup for the 2026 Genesis was 7,383 yds, par 71. The USGA NCRDB blocked automated access. The hero is the 18th green below the clubhouse; the aerial (a portrait photo) is in the gallery, and the two ground-level photos are only 640 px wide. The holes have no names. The club website says the course opened in 1927, and Wikipedia gives 1926 (as the Los Angeles Athletic Club Golf Course); the club's year is used. Upcoming: 2028 Olympic golf and the 2031 U.S. Open.",
   "sources": [
     "https://www.therivieracountryclub.com/golf-club",
     "https://stymie.golf/golf-courses/california/los-angeles-county/pacific-palisades/riviera-country-club",

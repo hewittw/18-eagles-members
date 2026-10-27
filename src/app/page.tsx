@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { checklist, parts, TOOL_HREF, type Status } from "@/lib/progress";
+import { checklist, parts, TOOL_HREF, week4, type Part, type Status } from "@/lib/progress";
 
 // The hub: a progress home base for the process. The submitted link is the tool itself (TOOL_HREF).
 const ring = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#25282A]";
@@ -18,16 +18,35 @@ function StatusTag({ s }: { s: Status }) {
   );
 }
 
+function PartList({ items }: { items: Part[] }) {
+  return (
+    <ol className="mt-6 divide-y divide-[#E6E6E6]">
+      {items.map((p) => (
+        <li key={p.n}>
+          <Link href={p.href} className={`group grid gap-2 py-6 sm:grid-cols-[3.5rem_1fr_auto] sm:items-baseline ${ring}`}>
+            <span className="font-mono text-sm text-[#6B6F73]">{p.n}</span>
+            <span>
+              <span className="text-lg font-medium tracking-tight group-hover:underline">{p.title}</span>
+              <span className="mt-1 block max-w-2xl text-[15px] leading-relaxed text-[#53565A]">{p.note}</span>
+            </span>
+            <StatusTag s={p.status} />
+          </Link>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export default function Hub() {
   return (
     <main id="main" className="mx-auto w-full max-w-[1120px] px-6 pb-32 pt-16 md:px-10">
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-balance text-[#53565A]">
-        Design, Build, Ship&nbsp;· Assignment 3&nbsp;· Patterns &amp; Flows
+        Design, Build, Ship&nbsp;· Assignment 4&nbsp;· Full Stack
       </p>
       <h1 className="mt-4 font-display text-5xl font-normal leading-[0.95] tracking-[-0.02em] text-[#006747] md:text-7xl">18 Eagles</h1>
       <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[#53565A]">
         A personal golf round journal. Play a round hole by hole, keep every card, and watch your handicap move.
-        This page tracks how it was made.
+        This week it gained accounts: your journal is saved to your own account, private to you. This page tracks how it was made.
       </p>
       <Link
         href={TOOL_HREF}
@@ -36,24 +55,18 @@ export default function Hub() {
         Open 18 Eagles <span aria-hidden>→</span>
       </Link>
 
-      <section aria-labelledby="parts" className="mt-20">
+      <section aria-labelledby="week4" className="mt-20">
+        <h2 id="week4" className="border-t border-[#D9D9D9] pt-6 text-xl font-medium tracking-tight">
+          Week 4: full stack
+        </h2>
+        <PartList items={week4} />
+      </section>
+
+      <section aria-labelledby="parts" className="mt-16">
         <h2 id="parts" className="border-t border-[#D9D9D9] pt-6 text-xl font-medium tracking-tight">
           The work
         </h2>
-        <ol className="mt-6 divide-y divide-[#E6E6E6]">
-          {parts.map((p) => (
-            <li key={p.n}>
-              <Link href={p.href} className={`group grid gap-2 py-6 sm:grid-cols-[3rem_1fr_auto] sm:items-baseline ${ring}`}>
-                <span className="font-mono text-sm text-[#6B6F73]">{p.n}</span>
-                <span>
-                  <span className="text-lg font-medium tracking-tight group-hover:underline">{p.title}</span>
-                  <span className="mt-1 block max-w-2xl text-[15px] leading-relaxed text-[#53565A]">{p.note}</span>
-                </span>
-                <StatusTag s={p.status} />
-              </Link>
-            </li>
-          ))}
-        </ol>
+        <PartList items={parts} />
       </section>
 
       <section aria-labelledby="checklist" className="mt-16">

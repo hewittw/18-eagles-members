@@ -164,7 +164,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/augusta-national/hero.jpg",
+    "src": "/courses/augusta-national/graded/hero.jpg",
     "alt": "Looking down the 10th fairway, Camellia, to the green and its large front bunker, framed by tall pines and Masters patrons",
     "credit": "Mbrooks (Wikimedia Commons)",
     "license": "Public domain",
@@ -172,14 +172,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/augusta-national/g1.jpg",
+      "src": "/courses/augusta-national/graded/g1.jpg",
       "alt": "A golfer putting on the 12th green, Golden Bell, with Rae's Creek and the stone Hogan Bridge behind",
       "credit": "Florian Fritsch, assisted by Mark Anderson",
       "license": "CC BY-SA 3.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:AGNC-12.jpg"
     },
     {
-      "src": "/courses/augusta-national/g2.jpg",
+      "src": "/courses/augusta-national/graded/g2.jpg",
       "alt": "The 18th green, Holly, with its yellow flag and the white leaders scoreboard during 2013 Masters practice rounds",
       "credit": "Dan Perry from Atlanta, USA",
       "license": "CC BY 2.0",

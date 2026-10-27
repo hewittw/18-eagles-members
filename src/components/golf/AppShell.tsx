@@ -2,8 +2,10 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { SkipLink } from "../ui/SkipLink";
 import { cx } from "../ui/cx";
+import { AccountMenu } from "./AccountMenu";
 import { AppNav, type NavKey } from "./AppNav";
 import { CurrentNav, PhoneTabBar } from "./CurrentNav";
+import { HeaderRecede } from "./HeaderRecede";
 import { Wordmark } from "./Wordmark";
 
 export type AppShellProps = {
@@ -55,14 +57,21 @@ export function AppShell({ children, current, preview, previewLayout = "phone" }
   return (
     <div className="flex min-h-dvh flex-col">
       <SkipLink />
-      <header data-obscures className="tex-locker on-green sticky top-0 z-40 border-b border-gold/40">
-        <div className="mx-auto flex max-w-ledger flex-wrap items-center justify-between gap-x-4 px-4 sm:px-6 lg:px-8">
-          <Link href="/clubhouse" className="-mx-1 flex min-h-tile items-center px-1 md:min-h-16" aria-label="18 Eagles, the clubhouse">
-            <Wordmark tone="green" />
+      {/* Recedes as you scroll (HeaderRecede): its top tucks under the edge and the contents settle into the slim bar. */}
+      <header id="app-header" data-obscures className="hdr tex-locker on-green sticky z-40 border-b border-gold/40 data-condensed:border-b-transparent [body:has(#hdr-deep)_&]:border-b-transparent">
+        <div className="mx-auto flex h-14 max-w-ledger items-center justify-between gap-x-4 px-4 transition-transform duration-300 ease-hang condensed:translate-y-1.5 sm:px-6 md:h-16 md:condensed:translate-y-2.5 lg:px-8">
+          <Link href="/clubhouse" className="-mx-1 flex min-h-tap shrink-0 items-center px-1" aria-label="18 Eagles, the clubhouse">
+            <Wordmark tone="green" className="origin-left transition-transform duration-300 ease-hang condensed:scale-[0.84]" />
           </Link>
-          <div className="hidden md:block">{nav("bar")}</div>
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="hidden md:block">{nav("bar")}</div>
+            <AccountMenu />
+          </div>
         </div>
       </header>
+      <Suspense fallback={null}>
+        <HeaderRecede />
+      </Suspense>
       <main id="main" className="flex-1 outline-none">
         {children}
       </main>
@@ -70,7 +79,7 @@ export function AppShell({ children, current, preview, previewLayout = "phone" }
       <footer className="border-t border-rule pb-[calc(var(--tabbar)+env(safe-area-inset-bottom))] md:pb-0">
         <div className="mx-auto flex max-w-ledger flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-6 text-[0.92rem] text-ink-2 sm:px-6 lg:px-8">
           <p className="caps text-[0.72rem] text-gold-ink">18 Eagles · A golf journal</p>
-          <p>Your rounds are saved in this browser only, on this device. Clearing the browser&apos;s data erases them, so export a copy from the Locker.</p>
+          <p>Your rounds are saved to your own account, private to you, on every device you sign in on.</p>
         </div>
       </footer>
       {/* Phones only; left out on the hole screen, where the hole's action bar takes the bottom edge. */}

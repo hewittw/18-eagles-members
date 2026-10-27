@@ -1,0 +1,88 @@
+{
+  "id": "9b9891db-3b45-48db-892f-149601b79d52",
+  "course_name": "Torrey Pines South Course",
+  "city": "San Diego",
+  "state": "CA",
+  "lat": 32.8971363,
+  "lng": -117.247647,
+  "type": "municipal",
+  "par": 72,
+  "holes": 18,
+  "yardage": 7802,
+  "timezone": null,
+  "architect": "William F. Bell, Rees Jones, Greg Muirhead, Rees Jones, David Rainville, Stephen Halsey, Jack Daray, Jr.",
+  "year_built": 1957,
+  "fairway_grass": "Kikuya Grass",
+  "green_grass": "Poa Annua Grass",
+  "website": "https://www.hilton.com/en/hotels/santphh-hilton-la-jolla-torrey-pines/",
+  "facilities": {
+    "lessons": true,
+    "restaurant": true,
+    "driving_range": true,
+    "putting_green": true
+  },
+  "tees": [
+    {
+      "tee_key": "black-male",
+      "tee_name": "Black",
+      "tee_color": "black",
+      "gender": "Male",
+      "course_rating": 78.8,
+      "slope": 148,
+      "par": 72,
+      "yardage": 7802
+    },
+    {
+      "tee_key": "brown-male",
+      "tee_name": "Brown",
+      "tee_color": null,
+      "gender": "Male",
+      "course_rating": 75,
+      "slope": 139,
+      "par": 72,
+      "yardage": 7015
+    }
+  ],
+  "holes_data": [
+    {
+      "number": 1,
+      "par": 4,
+      "handicap_index": 5,
+      "yardages": {
+        "web": 451,
+        "black": 451,
+        "brown": 434,
+        "green": 419,
+        "white": 409,
+        "silver": 350
+      }
+    },
+    {
+      "number": 2,
+      "par": 4,
+      "handicap_index": 15,
+      "yardages": {
+        "web": 389,
+        "black": 389,
+        "brown": 361,
+        "green": 344,
+        "white": 323,
+        "silver": 283
+      }
+    }
+  ],
+  "climate": {
+    "best_months": [],
+    "monthly": [
+      {
+        "month": 1,
+        "avg_low_f": 48,
+        "avg_high_f": 60,
+        "avg_temp_f": 54,
+        "avg_wind_mph": 18.1,
+        "avg_precipitation_in": 2.71
+      }
+    ]
+  },
+  "_trimmed": "Real response for GET /api/v1/courses/9b9891db-3b45-48db-892f-149601b79d52 on 2026-10-26, cut to the fields 18 Eagles reads, the first 2 of 6 tees and the first 2 of 18 holes. Dropped: description, phone, address, nearby, pricing, booking_link, insights, per-hole geometry."
+}

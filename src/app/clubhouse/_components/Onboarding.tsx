@@ -1,4 +1,5 @@
 "use client";
+import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { placeOf } from "@/components/golf";
@@ -341,9 +342,17 @@ function ActionBar({ label, value, muted, children }: { label: string; value: st
 export function NameGate({ photo }: { photo: { src: string } | null }) {
   const ref = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
-  const [name, setName] = useState("");
+  // Prefilled with the first name on the account (still the golfer's to change), so the first screen already knows them.
+  const { user } = useUser();
+  const [name, setName] = useState(() => user?.firstName?.trim() ?? "");
   const [error, setError] = useState<string | undefined>();
   const saved = useRef(false);
+  const typed = useRef(false);
+  const accountName = user?.firstName?.trim() ?? "";
+  useEffect(() => {
+    // If Clerk's user arrives after the screen opens, fill it in once, never over what someone has typed.
+    if (accountName && !typed.current) setName((n) => n || accountName);
+  }, [accountName]);
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
@@ -403,7 +412,7 @@ export function NameGate({ photo }: { photo: { src: string } | null }) {
           <h1 id="name-q" className="text-balance font-display text-display-1 text-on-green">
             <label htmlFor="golfer-name">What should we call you?</label>
           </h1>
-          <p id="golfer-name-hint" className="-mt-2 max-w-md font-serif text-lede text-paper-3">Your name goes on your locker, your cards and your trophies. It stays on this device.</p>
+          <p id="golfer-name-hint" className="-mt-2 max-w-md font-serif text-lede text-paper-3">Your name goes on your locker, your cards and your trophies. It&apos;s private to your account.</p>
           <div>
             <input
               ref={input}
@@ -414,7 +423,7 @@ export function NameGate({ photo }: { photo: { src: string } | null }) {
               enterKeyHint="go"
               maxLength={40}
               value={name}
-              onChange={(e) => { setName(e.target.value); if (error) setError(undefined); }}
+              onChange={(e) => { typed.current = true; setName(e.target.value); if (error) setError(undefined); }}
               aria-invalid={error ? true : undefined}
               aria-describedby={error ? "golfer-name-err golfer-name-hint" : "golfer-name-hint"}
               placeholder="Your name"

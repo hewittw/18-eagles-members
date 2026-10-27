@@ -1,5 +1,7 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist_Mono, Libre_Franklin, Newsreader, Oswald } from "next/font/google";
+import { clerkAppearance } from "@/components/golf/clerkAppearance";
 import "./globals.css";
 
 // Type matched to masters.com, with open-licensed equivalents (its own faces are commercial):
@@ -12,7 +14,7 @@ const oswald = Oswald({ weight: ["400", "500", "600"], subsets: ["latin"], varia
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "18 Eagles · Assignment 3", template: "%s · 18 Eagles" },
+  title: { default: "18 Eagles · Assignment 4", template: "%s · 18 Eagles" },
   description: "A personal golf round journal: play hole by hole, keep every card, and watch your handicap move.",
 };
 
@@ -22,7 +24,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${newsreader.variable} ${franklin.variable} ${oswald.variable} ${geistMono.variable} h-full bg-paper text-ink antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-paper font-sans text-ink">{children}</body>
+      <body className="flex min-h-full flex-col bg-paper font-sans text-ink">
+        <ClerkProvider appearance={clerkAppearance} afterSignOutUrl="/clubhouse">
+          {children}
+        </ClerkProvider>
+      </body>
     </html>
   );
 }

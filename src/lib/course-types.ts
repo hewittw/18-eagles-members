@@ -48,4 +48,7 @@ export type Course = {
   gallery: CourseImage[]; // 0–3 more
   dataNotes: string; // what's verified and what's estimated
   sources: string[]; // URLs for the scorecard, ratings, and facts
+  // Optional, for courses you add: built-in courses keep theirs in src/data/course-geo.ts.
+  geo?: { lat: number; lng: number } | null; // for the weather; none for a course entered by hand
+  openGolfId?: string | null; // set when the course was filled from OpenGolfAPI
 };

@@ -11,6 +11,7 @@ import { emptyEntry, setEntry, update } from "@/lib/store";
 import type { HoleEntry } from "@/lib/types";
 import { puttsError } from "@/lib/validate";
 import { Page, Placeholder } from "../../../_components/Placeholder";
+import { HoleWind } from "../../../_components/Conditions";
 
 const count = (xs: string[], id: string) => xs.filter((x) => x === id).length;
 // iOS inset grouping: a small caps caption above a rounded white card.
@@ -111,7 +112,10 @@ export function HoleScreen({ id, holeParam }: { id: string; holeParam: string })
         {/* Where you are: the course, the hole, and the running score, on a Masters-green card.
             Phones: the score chip sits beside the hole number, so the score tiles start on the first screen. */}
         <header className="tex-locker on-green grid grid-cols-[minmax(0,1fr)] rounded-2xl px-5 py-4 shadow-card sm:px-7 sm:py-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:gap-x-10 md:[grid-template-areas:'e_c'_'h_c'_'d_c']">
-          <p className="caps text-balance text-label text-gold max-sm:tracking-[0.1em] md:[grid-area:e]">{c.shortName} · {round.teeName} tees{round.status === "complete" ? " · editing a finished card" : ""}</p>
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 md:[grid-area:e]">
+            <p className="caps text-balance text-label text-gold max-sm:tracking-[0.1em]">{c.shortName} · {round.teeName} tees{round.status === "complete" ? " · editing a finished card" : ""}</p>
+            {round.status === "playing" && <HoleWind course={c} round={round} />}
+          </div>
           <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 md:contents">
           <h1 className="min-w-0 font-display text-display-2 text-on-green md:mt-1 md:[grid-area:h]">
             Hole {n}
@@ -265,9 +269,9 @@ export function HoleScreen({ id, holeParam }: { id: string; holeParam: string })
 function Missing({ what = "round", roundId }: { what?: "round" | "hole"; roundId?: string }) {
   return (
     <Page>
-      <h1 className="font-display text-display-2 text-ink">{what === "round" ? "This round isn't on this device" : "That hole isn't part of this round"}</h1>
+      <h1 className="font-display text-display-2 text-ink">{what === "round" ? "This round isn't in your journal" : "That hole isn't part of this round"}</h1>
       <p className="mt-4 max-w-measure font-serif text-lede text-ink-2">
-        {what === "round" ? "Rounds are saved in the browser where you played them. It may have been deleted, or played on another device." : "Pick a hole from the card."}
+        {what === "round" ? "It may have been deleted, or it belongs to another account. Rounds are private to the golfer who played them." : "Pick a hole from the card."}
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         {roundId && <ButtonLink href={`/clubhouse/rounds/${roundId}`} variant="primary">Open the card</ButtonLink>}

@@ -163,7 +163,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/harbour-town/hero.jpg",
+    "src": "/courses/harbour-town/graded/hero.jpg",
     "alt": "A Harbour Town green framed by a sod-walled bunker, with a palmetto, salt marsh and the open water of Calibogue Sound behind",
     "credit": "Dan Perry (danperry.com)",
     "license": "CC BY 2.0",
@@ -171,14 +171,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/harbour-town/g1.jpg",
+      "src": "/courses/harbour-town/graded/g1.jpg",
       "alt": "View from a Harbour Town tee under live oaks and palmettos to a small green behind a wooden bulkhead",
       "credit": "Dan Perry (danperry.com)",
       "license": "CC BY 2.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Harbour_Town_Golf,_Hilton_Head_-_5111137869.jpg"
     },
     {
-      "src": "/courses/harbour-town/g2.jpg",
+      "src": "/courses/harbour-town/graded/g2.jpg",
       "alt": "A long, shallow greenside bunker in front of a Harbour Town green, ringed by tall pines and moss-hung oaks",
       "credit": "Dan Perry (danperry.com)",
       "license": "CC BY 2.0",

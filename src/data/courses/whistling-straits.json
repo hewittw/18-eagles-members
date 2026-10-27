@@ -181,7 +181,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/whistling-straits/hero.jpg",
+    "src": "/courses/whistling-straits/graded/hero.jpg",
     "alt": "A green on the bluff edge at Whistling Straits, ringed by bunkers and dune grass, with Lake Michigan stretching to the horizon",
     "credit": "Specialkboyle",
     "license": "Public domain",
@@ -189,14 +189,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/whistling-straits/g1.jpg",
+      "src": "/courses/whistling-straits/graded/g1.jpg",
       "alt": "A par-5 fairway running along the grassy bluff above the Lake Michigan shoreline and beach",
       "credit": "Baybay1901",
       "license": "CC BY-SA 4.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:WhistlingStraits-Shoreline-Par5.jpg"
     },
     {
-      "src": "/courses/whistling-straits/g2.jpg",
+      "src": "/courses/whistling-straits/graded/g2.jpg",
       "alt": "Looking from the tee down the 11th fairway, Sand Box, past sandy waste areas and dunes toward the lake",
       "credit": "KevinTR",
       "license": "Public domain",

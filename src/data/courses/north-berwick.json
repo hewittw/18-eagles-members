@@ -35,7 +35,7 @@
     { "name": "Blue", "color": "#1f4e9c", "par": 71, "yards": 6168, "rating": 71.0, "slope": 127, "source": "published" }
   ],
   "hero": {
-    "src": "/courses/north-berwick/hero.jpg",
+    "src": "/courses/north-berwick/graded/hero.jpg",
     "alt": "The 'Welcome to North Berwick West Links' sign beside the 1st tee, with a stone wall in front and Craigleith island in the Firth of Forth behind",
     "credit": "Robertaleotta2020",
     "license": "CC BY-SA 4.0",
@@ -43,7 +43,7 @@
   },
   "gallery": [
     {
-      "src": "/courses/north-berwick/g1.jpg",
+      "src": "/courses/north-berwick/graded/g1.jpg",
       "alt": "The 18th green on North Berwick's West Links with its flag, the beach fence and the Firth of Forth beyond",
       "credit": "Stuart Shepherd",
       "license": "CC BY-SA 2.0",

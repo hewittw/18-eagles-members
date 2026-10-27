@@ -8,7 +8,10 @@ import { useClub } from "@/lib/hooks";
 import { nextUnplayed } from "@/lib/round-actions";
 import { Page, Placeholder } from "../../_components/Placeholder";
 import { TeeOff } from "../../_components/TeeOff";
+import { CourseConditions, CourseFacts, CourseForecast } from "../../_components/Conditions";
 import { formatDay, recordAt } from "../_lib/record";
+import { RemoveCourse } from "./RemoveCourse";
+import { httpUrl } from "@/lib/safe-url";
 
 const ACCESS = { public: "Public", resort: "Resort (guests and the public)", private: "Private (members and guests)" } as const;
 
@@ -138,7 +141,15 @@ export function CourseView({ slug }: { slug: string }) {
               <TeeOff course={c} rememberedTee={store.profile.lastTee[c.slug]} />
             </div>
           </Card>
+
+          <CourseConditions course={c} />
         </div>
+      </div>
+
+      {/* Outside data: the week's weather and OpenGolfAPI's facts (each hides itself when there's nothing to ask) */}
+      <div className="mt-14 grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-10">
+        <CourseForecast course={c} />
+        <CourseFacts course={c} />
       </div>
 
       <section aria-labelledby="card-h" className="mt-14">
@@ -175,7 +186,7 @@ export function CourseView({ slug }: { slug: string }) {
                 {photos.map((p) => (
                   <li key={p.src}>
                     {p.credit}, {p.license}.{" "}
-                    <a className="link inline-flex min-h-6 items-center" href={p.sourceUrl} target="_blank" rel="noreferrer">Source<span className="sr-only"> for the photo by {p.credit} (opens in a new tab)</span></a>
+                    {httpUrl(p.sourceUrl) && <a className="link inline-flex min-h-6 items-center" href={httpUrl(p.sourceUrl)!} target="_blank" rel="noreferrer">Source<span className="sr-only"> for the photo by {p.credit} (opens in a new tab)</span></a>}
                   </li>
                 ))}
               </ul>
@@ -185,7 +196,7 @@ export function CourseView({ slug }: { slug: string }) {
             <div>
               <p className="font-medium text-ink">Sources</p>
               <ul className="mt-1 grid gap-1" role="list">
-                {c.sources.map((s) => (
+                {c.sources.filter((s) => httpUrl(s)).map((s) => (
                   <li key={s} className="min-w-0 break-words">
                     <a className="link inline-flex min-h-6 items-center" href={s} target="_blank" rel="noreferrer">{s.replace(/^https?:\/\/(www\.)?/, "")}</a>
                   </li>
@@ -195,6 +206,8 @@ export function CourseView({ slug }: { slug: string }) {
           )}
         </div>
       </details>
+
+      {c.tags.includes("yours") && <RemoveCourse slug={c.slug} name={c.name} />}
     </Page>
   );
 }
@@ -219,7 +232,7 @@ function NotFound({ slug }: { slug: string }) {
       <div className="mt-6 max-w-measure">
         <p className="font-serif text-lede text-ink-2">
           {custom
-            ? "That course was added on another device, or the data here was erased. Courses you add are saved in this browser only."
+            ? "It may have been removed, or it was added by another account. Courses you add are private to you."
             : "There's no course at this address. It may have been renamed."}
         </p>
         <div className="mt-6 flex flex-wrap gap-2">

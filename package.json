@@ -7,14 +7,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prebuild": "node scripts/gen-course-index.mjs"
+    "prebuild": "node scripts/gen-course-index.mjs",
+    "test:rls": "playwright test"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.9.21",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.2.51",
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

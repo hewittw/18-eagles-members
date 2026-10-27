@@ -1,0 +1,44 @@
+{
+    "courses": [
+        {
+            "id": "e1e1ee41-ed5b-4755-a779-553d4a7c59b2",
+            "course_name": "North At Torrey Pines Municipal Golf Course",
+            "city": "La Jolla",
+            "state": "CA",
+            "country_iso": "US",
+            "lat": 32.9046735,
+            "lng": -117.2446167,
+            "type": "Public/Municipal",
+            "par": 72,
+            "holes": 18,
+            "completeness": 0
+        },
+        {
+            "id": "d9a5bf8b-0ce9-4f77-9e6f-de8738690423",
+            "course_name": "South At Torrey Pines Municipal Golf Course",
+            "city": "La Jolla",
+            "state": "CA",
+            "country_iso": "US",
+            "lat": 32.9024628,
+            "lng": -117.2462734,
+            "type": "Public/Municipal",
+            "par": 72,
+            "holes": 18,
+            "completeness": 0
+        },
+        {
+            "id": "2dec10e3-10e8-4262-bfdf-6b2d2d2e4d3e",
+            "course_name": "Torrey Pines North Course",
+            "city": "San Diego",
+            "state": "CA",
+            "country_iso": "US",
+            "lat": 32.9087097,
+            "lng": -117.2489801,
+            "type": "municipal",
+            "par": 72,
+            "holes": 18,
+            "completeness": 0
+        }
+    ],
+    "total": 3
+}

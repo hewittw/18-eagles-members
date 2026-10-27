@@ -35,7 +35,7 @@
     { "name": "White", "color": "#f5f5f0", "par": 72, "yards": 6945, "rating": 75.2, "slope": 139, "source": "published" }
   ],
   "hero": {
-    "src": "/courses/carnoustie/hero.jpg",
+    "src": "/courses/carnoustie/graded/hero.jpg",
     "alt": "Elevated view over the 18th green of the Carnoustie Championship Course, with the Barry Burn crossing the links and the Carnoustie Golf Hotel at right",
     "credit": "Jim Smillie",
     "license": "CC BY-SA 2.0",
@@ -43,7 +43,7 @@
   },
   "gallery": [
     {
-      "src": "/courses/carnoustie/g1.jpg",
+      "src": "/courses/carnoustie/graded/g1.jpg",
       "alt": "View from the tee down the 6th hole, Hogan's Alley, at Carnoustie, with fairway bunkers and the out-of-bounds fence at left",
       "credit": "Scott Cormie",
       "license": "CC BY-SA 2.0",

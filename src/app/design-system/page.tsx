@@ -6,6 +6,7 @@ import { SkipLink, ToastProvider } from "@/components/ui";
 import { Section } from "./ds";
 import { ColorTokens, Principles, SpaceShape, TypeScale } from "./foundations";
 import { ChartSpecs, ClubPickerSpec, CourseSpecs, FairwaySpec, ScoreMarkSpec, ScoreTilesSpec, ScorecardSpec, ShellSpec } from "./golf-gallery";
+import { ApiStateSpecs, WeatherNowSpec, WindSpecs } from "./api-gallery";
 import { ButtonLinkSpec, ButtonSpec, ChoiceSpec, FeedbackSpecs, FieldSpec, MotionDemo, StepperSpec, SurfaceSpecs, ToggleSpec } from "./ui-gallery";
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ const TOC: { id: string; n: string; label: string; items?: [string, string][] }[
   { id: "course", n: "VII", label: "On the course", items: [["scoremark", "ScoreMark"], ["scoretiles", "ScoreTiles"], ["clubpicker", "ClubPicker"], ["fairwaypicker", "FairwayPicker"], ["scorecardtable", "ScorecardTable"]] },
   { id: "clubhouse", n: "VIII", label: "The clubhouse", items: [["appshell", "AppShell"], ["appnav", "AppNav"], ["pageheader", "PageHeader"], ["wordmark", "Wordmark"], ["bignumber", "BigNumber"], ["coursecard", "CourseCard"], ["holeillustration", "HoleIllustration"], ["teeswatch", "TeeSwatch"]] },
   { id: "charts-s", n: "IX", label: "Charts" },
+  { id: "outside", n: "X", label: "Outside data", items: [["weathernow", "WeatherNow"], ["windarrow", "WindArrow"], ["weatherglyph", "WeatherGlyph"], ["forecaststrip", "ForecastStrip"], ["teesheetforecast", "TeeSheetForecast"], ["apistate", "ApiState"], ["coursehits", "CourseHits"], ["apicredit", "ApiCredit"]] },
 ];
 
 export default function DesignSystemPage() {
@@ -123,6 +125,11 @@ export default function DesignSystemPage() {
           </Section>
           <Section id="charts-s" numeral="IX" eyebrow="src/components/golf/charts" title="Breakdowns, read like a board" lede="One example of each chart with a sample season. Every one can become a table.">
             <ChartSpecs />
+          </Section>
+          <Section id="outside" numeral="X" eyebrow="src/components/golf · Week 4" title="Weather and the course book, from outside" lede="Open-Meteo and OpenGolfAPI, called only by our own server routes. Each part in every state: loading, found, nothing found, and the service resting.">
+            <WeatherNowSpec />
+            <WindSpecs />
+            <ApiStateSpecs />
           </Section>
         </main>
       </div>

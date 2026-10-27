@@ -181,7 +181,7 @@
     }
   ],
   "hero": {
-    "src": "/courses/shinnecock-hills/hero.jpg",
+    "src": "/courses/shinnecock-hills/graded/hero.jpg",
     "alt": "The shingled Shinnecock Hills clubhouse on its hilltop above fescue-edged fairways and bunkers, with spectators walking the course at the 2018 U.S. Open",
     "credit": "Peetlesnumber1",
     "license": "CC BY-SA 4.0",
@@ -189,14 +189,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/shinnecock-hills/g1.jpg",
+      "src": "/courses/shinnecock-hills/graded/g1.jpg",
       "alt": "Tall golden fescue in the foreground with a green, bunkers and the clubhouse on the ridge behind during 2018 U.S. Open practice",
       "credit": "Peetlesnumber1",
       "license": "CC BY-SA 4.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Shinnecock_Hills_GC_02.jpg"
     },
     {
-      "src": "/courses/shinnecock-hills/g2.jpg",
+      "src": "/courses/shinnecock-hills/graded/g2.jpg",
       "alt": "The Shinnecock Hills clubhouse, a gray-shingled building with a long white-columned porch, seen across the gravel drive under a deep blue sky",
       "credit": "Michael O'Connor",
       "license": "CC BY-SA 4.0",

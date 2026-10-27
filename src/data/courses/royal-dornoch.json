@@ -38,7 +38,7 @@
     { "name": "Blue", "color": "#1f5fa8", "par": 70, "yards": 5296, "rating": 66.3, "slope": 114, "source": "published" }
   ],
   "hero": {
-    "src": "/courses/royal-dornoch/hero.jpg",
+    "src": "/courses/royal-dornoch/graded/hero.jpg",
     "alt": "Two deep revetted bunkers on a Royal Dornoch fairway, with dunes and the Dornoch Firth beyond",
     "credit": "Julian Paren",
     "license": "CC BY-SA 2.0",
@@ -46,14 +46,14 @@
   },
   "gallery": [
     {
-      "src": "/courses/royal-dornoch/g1.jpg",
+      "src": "/courses/royal-dornoch/graded/g1.jpg",
       "alt": "The Royal Dornoch clubhouse with its clock tower, the flagpoles and club sign by the first tee, and Highland hills in the distance",
       "credit": "Craig Wallace",
       "license": "CC BY-SA 2.0",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Royal_Dornoch_Golf_Club_-_geograph.org.uk_-_7273513.jpg"
     },
     {
-      "src": "/courses/royal-dornoch/g2.jpg",
+      "src": "/courses/royal-dornoch/graded/g2.jpg",
       "alt": "A raised green with a red flag at Royal Dornoch, backed by gorse and the Sutherland hills",
       "credit": "David Dixon",
       "license": "CC BY-SA 2.0",
