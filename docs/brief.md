@@ -49,3 +49,9 @@ hand-operated white leaderboard, scorecard typography, restraint, ceremony). Don
 | `/<slug>/rounds` | History |
 | `/<slug>/stats` | Breakdowns with filters |
 | `/<slug>/locker` | The bag and preferences |
+
+## APIs (Week 4)
+Two free, keyless APIs, both called only from our own route handlers (`/api/golf/search`, `/api/golf/course/[id]`,
+`/api/weather`), never from the browser: OpenGolfAPI fills the add-a-course form and shows course facts; Open-Meteo
+gives conditions, a 7-day tee sheet, and the wind on the hole screen, and a live card keeps the weather it was played
+in. Where the calls happen and why, plus one real response from each explained field by field: `docs/apis.md`.

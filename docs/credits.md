@@ -139,3 +139,12 @@ Courses with no photo show a drawn yardage-book illustration instead.
 ## Research
 
 App screenshots in `public/research/<app>/` are store listing images, used as screenshot, for study. Sources are listed in each study in `docs/research/`.
+
+## Data sources (live APIs, Week 4)
+
+Both are free and keyless, and both are called only from our own server routes (see `docs/apis.md`).
+
+| Source | What we use | License / terms | Attribution shown |
+|---|---|---|---|
+| [OpenGolfAPI](https://opengolfapi.org/) | Course search, scorecards (par, stroke index, tees with rating and slope, hole yards), course facts (architect, year, grasses, facilities, best months), and the coordinates in `src/data/course-geo.ts` | Data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/); anonymous reads allowed (daily per-IP limit) | “Course data © OpenStreetMap contributors (ODbL 1.0) via OpenGolfAPI”, under course search, course facts, and on every course filled from it (its data notes) |
+| [Open-Meteo](https://open-meteo.com/) | Current conditions, the next 12 hours, the 7-day forecast, sunrise and sunset | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); free for non-commercial use, no key | “Weather data by Open-Meteo.com”, under every weather panel, the tee sheet forecast, and a card's “Played in” line |
