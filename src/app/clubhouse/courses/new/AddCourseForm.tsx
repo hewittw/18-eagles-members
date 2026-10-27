@@ -233,13 +233,12 @@ export function AddCourseForm() {
           </Field>
         )}
 
-        <fieldset className="grid min-w-0 gap-6 rounded-xl border border-rule/70 bg-paper-2 p-5 shadow-card sm:p-6">
-          <legend className="float-left mb-1 w-full">
-            <span className="block font-serif text-[1.15rem] font-bold text-ink">From the scorecard <span className="font-sans text-[1rem] font-normal text-ink-2">(optional)</span></span>
-            <span className="mt-1 block text-[0.92rem] font-normal leading-snug text-ink-2">
-              Rating and slope make your handicap exact. Leave them blank and we use par and 113 (an average course), and mark scores here as estimates until you add them.
-            </span>
-          </legend>
+        <fieldset aria-describedby="scorecard-why" className="grid min-w-0 gap-6 rounded-xl border border-rule/70 bg-paper-2 p-5 shadow-card sm:p-6">
+          {/* A short group name for screen readers; the why is the group's description (QA: the legend was two sentences). */}
+          <legend className="float-left mb-1 w-full font-serif text-[1.15rem] font-bold text-ink">From the scorecard <span className="font-sans text-[1rem] font-normal text-ink-2">(optional)</span></legend>
+          <p id="scorecard-why" className="clear-left -mt-5 text-[0.92rem] font-normal leading-snug text-ink-2">
+            Rating and slope make your handicap exact. Leave them blank and we use par and 113 (an average course), and mark scores here as estimates until you add them.
+          </p>
           <Field id={ID.rating} label="Course rating" optional hint={`What a scratch golfer shoots from these tees. Usually near par, like ${par === 36 ? "35.4" : "71.3"}.`} error={errors.rating}>
             {(a) => <NumberInput {...a} decimal value={d.rating} onChange={(e) => set("rating", e.target.value.replace(",", "."))} className="max-w-[10rem]" />}
           </Field>
