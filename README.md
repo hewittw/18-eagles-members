@@ -1,5 +1,141 @@
 # 18 Eagles
 
+## Assignment 5: Live Data System
+
+18 Eagles now has two live pages. **Tour** shows this week's PGA TOUR leaderboard (ESPN) and the Official World Golf
+Ranking (OWGR), with the players you follow first. **Flights** ("Getting there") suggests the airport nearest each of
+your courses and shows live aircraft around the airports you follow (adsb.lol, with adsb.fi as a fallback). Workers on
+Supabase fetch each source on a schedule, save only what changed, and record every run. Supabase Realtime then pushes
+each change to the open pages, so they update without a refresh. Each golfer chooses what they follow, and row-level
+security keeps those choices private.
+
+- **Tour:** https://18-eagles-live.vercel.app/clubhouse/tour
+- **Flights:** https://18-eagles-live.vercel.app/clubhouse/flights
+- Sign in (any email; your follows are private to you), follow a player or an airport, and leave the page open.
+- Diagrams: [`docs/data-flow.md`](docs/data-flow.md) (the chart drawn before code, and the one as built),
+  [`flows.md`](flows.md) (user flows, freshness states, one update traced), also on the site's `/flows` page.
+  Talking points for class: [`docs/talking-points.md`](docs/talking-points.md).
+
+### The system
+![The system as built: ESPN, OWGR, adsb.lol and adsb.fi feed two Edge Functions run by Supabase Cron; they write changed rows to Postgres; Realtime pushes them to the Tour and Flights pages on Vercel; follows go through Server Actions with the Clerk token and RLS.](public/flows/system/flow-2.svg)
+
+### How one change travels
+1. **Source.** A player birdies the 7th. ESPN's leaderboard JSON now says -4, thru 7.
+2. **Cron.** Every 10 seconds, `pg_cron` runs the `poll-tour` job. `pg_net` POSTs to the Edge Function with the
+   `x-worker-secret` header, read from Supabase Vault at that moment.
+3. **Worker.** `poll-tour` asks the database whether the secret is right (`worker_secret_ok`). A round is live, so it
+   fetches ESPN (8 s timeout) and parses it into one event row and one row per player.
+4. **Only what changed.** `diffRows` compares the new rows with the saved ones and returns just his row. The worker
+   upserts that one row with the secret key and adds one `worker_runs` row (`ok`, `rows_changed = 1`).
+5. **Database to Realtime.** The update goes into Postgres's change log (WAL). `tour_leaderboard` is in the
+   `supabase_realtime` publication, so Realtime picks it up.
+6. **Realtime to the browser.** For each open Tour page subscribed with `event_id=eq.<id>`, Realtime checks RLS as
+   that golfer's Clerk token (select grant + select policy) and sends the row over the WebSocket.
+7. **Screen.** `useTourLive` puts the row into React state. The row washes Fairway Tint once (no motion under
+   reduced motion). If you follow him, a polite live region reads his new position and score. The `worker_runs`
+   insert turns the freshness line to "Updated just now".
+
+### Sources and how we stay under their limits
+| Source | What we take | How often | Limits | How we stay under them |
+|---|---|---|---|---|
+| ESPN leaderboard (`site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga`) | this week's event and every player's position, to par, today, thru | every 10 s during a live round (or within 30 min of the first tee time); otherwise at most every 5 min | unpublished; it blocks default User-Agents | one server-side call per tick for every golfer; a real User-Agent; the small leaderboard endpoint (~230 KB, not the ~700 KB scoreboard); idle runs make no call |
+| OWGR (`apiweb.owgr.com/.../getRankings`, top 200) | rank, last week's rank, average points | hourly at :07 | unpublished | 24 calls a day; 0 writes when nothing changed (it updates weekly) |
+| adsb.lol (`api.adsb.lol/v2/point/{lat}/{lon}/15`) | aircraft within 15 nm of an airport | every 30 s, one call per airport | dynamic; it rate-limits Supabase's shared egress (we saw 429s) | only airports golfers follow: the 6 most-followed plus ORD, shared by everyone; two at a time; a 429 never retries in a loop |
+| adsb.fi (`opendata.adsb.fi/api/v2/lat/{lat}/lon/{lon}/dist/15`) | the same data, same field names | only when adsb.lol answers 429 or fails, for that airport | 1 request a second | calls spaced 1.1 s apart within a run |
+| OurAirports | 1,955 airports (code, name, lat/lon) | once, as a seed migration | none (public domain) | it's a table, so the page never calls it |
+
+### Free-tier budget
+- **Edge Function calls (Free: 500,000 a month).** `poll-tour` every 10 s = 8,640 a day; `poll-flights` every 30 s =
+  2,880; `poll-rankings` hourly = 24. That is 11,544 a day, about **346,000 in 30 days (69%)**. The adsb.fi fallback
+  runs inside the same call, so it adds nothing. Idle tour runs still count as calls; they save ESPN calls, not
+  Supabase ones.
+- **Realtime messages (Free: 2 million a month).** Every change counts once for every open page that receives it.
+  - An open Tour page gets 1 `worker_runs` message every 10 s (360 an hour) plus changed leaderboard rows. With no live
+    round, that is about 360 an hour. In a live round, about 120 players × 18 holes = ~2,200 row updates over a ~10 h
+    day, plus position shifts: roughly 500 more an hour, so **~900 an hour** per open page.
+  - An open Flights page following ORD and Carlsbad (CLD, McClellan-Palomar) gets 120 run messages an hour plus flight rows. The live
+    worker changed 40 and 74 rows per run on those two airports (`worker_runs` 54 and 67). That's **~5,000–9,000 an hour**
+    per open page, because moving planes really do cross the 1 nm and 1,000 ft lines.
+  - So 2 million is about 250–400 hours of one Flights page, or ~2,000 hours of a Tour page on a live day. A class of 28
+    each watching for 15 minutes uses ~50,000. The risk is a Flights tab left open all month (~5 million). If that
+    happens: coarsen to 2 nm bands, or pause the `poll-flights` job (below).
+- **Database (Free: 500 MB).** 13 MB used. `worker_runs` grows ~11,500 rows a day and a daily job keeps 2 days;
+  `cron.job_run_details` keeps 1 day. Live tables stay small (one event, ~120 players, 200 rankings, a few hundred planes).
+- Vercel Hobby and Clerk's development instance: unchanged from Assignment 4. No payment method anywhere.
+
+### Freshness rules
+The page reads the latest `worker_runs` row for its source, then gets each new run pushed by Realtime
+(`source=eq.tour`, `eq.flights`, `eq.rankings`), and re-checks every 5 s (`src/lib/live/useWorkerHealth.ts`).
+| State | Rule | The line says |
+|---|---|---|
+| loading | no answer from the database yet | "Checking for the latest…" |
+| fresh | the latest run is ok and the last ok run finished within 3 intervals: **30 s** for the leaderboard, **90 s** for flights, **3 h** for the world ranking | "Updated 8 seconds ago" |
+| stale | no ok run within 3 intervals (the worker stopped, or Cron stopped) | "Last updated 2 minutes ago. Waiting for the next update." |
+| down | the latest run failed (`ok = false`) | "The feed is down. Showing the last update, from 3 minutes ago." |
+An idle tour run (`idle: no live round`) is an ok run: it means the worker is alive and nothing could have changed.
+Down holds until the next ok run. A call without the secret writes no run, so a broken secret shows as stale.
+Each state has its own drawn mark (dot, ring, struck ring, dashed ring), never colour alone; only state changes are announced.
+
+### Security
+- **The Vault secret.** A migration makes `worker_secret` inside the database from `gen_random_bytes(32)`, so no
+  person ever sees it. Cron reads it from `vault.decrypted_secrets` at each tick and sends it as `x-worker-secret`.
+  The function asks `public.worker_secret_ok(p)` (security definer, empty `search_path`, callable only by
+  `service_role`), which answers only true or false. A wrong or missing secret gets 401, and nothing is written.
+- **`verify_jwt = false`, on purpose** (`supabase/config.toml`). Cron isn't a user and has no JWT. Turning verification
+  on would mean storing a Supabase key in the cron job's SQL. The Vault secret replaces that, and it's checked first.
+- **The secret key lives only on Supabase.** Supabase gives it to the Edge Functions on its servers
+  (`SUPABASE_SECRET_KEYS`, or `SUPABASE_SERVICE_ROLE_KEY`). It isn't in the code, the repo, Vercel, or the Next.js
+  app. The app uses the publishable key plus the golfer's Clerk token, in the browser (`src/lib/live/browser.ts`) and
+  in Server Actions (`src/lib/server/follow-actions.ts`).
+- **Follows are private.** `followed_players` and `followed_airports` have RLS on, with four policies requiring
+  `(select auth.jwt())->>'sub' = user_id`. The limits (20 players, 6 airports) are before-insert triggers.
+- **Shared tables are read-only.** `tour_*`, `airport_flights`, `airports` and `worker_runs`: RLS on, one select
+  policy for `authenticated`, `grant select` only. Only the worker's role (`service_role`) can write.
+- **anon gets nothing.** Every new table has `revoke all ... from anon`. Browsers never call ESPN, OWGR, adsb.lol or adsb.fi.
+
+### Tests
+`npm run test:worker` runs the worker's pure code on saved real responses (`supabase/functions/tests/fixtures/`,
+saved 2026-11-02) with Node's test runner. 44 tests pass today.
+| File | What it checks |
+|---|---|
+| `diff.test.ts` | `diffRows`: the same rows twice give 0 upserts and 0 deletes; a first run saves everything; A then B upserts only new and changed rows and deletes the missing one; deletes can be turned off; only listed fields count; composite keys; duplicate keys; database round-trips (`"12.5"` vs `12.5`, `Z` vs `+00:00`) aren't changes |
+| `keys.test.ts` | `playerKey`: lowercase dash-joined keys, accents and letters like ø folded, punctuation collapsed, database length limits; the saved ESPN and OWGR responses join on it; the app's copy and the worker's agree on every saved name |
+| `tour.test.ts` | ESPN parse on the saved Mexico Open final: event fields, 120 rows, the winner (Andrew Novak, -25), ties ("T2"), a cut player, a withdrawal with no score, no event this week, a changed API throws; a live-round shape; OWGR parse (#1 Scottie Scheffler, points rounded) and a changed API throws; the ESPN-OWGR join; the same response twice writes nothing, one change writes one row; adaptive polling: live fetches every tick, idle waits 5 minutes, the first run fetches, the first tee time beats ESPN's midnight date |
+| `flights.test.ts` | adsb.lol parse on two saved O'Hare responses 66 s apart: one row per positioned aircraft, registration when there's no callsign, all four phases, phase boundaries (12,000 ft, ±300 ft/min, ground), coarsening to 1,000 ft and 1 nm, airlines from callsigns; A→A writes nothing, A→B writes exactly the new/changed planes and deletes the ones that left; bad rows skipped; `selectAirports` dedupes, ranks, caps at 6, always ORD. The adsb.fi fallback comes with its own saved response (`adsbfi-ord.json`). |
+
+`npm run test:rls` (Playwright, the Clerk test users) adds one test to Assignment 4's: golfer-b follows a player;
+golfer-a can't see it, can't delete it, and can't insert a follow in golfer-b's name; a signed-out caller gets nothing.
+
+### Operating it
+Read-only checks in the Supabase SQL editor (or the MCP's `execute_sql`):
+```sql
+-- The last runs, newest first: is each worker alive, and what did it change?
+select source, ok, rows_changed, detail, started_at from public.worker_runs order by started_at desc limit 20;
+-- The schedules, and whether each job is on.
+select jobid, jobname, schedule, active from cron.job order by jobid;
+-- Did Cron's own runs succeed? (pg_net's POST is asynchronous, so "succeeded" means the request was queued.)
+select j.jobname, d.status, d.return_message, d.start_time
+from cron.job_run_details d join cron.job j using (jobid) order by d.start_time desc limit 10;
+-- Failures in the last hour.
+select source, count(*) filter (where not ok) as failed, count(*) as runs
+from public.worker_runs where started_at > now() - interval '1 hour' group by source;
+-- Row counts and the database size.
+select (select count(*) from public.tour_leaderboard) as board, (select count(*) from public.airport_flights) as flights,
+       pg_size_pretty(pg_database_size(current_database())) as db;
+```
+Pause and resume a job (a change to the schedule, so do it as a migration or by hand in the dashboard's Cron page):
+```sql
+select cron.alter_job((select jobid from cron.job where jobname = 'poll-flights'), active := false);  -- pause
+select cron.alter_job((select jobid from cron.job where jobname = 'poll-flights'), active := true);   -- resume
+```
+While a job is paused, its page goes **stale** within 3 intervals and says so. Nothing else breaks.
+
+Run it locally: `npx next dev -p 3400`, then `/clubhouse/tour` and `/clubhouse/flights`. The workers run only on Supabase.
+
+---
+
+## Assignment 4: Full Stack App (and earlier)
+
 A personal golf round journal, now with your own account. Play a round hole by hole, keep every card, and watch your
 handicap move, on every device you sign in on. Built for Design, Build, Ship (MPCS 51238, Autumn 2026),
 **Assignment 4: Full Stack App**, extending Assignment 3.
