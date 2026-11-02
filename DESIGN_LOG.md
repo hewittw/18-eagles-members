@@ -343,3 +343,26 @@ Append as decisions happen, newest at the bottom.
   are announced. Unfollow offers Undo, not a confirm.
 - **Realtime deletes can't be filtered**, so the leaderboard channel listens to inserts and updates filtered
   `event_id=eq.<id>` and to deletes unfiltered, then drops any delete for another event (the old record carries the key).
+
+## 2026-11-02 · A5 Flights ("Getting there")
+- **Airports seed:** OurAirports, every large airport with an IATA code plus scheduled medium ones in the golf countries
+  (MRY, SAV, HHH, INV, CLD…): 1,955 rows. The seed travels to Supabase as text through the MCP, so it's a compact
+  `code|icao|name|city|country|lat|lon` block split in SQL, cut into four ~40 KB migrations. After applying, an md5
+  fingerprint of the table matched the generator's, so nothing was mistyped on the way. Rejected: every scheduled
+  medium airport worldwide (255 KB, ~70% more to send for airports no golf trip here uses).
+- **Coarsened rows, no seen_at.** Phase (ground / arriving / departing / passing over, read from height and climb, since
+  adsb.lol has no routes), altitude to 1,000 ft, distance to whole nm. A parked plane is never rewritten. Measured on
+  the live worker: the second call 18 s after the first changed 40 of 68 rows, almost all moving aircraft crossing a
+  1 nm or 1,000 ft line. That is real movement, not noise; if Realtime volume matters later, the next lever is 2 nm bands.
+- **One call per airport, shared.** The worker polls the distinct followed airports (most-followed first, max 6, ORD
+  always), two at a time. A failed airport keeps its rows; a 429 skips the rest of the tick.
+- **adsb.lol rate-limits Supabase's shared egress.** Two of the first five test calls got 429 for every airport while
+  the same URL answered 200 from a laptop. The board handles it (a "held from the last good sweep" frame, "Asked to
+  slow down" on an empty board, the freshness line says down), but at a 30 s cron some ticks will be 429s.
+- **Realtime can't filter DELETE events**, so the page listens to inserts/updates with `airport=in.(…)` and to deletes
+  unfiltered, dropping the ones for airports it doesn't show.
+- **States, from the worker's own run detail:** "ORD 43 (+3 −2 ~5)" tells the page an airport was swept (so empty means
+  "Quiet skies"), failed, or wasn't swept yet ("Waiting for the first sweep"), or isn't among the six this tick.
+- **The board:** four hand-hung count tiles on a Locker Green band (2×2 below 400 px, where four clipped their labels),
+  then arrivals nearest the field first. A pushed row washes Fairway Tint once (none under reduced motion). An
+  airborne plane rounded to 0 ft reads "Under 500 ft", not "0 ft".

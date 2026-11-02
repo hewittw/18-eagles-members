@@ -269,7 +269,8 @@ function AirportBoard({ code, airport, rows, loading, loadFailed, sweep, health,
     return PHASES.map((p) => ({ phase: p, rows: sortRows(p, g.get(p)!) }));
   }, [rows]);
   const held = rows.length > 0 && (health.state === "down" || health.state === "stale" || sweep.kind === "failed");
-  const waiting = rows.length === 0 && (sweep.kind === "waiting" || loading);
+  // No counts to post until a sweep has actually looked (a quiet sweep posts zeros; waiting or failed posts dashes).
+  const waiting = rows.length === 0 && (sweep.kind !== "swept" || loading);
   const titleId = `ap-${code}`;
 
   return (
@@ -285,7 +286,7 @@ function AirportBoard({ code, airport, rows, loading, loadFailed, sweep, health,
           </div>
           <FollowToggle tone="green" label={spokenName(code, airport)} following busy={follows.busy.has(code)} onToggle={() => follows.toggle(code)} />
         </div>
-        <dl className="grid grid-cols-4 gap-1.5 sm:gap-2" aria-label={`${code} right now`}>
+        <dl className="grid grid-cols-2 gap-1.5 min-[400px]:grid-cols-4 sm:gap-2" aria-label={`${code} right now`}>
           {groups.map(({ phase, rows: g }) => (
             <div key={phase} className="tile flex min-w-0 flex-col-reverse items-center justify-end gap-1 rounded-xs px-1 py-2 text-center text-ink">
               <dt className="caps text-[0.72rem] leading-tight text-ink-2 text-balance">{TILE_LABEL[phase]}</dt>
@@ -374,7 +375,9 @@ function PhaseGroup({ code, phase, rows, touched }: { code: string; phase: Phase
   );
 }
 
-const fmtAlt = (r: FlightRow) => (r.phase === "ground" ? "Ground" : r.alt_ft === null ? "–" : `${r.alt_ft.toLocaleString("en-US")} ft`);
+// Altitude is stored to the nearest 1,000 ft, so an airborne 0 means "under 500 ft" (short final, just off the runway).
+const fmtAlt = (r: FlightRow) =>
+  r.phase === "ground" ? "Ground" : r.alt_ft === null ? "–" : r.alt_ft === 0 ? "Under 500 ft" : `${r.alt_ft.toLocaleString("en-US")} ft`;
 const fmtDist = (r: FlightRow) => (r.dist_nm === null ? "" : `${r.dist_nm} nm`);
 
 function FlightLi({ r, flashAt }: { r: FlightRow; flashAt: number | undefined }) {

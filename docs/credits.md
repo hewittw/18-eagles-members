@@ -161,3 +161,5 @@ App screenshots in `public/research/<app>/` are store listing images, used as sc
 |---|---|---|
 | ESPN (`site.web.api.espn.com` golf leaderboard) | The live PGA TOUR leaderboard on `/clubhouse/tour` | Data from ESPN, credited and linked on the page. Called only by our worker, at most every 10 s during a live round and every 5 min otherwise |
 | Official World Golf Ranking (`apiweb.owgr.com`) | The world ranking top 200 on `/clubhouse/tour` | Data from the OWGR, credited and linked on the page. Called by our worker once an hour |
+| adsb.lol (`api.adsb.lol/v2/point`) | Live aircraft within 15 nm of the followed airports on `/clubhouse/flights` | ODbL 1.0, "Data from adsb.lol", credited and linked on the page. Called only by our worker, once per followed airport (max 6) per run |
+| OurAirports (`ourairports.com/data`) | The airport list: codes, names, places, coordinates (seeded by `scripts/gen-airports.mjs`) | Public domain, credited on the page |
