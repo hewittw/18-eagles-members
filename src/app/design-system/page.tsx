@@ -7,7 +7,7 @@ import { Section } from "./ds";
 import { ColorTokens, Principles, SpaceShape, TypeScale } from "./foundations";
 import { ChartSpecs, ClubPickerSpec, CourseSpecs, FairwaySpec, ScoreMarkSpec, ScoreTilesSpec, ScorecardSpec, ShellSpec } from "./golf-gallery";
 import { ApiStateSpecs, WeatherNowSpec, WindSpecs } from "./api-gallery";
-import { ButtonLinkSpec, ButtonSpec, ChoiceSpec, FeedbackSpecs, FieldSpec, MotionDemo, StepperSpec, SurfaceSpecs, ToggleSpec } from "./ui-gallery";
+import { ButtonLinkSpec, ButtonSpec, ChoiceSpec, FeedbackSpecs, FieldSpec, MotionDemo, FollowSpec, StepperSpec, SurfaceSpecs, ToggleSpec } from "./ui-gallery";
 
 export const metadata: Metadata = {
   title: "Design system · The Members' Ledger",
@@ -19,7 +19,7 @@ const TOC: { id: string; n: string; label: string; items?: [string, string][] }[
   { id: "color", n: "II", label: "Color" },
   { id: "type", n: "III", label: "Type" },
   { id: "space", n: "IV", label: "Space, shape, motion" },
-  { id: "controls", n: "V", label: "Controls", items: [["button", "Button"], ["buttonlink", "ButtonLink"], ["field", "Field + inputs"], ["choicegroup", "ChoiceGroup"], ["togglechip", "ToggleChip"], ["stepper", "Stepper"]] },
+  { id: "controls", n: "V", label: "Controls", items: [["button", "Button"], ["buttonlink", "ButtonLink"], ["field", "Field + inputs"], ["choicegroup", "ChoiceGroup"], ["togglechip", "ToggleChip"], ["followtoggle", "FollowToggle"], ["stepper", "Stepper"]] },
   { id: "surfaces", n: "VI", label: "Surfaces and messages", items: [["card", "Card"], ["sectionheading", "SectionHeading"], ["tag", "Tag"], ["callout", "Callout"], ["toast", "Toast"], ["confirmdialog", "ConfirmDialog"], ["skiplink", "SkipLink"]] },
   { id: "course", n: "VII", label: "On the course", items: [["scoremark", "ScoreMark"], ["scoretiles", "ScoreTiles"], ["clubpicker", "ClubPicker"], ["fairwaypicker", "FairwayPicker"], ["scorecardtable", "ScorecardTable"]] },
   { id: "clubhouse", n: "VIII", label: "The clubhouse", items: [["appshell", "AppShell"], ["appnav", "AppNav"], ["pageheader", "PageHeader"], ["wordmark", "Wordmark"], ["bignumber", "BigNumber"], ["coursecard", "CourseCard"], ["holeillustration", "HoleIllustration"], ["teeswatch", "TeeSwatch"]] },
@@ -106,6 +106,7 @@ export default function DesignSystemPage() {
             <FieldSpec />
             <ChoiceSpec />
             <ToggleSpec />
+            <FollowSpec />
             <StepperSpec />
           </Section>
           <Section id="surfaces" numeral="VI" eyebrow="src/components/ui" title="Surfaces and messages" lede="Where things sit, and how the app talks back: quietly, in words, with Undo.">

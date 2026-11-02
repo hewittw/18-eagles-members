@@ -4,6 +4,7 @@ import {
   ArrowIcon, Button, ButtonLink, Callout, Card, ChoiceGroup, ConfirmDialog, DateInput, Field, NumberInput, SectionHeading, Select,
   Stepper, Tag, TextArea, TextInput, Toast, ToggleChip, useToast, VisuallyHidden,
 } from "@/components/ui";
+import { FollowToggle } from "@/components/golf/FollowToggle";
 import { cx } from "@/components/ui/cx";
 import { COURSES } from "./sample-data";
 import { Demo, Spec, State, States } from "./ds";
@@ -231,6 +232,38 @@ export function ToggleSpec() {
           {shown.map((c) => <li key={c.slug} className="font-serif text-[1.02rem]">{c.name}</li>)}
           {!shown.length && <li className="font-serif italic text-ink-2">No course is all of those. Turn one filter off.</li>}
         </ul>
+      </Demo>
+    </Spec>
+  );
+}
+
+/* ─────────────── FollowToggle ─────────────── */
+export function FollowSpec() {
+  const [on, setOn] = useState(false);
+  return (
+    <Spec
+      id="followtoggle"
+      name="FollowToggle"
+      from="golf"
+      summary={<>Follow a tour player or an airport (the two live pages). ToggleChip&rsquo;s grammar in Button&rsquo;s condensed caps: <code>aria-pressed</code>, the word stays &ldquo;Follow&rdquo; and the name is &ldquo;Follow Scottie Scheffler&rdquo;, so the visible label is inside it.</>}
+      use={["Unfollowing offers Undo in a toast, never a confirm.", "At a follow limit it stays focusable (aria-disabled) and points at the reason with describedBy.", "compact hides the word below sm (dense tables); the mark stays 44 px.", "tone=\"green\" on Locker Green bands."]}
+    >
+      <States label="States" cols="wide">
+        <State label="Rest"><FollowToggle label="Scottie Scheffler" following={false} onToggle={noop} /></State>
+        <State label="Hover" force="hover"><FollowToggle label="Scottie Scheffler" following={false} onToggle={noop} /></State>
+        <State label="Focus-visible" force="focus"><FollowToggle label="Scottie Scheffler" following={false} onToggle={noop} /></State>
+        <State label="Following (aria-pressed)"><FollowToggle label="Scottie Scheffler" following onToggle={noop} /></State>
+        <State label="At the limit"><FollowToggle label="SAN" following={false} disabled onToggle={noop} /></State>
+        <State label="Compact (phones)"><FollowToggle label="Tom Kim" following={false} compact onToggle={noop} /></State>
+      </States>
+      <States label="On Locker Green" tone="green" cols="wide">
+        <State label="Rest" tone="green"><FollowToggle tone="green" label="ORD" following={false} onToggle={noop} /></State>
+        <State label="Following" tone="green"><FollowToggle tone="green" label="ORD" following onToggle={noop} /></State>
+        <State label="Focus-visible" tone="green" force="focus"><FollowToggle tone="green" label="ORD" following onToggle={noop} /></State>
+      </States>
+      <Demo title="Try it">
+        <FollowToggle label="Ludvig Åberg" following={on} onToggle={() => setOn((v) => !v)} />
+        <p className="mt-3 text-[0.92rem] text-ink-2" aria-live="polite">{on ? "Following Ludvig Åberg." : "Not following."}</p>
       </Demo>
     </Spec>
   );
