@@ -3,7 +3,7 @@
 // first. Everything arrives through Supabase: a snapshot, then Realtime pushes of only the rows the worker changed.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ApiState, Freshness, PageHeader } from "@/components/golf";
-import { FollowButton } from "@/components/golf/tour/FollowButton";
+import { FollowToggle } from "@/components/golf/FollowToggle";
 import { isOut, OUT_LABEL, OUT_WORDS, sayThru, sayToPar, shortDate, showThru, showToPar, toParTone } from "@/components/golf/tour/format";
 import { Button, cx, Field, SectionHeading, TextInput } from "@/components/ui";
 import { useSupabaseBrowser } from "@/lib/live/browser";
@@ -85,10 +85,9 @@ function EventBand({ live, health }: { live: TourLive; health: WorkerHealth }) {
     body = <ApiState kind="loading" tone="green" shape="line" label="Loading this week's event" className="py-2" />;
   } else if (live.eventLoad === "error" && !e) {
     body = (
-      <div role="status">
-        <h2 className="font-display text-title text-on-green">We couldn&rsquo;t read this week&rsquo;s event</h2>
-        <p className="mt-2 max-w-measure text-paper-3">Something went wrong reading the board. Reload the page in a moment.</p>
-      </div>
+      <ApiState kind="down" tone="green" title="We couldn’t read this week’s event">
+        Reload the page in a moment. Your players and the world ranking are below.
+      </ApiState>
     );
   } else if (!e) {
     body = (
@@ -177,7 +176,7 @@ function YourPlayers({ follows, boardByKey, rankByKey, live }: { follows: Follow
         <ul className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
           {sorted.map((p) => (
             <PlayerCard key={p.key} name={p.name} row={boardByKey.get(p.key) ?? null} rank={rankByKey.get(p.key) ?? null} follows={follows}
-              boardReady={live.boardLoad === "ready"} hasEvent={!!live.event} flashAt={live.touched.get(p.key)} />
+              boardReady={live.boardLoad === "ready"} rankReady={live.rankings.length > 0 || live.rankLoad === "ready"} hasEvent={!!live.event} flashAt={live.touched.get(p.key)} />
           ))}
         </ul>
       )}
@@ -185,13 +184,14 @@ function YourPlayers({ follows, boardByKey, rankByKey, live }: { follows: Follow
   );
 }
 
-function PlayerCard({ name, row, rank, follows, boardReady, hasEvent, flashAt }: { name: string; row: BoardRow | null; rank: RankRow | null; follows: FollowsState; boardReady: boolean; hasEvent: boolean; flashAt?: number }) {
+function PlayerCard({ name, row, rank, follows, boardReady, rankReady, hasEvent, flashAt }: { name: string; row: BoardRow | null; rank: RankRow | null; follows: FollowsState; boardReady: boolean; rankReady: boolean; hasEvent: boolean; flashAt?: number }) {
   const ref = useFlash<HTMLLIElement>(flashAt);
   const key = playerKey(name);
   const display = row?.name ?? rank?.name ?? name;
   const out = row && isOut(row.status);
   const pos = row ? (out ? OUT_LABEL[row.status!] : row.position ?? "–") : "–";
-  const worldRank = rank ? `World No. ${rank.rank}` : "Outside the world top 200";
+  // Only claim "outside the top 200" once the ranking has actually loaded (not while it loads or if it failed).
+  const worldRank = rank ? `World No. ${rank.rank}` : rankReady ? "Outside the world top 200" : null;
 
   return (
     <li ref={ref} className="grid min-w-0 gap-3 rounded-xl border border-rule bg-paper-2 p-4 shadow-card">
@@ -200,7 +200,7 @@ function PlayerCard({ name, row, rank, follows, boardReady, hasEvent, flashAt }:
           <h3 className="font-serif text-[1.15rem] font-bold leading-snug text-balance text-ink">{display}</h3>
           <p className="text-[0.88rem] leading-snug text-ink-2">{[row?.country ?? rank?.country, worldRank].filter(Boolean).join(" · ")}</p>
         </div>
-        <FollowButton name={display} following onToggle={() => follows.toggle(display)} busy={follows.busy.has(key)} compact />
+        <FollowToggle label={display} following onToggle={() => follows.toggle(display)} busy={follows.busy.has(key)} compact />
       </div>
       <div className="flex min-w-0 items-center gap-3 border-t border-rule pt-3">
         <p className={cx("tile grid min-h-12 min-w-12 shrink-0 place-items-center rounded-xs px-2 font-numeral text-[1.2rem] font-semibold leading-none tabular-nums", out || !row ? "text-ink-2" : "text-ink")}>
@@ -304,7 +304,7 @@ function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { liv
 }
 
 function Th({ children, className }: { children: ReactNode; className?: string }) {
-  return <th scope="col" className={cx("caps px-2 py-3 text-[0.74rem] font-semibold text-ink-2", className)}>{children}</th>;
+  return <th scope="col" className={cx("caps px-2 py-3 text-label font-semibold text-ink-2", className)}>{children}</th>;
 }
 
 function BoardTr({ r, cutLine, follows, flashAt, rank }: { r: BoardRow; cutLine: boolean; follows: FollowsState; flashAt?: number; rank?: number }) {
@@ -316,7 +316,7 @@ function BoardTr({ r, cutLine, follows, flashAt, rank }: { r: BoardRow; cutLine:
       {cutLine && (
         <tr>
           <td colSpan={6} className="border-y border-rule-strong bg-paper-3 px-4 py-2">
-            <span className="caps text-[0.74rem] text-ink-2">Missed the cut · withdrew</span>
+            <span className="caps text-label text-ink-2">Missed the cut · withdrew</span>
           </td>
         </tr>
       )}
@@ -350,7 +350,7 @@ function BoardTr({ r, cutLine, follows, flashAt, rank }: { r: BoardRow; cutLine:
           <span className="sr-only">{sayThru(r.thru, r.status)}</span>
         </td>
         <td className="py-1.5 pl-2 pr-3 text-right sm:pr-4">
-          <FollowButton name={r.name} following={following} onToggle={() => follows.toggle(r.name)} busy={follows.busy.has(r.player_key)} compact />
+          <FollowToggle label={r.name} following={following} onToggle={() => follows.toggle(r.name)} busy={follows.busy.has(r.player_key)} compact />
         </td>
       </tr>
     </>
@@ -427,7 +427,7 @@ function RankTr({ r, follows, flashAt }: { r: RankRow; follows: FollowsState; fl
       </th>
       <td className="hidden px-2 py-2 text-right font-numeral text-[1.05rem] font-medium tabular-nums text-ink sm:table-cell">{pts == null ? "–" : pts.toFixed(2)}</td>
       <td className="py-1.5 pl-2 pr-3 text-right sm:pr-4">
-        <FollowButton name={r.name} following={following} onToggle={() => follows.toggle(r.name)} busy={follows.busy.has(r.player_key)} compact />
+        <FollowToggle label={r.name} following={following} onToggle={() => follows.toggle(r.name)} busy={follows.busy.has(r.player_key)} compact />
       </td>
     </tr>
   );
@@ -435,7 +435,7 @@ function RankTr({ r, follows, flashAt }: { r: RankRow; follows: FollowsState; fl
 
 /** Up: a Fairway triangle and the places gained. Down: an ink triangle pointing down. Words for screen readers. */
 function Movement({ rank, prev }: { rank: number; prev: number | null }) {
-  if (prev == null) return <span className="caps text-[0.74rem] text-ink-2">New</span>;
+  if (prev == null) return <span className="caps text-label text-ink-2">New</span>;
   const d = prev - rank;
   if (d === 0) return <span className="font-numeral text-ink-2"><span aria-hidden="true">–</span><span className="sr-only">No change</span></span>;
   const up = d > 0;

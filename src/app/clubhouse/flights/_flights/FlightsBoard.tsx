@@ -170,7 +170,7 @@ function CourseAirport({ course, home, near, follows }: { course: Course; home: 
             <span className="sr-only">{course.shortName || course.name}: </span>
             Fly into <span className="font-numeral text-[1.1rem] font-semibold tracking-wide text-ink">{near.airport.code}</span>,{" "}
             <span className="font-numeral tabular-nums text-ink">{Math.max(1, Math.round(near.miles))} mi</span>
-            <span className="block truncate text-[0.9rem]">{near.airport.name}</span>
+            <span className="block text-[0.9rem] text-pretty">{near.airport.name}</span>
           </p>
         )}
         {near.state === "none" && <p className="mt-0.5 text-[0.95rem] text-ink-2">No airport with airline service within a few hundred miles.</p>}
@@ -232,7 +232,7 @@ function YourAirports({ follows, live, info, health }: { follows: AirportFollows
           Follow the airport near one of your courses above, or find one below. Chicago O&apos;Hare is always watched, if you want to see a busy board right now.
         </ApiState>
       ) : (
-        <div className="grid gap-8 xl:grid-cols-2 xl:items-start [&>*]:min-w-0">
+        <div className="grid gap-8 lg:grid-cols-2 lg:items-start [&>*]:min-w-0">
           {list.map((f) => (
             <AirportBoard
               key={f.code}
@@ -287,7 +287,7 @@ function AirportBoard({ code, airport, rows, loading, loadFailed, sweep, health,
           </div>
           <FollowToggle tone="green" label={spokenName(code, airport)} following busy={follows.busy.has(code)} onToggle={() => follows.toggle(code)} />
         </div>
-        <dl className="grid grid-cols-2 gap-1.5 min-[400px]:grid-cols-4 sm:gap-2" aria-label={`${code} right now`}>
+        <dl className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2" aria-label={`${code} right now`}>
           {groups.map(({ phase, rows: g }) => (
             <div key={phase} className="tile flex min-w-0 flex-col-reverse items-center justify-end gap-1 rounded-xs px-1 py-2 text-center text-ink">
               <dt className="caps text-label leading-tight text-ink-2 text-balance">{TILE_LABEL[phase]}</dt>
