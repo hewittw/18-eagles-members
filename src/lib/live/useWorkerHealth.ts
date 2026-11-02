@@ -3,10 +3,11 @@
 // re-evaluates on the shared 5 s clock (useNow) so "fresh" turns "stale" on its own when runs stop arriving.
 import { useEffect, useState } from "react";
 import { useSupabaseBrowser } from "./browser";
+import { useLivePause } from "./useLivePause";
 import { tickNow, useNow } from "./useNow";
 
 export type WorkerSource = "tour" | "rankings" | "flights";
-export type WorkerHealthState = "loading" | "fresh" | "stale" | "down";
+export type WorkerHealthState = "loading" | "fresh" | "stale" | "down" | "paused";
 
 /** One row of public.worker_runs. */
 export type WorkerRun = {
@@ -20,12 +21,15 @@ export type WorkerRun = {
 };
 
 export type WorkerHealth = {
-  /** loading: no answer yet. fresh: the last run worked, within 3 intervals. stale: no ok run within 3 intervals. down: the latest run failed. */
+  /** loading: no answer yet. fresh: the last run worked, within 3 intervals. stale: no ok run within 3 intervals.
+   *  down: the latest run failed. paused: not listening (hidden or idle tab, see useLivePause); the last data stays. */
   state: WorkerHealthState;
   /** When the last successful run finished (the data on screen is at least this fresh), or null if none is known. */
   lastOkAt: Date | null;
   /** The latest run, ok or not. */
   lastRun: WorkerRun | null;
+  /** The latest successful run (its detail says whether the source was actually fetched, e.g. "idle: …"). */
+  lastOk: WorkerRun | null;
 };
 
 const COLUMNS = "id, source, started_at, finished_at, ok, rows_changed, detail";
@@ -39,15 +43,17 @@ const doneAt = (r: WorkerRun) => Date.parse(r.finished_at ?? r.started_at);
 /**
  * useWorkerHealth(source, everySec) → { state, lastOkAt, lastRun }
  * `everySec` is the worker's schedule (tour 10, flights 30, rankings 3600). Subscribes before it fetches the first
- * snapshot, so no run falls in the gap; refetches on every (re)subscribe; unsubscribes on unmount.
+ * snapshot, so no run falls in the gap; refetches on every (re)subscribe; unsubscribes on unmount and while the
+ * page is paused (useLivePause), and subscribes again (then refetches) on resume.
  */
 export function useWorkerHealth(source: WorkerSource, everySec: number): WorkerHealth {
   const db = useSupabaseBrowser();
   const [snap, setSnap] = useState<Snap>({ key: "", lastRun: null, lastOk: null, loaded: false });
   const now = useNow();
+  const { paused } = useLivePause();
 
   useEffect(() => {
-    if (!db) return;
+    if (!db || paused) return;
     let live = true;
     const merge = (lastRun: WorkerRun | null, lastOk: WorkerRun | null) =>
       setSnap((s) => {
@@ -81,7 +87,7 @@ export function useWorkerHealth(source: WorkerSource, everySec: number): WorkerH
       live = false;
       void db.removeChannel(channel);
     };
-  }, [db, source]);
+  }, [db, source, paused]);
 
   const current = snap.key === source ? snap : null;
   const lastRun = current?.lastRun ?? null;
@@ -89,9 +95,10 @@ export function useWorkerHealth(source: WorkerSource, everySec: number): WorkerH
   const lastOkAt = lastOk ? new Date(doneAt(lastOk)) : null;
   let state: WorkerHealthState;
   // now is 0 until the clock starts (server render, hydration): too early to call anything fresh or stale.
-  if (!current?.loaded || !now) state = "loading";
+  if (paused) state = "paused";
+  else if (!current?.loaded || !now) state = "loading";
   else if (lastRun && !lastRun.ok) state = "down";
   else if (lastOkAt && now - lastOkAt.getTime() <= 3 * everySec * 1000) state = "fresh";
   else state = "stale";
-  return { state, lastOkAt, lastRun };
+  return { state, lastOkAt, lastRun, lastOk };
 }

@@ -1,6 +1,6 @@
 "use client";
 // The live pages' freshness line: "Updated 8 seconds ago", or plainly stale, or plainly down (the last good data stays
-// on screen, marked). Fed by useWorkerHealth (src/lib/live/useWorkerHealth.ts). The visible time ticks every 5 s, but
+// on screen, marked), or paused (nobody was looking: src/lib/live/useLivePause.ts). Fed by useWorkerHealth (src/lib/live/useWorkerHealth.ts). The visible time ticks every 5 s, but
 // only a change of state is announced (a polite live region), so a screen reader isn't read the clock.
 import { useNow } from "@/lib/live/useNow";
 import type { WorkerHealth } from "@/lib/live/useWorkerHealth";
@@ -24,12 +24,14 @@ export function Freshness({ health, what = "The live data", tone = "paper", clas
   const line =
     state === "loading" ? "Checking for the latest…"
     : state === "fresh" ? `Updated ${ago}`
+    : state === "paused" ? (ago ? `Live updates paused. Last updated ${ago}.` : "Live updates paused.")
     : state === "stale" ? (ago ? `Last updated ${ago}. Waiting for the next update.` : "No updates yet. Waiting for the first one.")
     : ago ? `The feed is down. Showing the last update, from ${ago}.` : "The feed is down. We'll show it as soon as it's back.";
 
   const announce =
     state === "loading" ? ""
     : state === "fresh" ? `${what} is live.`
+    : state === "paused" ? `${what} is paused.`
     : state === "stale" ? `${what} hasn't updated recently.`
     : `${what} is down. Showing the last update.`;
 
@@ -47,7 +49,8 @@ export function Freshness({ health, what = "The live data", tone = "paper", clas
   );
 }
 
-/** fresh: a filled pin dot. stale: an open ring. down: a ring with a stroke through it. loading: a dashed ring. */
+/** fresh: a filled pin dot. stale: an open ring. down: a ring with a stroke through it. loading: a dashed ring.
+ *  paused: two upright bars (the pause sign). */
 function Mark({ state, className }: { state: WorkerHealth["state"]; className?: string }) {
   return (
     <svg viewBox="0 0 16 16" className={cx("size-3.5 shrink-0", className)} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
@@ -55,6 +58,7 @@ function Mark({ state, className }: { state: WorkerHealth["state"]; className?: 
       {state === "stale" && <circle cx="8" cy="8" r="5" />}
       {state === "down" && (<><circle cx="8" cy="8" r="5.5" /><path d="M4.2 11.8 L11.8 4.2" /></>)}
       {state === "loading" && <circle cx="8" cy="8" r="5" strokeDasharray="2.2 2.4" />}
+      {state === "paused" && <path d="M5.75 3.5 V12.5 M10.25 3.5 V12.5" strokeWidth="2.2" />}
     </svg>
   );
 }

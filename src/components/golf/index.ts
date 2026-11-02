@@ -21,4 +21,5 @@ export { WeatherGlyph, WindArrow, WeatherNow, ForecastStrip, TeeSheetForecast, t
 export { ApiState, ApiCredit, type ApiStateProps, type ApiCreditProps } from "./ApiState";
 export { CourseHits, type CourseHitsProps } from "./CourseHits";
 export { Freshness, since, type FreshnessProps } from "./Freshness";
+export { LivePauseNotice } from "./LivePauseNotice";
 export { FollowToggle, type FollowToggleProps } from "./FollowToggle";

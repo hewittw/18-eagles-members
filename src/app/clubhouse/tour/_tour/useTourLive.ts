@@ -1,9 +1,11 @@
 "use client";
 // The Tour page's live data: this week's event, its leaderboard, and the world ranking. For each, the page subscribes
 // to Realtime FIRST and fetches the snapshot when the channel says SUBSCRIBED (again after every reconnect), so no
-// change falls in the gap. The browser reads Supabase only (never ESPN or OWGR): the worker is the one caller.
+// change falls in the gap. While the page is paused (useLivePause: hidden or idle tab) every channel is removed;
+// resuming subscribes again and refetches, in the same order. The browser reads Supabase only (never ESPN or OWGR): the worker is the one caller.
 import type { RealtimePostgresChangesPayload, SupabaseClient } from "@supabase/supabase-js";
 import { useEffect, useRef, useState } from "react";
+import { useLivePause } from "@/lib/live/useLivePause";
 
 export type TourEvent = {
   id: string;
@@ -73,6 +75,7 @@ export function useTourLive(db: SupabaseClient | null): TourLive {
   const [rankLoad, setRankLoad] = useState<Load>("loading");
   const [touched, setTouched] = useState<Map<string, number>>(() => new Map());
   const [lastChange, setLastChange] = useState<TourLive["lastChange"]>(null);
+  const { paused } = useLivePause();
   const boardRef = useRef(boardMap);
   useEffect(() => { boardRef.current = boardMap; }, [boardMap]);
 
@@ -88,7 +91,7 @@ export function useTourLive(db: SupabaseClient | null): TourLive {
 
   // 1. The event. The table holds one event (the worker replaces last week's), but read the newest to be safe.
   useEffect(() => {
-    if (!db) return;
+    if (!db || paused) return;
     let live = true;
     const fetchEvent = async () => {
       const { data, error } = await db.from("tour_events").select(EVENT_COLS).order("starts_at", { ascending: false, nullsFirst: false }).limit(1).maybeSingle<TourEvent>();
@@ -111,13 +114,13 @@ export function useTourLive(db: SupabaseClient | null): TourLive {
       })
       .subscribe((s) => { if (s === "SUBSCRIBED" || s === "CHANNEL_ERROR" || s === "TIMED_OUT") void fetchEvent(); });
     return () => { live = false; void db.removeChannel(ch); };
-  }, [db]);
+  }, [db, paused]);
 
   // 2. The leaderboard for that event: inserts/updates filtered to it; deletes can't be filtered by Realtime, so
   //    they're checked against the event here (the old record carries the primary key: event_id, player_key).
   const eventId = event?.id ?? null;
   useEffect(() => {
-    if (!db || !eventId) return;
+    if (!db || !eventId || paused) return;
     let live = true;
     const fetchBoard = async () => {
       const { data, error } = await db.from("tour_leaderboard").select(BOARD_COLS).eq("event_id", eventId).order("sort_order", { ascending: true }).limit(400).returns<BoardRow[]>();
@@ -148,11 +151,11 @@ export function useTourLive(db: SupabaseClient | null): TourLive {
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "tour_leaderboard" }, onRow)
       .subscribe((s) => { if (s === "SUBSCRIBED" || s === "CHANNEL_ERROR" || s === "TIMED_OUT") void fetchBoard(); });
     return () => { live = false; void db.removeChannel(ch); };
-  }, [db, eventId]);
+  }, [db, eventId, paused]);
 
   // 3. The world ranking (top 200).
   useEffect(() => {
-    if (!db) return;
+    if (!db || paused) return;
     let live = true;
     const fetchRanks = async () => {
       const { data, error } = await db.from("tour_rankings").select(RANK_COLS).order("rank", { ascending: true }).limit(200).returns<RankRow[]>();
@@ -175,7 +178,7 @@ export function useTourLive(db: SupabaseClient | null): TourLive {
       })
       .subscribe((s) => { if (s === "SUBSCRIBED" || s === "CHANNEL_ERROR" || s === "TIMED_OUT") void fetchRanks(); });
     return () => { live = false; void db.removeChannel(ch); };
-  }, [db]);
+  }, [db, paused]);
 
   // Rows of another (older) event never show, and with no event there's no board to wait for.
   const board = [...boardMap.values()].filter((r) => r.event_id === eventId).sort((a, b) => (a.sort_order ?? 9999) - (b.sort_order ?? 9999) || a.name.localeCompare(b.name));

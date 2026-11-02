@@ -4,7 +4,7 @@
 // Realtime pushes of only the rows the poll-flights worker changed. The browser never calls adsb.lol.
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ApiState, Freshness, PageHeader } from "@/components/golf";
+import { ApiState, Freshness, LivePauseNotice, PageHeader } from "@/components/golf";
 import { FollowToggle } from "@/components/golf/FollowToggle";
 import { PHASE_LABEL, PhaseMark, type Phase } from "@/components/golf/flights/PhaseMark";
 import { Button, cx, Field, SectionHeading, Tag, TextInput } from "@/components/ui";
@@ -64,6 +64,8 @@ export function FlightsBoard() {
         <a className="link" href="https://ourairports.com/data/" target="_blank" rel="noreferrer">OurAirports<span className="sr-only"> (opens in a new tab)</span></a>{" "}
         (public domain). Positions only: arriving and departing are read from height and climb near the field, not from a timetable.
       </p>
+
+      <LivePauseNotice what="the flights board" />
     </Page>
   );
 }

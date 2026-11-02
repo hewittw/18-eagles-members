@@ -2,10 +2,12 @@
 // The live board for the golfer's airports. Subscribes to Realtime FIRST and reads the snapshot when the channel says
 // SUBSCRIBED (again after every reconnect), so no change falls in the gap. Inserts and updates are filtered to the
 // followed airports (`airport=in.(…)`); Realtime can't filter deletes, so those are checked here against the board.
-// The channel is rebuilt whenever the followed set changes. The browser reads Supabase only, never adsb.lol.
+// The channel is rebuilt whenever the followed set changes, removed while the page is paused (useLivePause), and
+// rebuilt (subscribe, then refetch) on resume. The browser reads Supabase only, never adsb.lol.
 import type { RealtimePostgresChangesPayload, SupabaseClient } from "@supabase/supabase-js";
 import { useEffect, useMemo, useState } from "react";
 import type { Phase } from "@/components/golf/flights/PhaseMark";
+import { useLivePause } from "@/lib/live/useLivePause";
 
 export type FlightRow = {
   airport: string;
@@ -36,9 +38,10 @@ export function useFlightsLive(db: SupabaseClient | null, codes: readonly string
   const [rows, setRows] = useState<Map<string, FlightRow>>(() => new Map());
   const [loadedFor, setLoadedFor] = useState<{ key: string; ok: boolean } | null>(null);
   const [touched, setTouched] = useState<Map<string, number>>(() => new Map());
+  const { paused } = useLivePause();
 
   useEffect(() => {
-    if (!db || codesKey === null) return;
+    if (!db || codesKey === null || paused) return;
     const set = new Set(codesKey ? codesKey.split(",") : []);
     if (!set.size) return;
 
@@ -83,7 +86,7 @@ export function useFlightsLive(db: SupabaseClient | null, codes: readonly string
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "airport_flights" }, onRow)
       .subscribe((s) => { if (s === "SUBSCRIBED" || s === "CHANNEL_ERROR" || s === "TIMED_OUT") void fetchSnapshot(); });
     return () => { live = false; void db.removeChannel(ch); };
-  }, [db, codesKey]);
+  }, [db, codesKey, paused]);
 
   // Boards no longer followed drop out at once; the rest stay on screen while a new snapshot loads.
   const byAirport = useMemo(() => {

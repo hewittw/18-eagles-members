@@ -2,7 +2,7 @@
 // /clubhouse/tour: this week's PGA TOUR event (ESPN) and the world ranking (OWGR), with the golfer's own players
 // first. Everything arrives through Supabase: a snapshot, then Realtime pushes of only the rows the worker changed.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ApiState, Freshness, PageHeader } from "@/components/golf";
+import { ApiState, Freshness, LivePauseNotice, PageHeader } from "@/components/golf";
 import { FollowToggle } from "@/components/golf/FollowToggle";
 import { isOut, OUT_LABEL, OUT_WORDS, sayThru, sayToPar, shortDate, showThru, showToPar, toParTone } from "@/components/golf/tour/format";
 import { Button, cx, Field, SectionHeading, TextInput } from "@/components/ui";
@@ -63,6 +63,8 @@ export function TourBoard() {
         <a className="link" href="https://www.owgr.com/" target="_blank" rel="noreferrer">Official World Golf Ranking<span className="sr-only"> (opens in a new tab)</span></a>.
         Our server checks both on a schedule and saves only what changed; your browser never calls them.
       </p>
+
+      <LivePauseNotice what="the leaderboard and the ranking" />
     </Page>
   );
 }
