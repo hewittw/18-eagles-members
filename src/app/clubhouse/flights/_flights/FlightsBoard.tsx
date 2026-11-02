@@ -92,7 +92,7 @@ function useAirportInfo(db: ReturnType<typeof useSupabaseBrowser>, codes: string
 const placeOf = (a: Airport | undefined) => (a ? [a.city, a.country].filter(Boolean).join(", ") : "");
 const spokenName = (code: string, a?: Airport) => (a ? `${code}, ${a.name}` : code);
 
-// ───────── I. Near your courses ─────────
+// ───────── Near your courses ─────────
 
 type Nearest = { state: "loading" } | { state: "ok"; airport: Airport; miles: number } | { state: "none" } | { state: "error" };
 
@@ -133,7 +133,7 @@ function NearYourCourses({ follows }: { follows: AirportFollows }) {
   const shown = all ? courses : courses.slice(0, PREVIEW);
   return (
     <section aria-labelledby="near-h" className="grid gap-5">
-      <SectionHeading id="near-h" numeral="I" eyebrow="Fly in for the round" title="Near your courses" lede="The closest airport with airline service to each course you call home or have played." />
+      <SectionHeading id="near-h" eyebrow="Fly in for the round" title="Near your courses" lede="The closest airport with airline service to each course you call home or have played." />
       {!ready ? (
         <ApiState kind="loading" shape="list" label="Finding the airports near your courses" />
       ) : courses.length === 0 ? (
@@ -193,7 +193,7 @@ function CourseAirport({ course, home, near, follows }: { course: Course; home: 
   );
 }
 
-// ───────── II. Your airports ─────────
+// ───────── Your airports ─────────
 
 /** What the latest worker run said about one airport, read from its detail ("ORD 43 (+3 −2 ~5), SAN failed: …"). */
 type Sweep =
@@ -218,7 +218,6 @@ function YourAirports({ follows, live, info, health }: { follows: AirportFollows
     <section aria-labelledby="yours-h" className="grid gap-6">
       <SectionHeading
         id="yours-h"
-        numeral="II"
         eyebrow="The board"
         title="Your airports"
         lede={list && list.length ? `Watching ${list.length} of ${MAX_AIRPORTS}. Arrivals first, nearest the field at the top.` : undefined}
@@ -416,7 +415,7 @@ function useFlash<T extends HTMLElement>(at: number | undefined) {
   return ref;
 }
 
-// ───────── III. Add an airport ─────────
+// ───────── Add an airport ─────────
 
 type Search = { q: string; state: "idle" | "loading" | "done" | "error"; results: Airport[] };
 
@@ -444,7 +443,7 @@ function AddAirport({ follows }: { follows: AirportFollows }) {
   const view = active ? search : { q: "", state: "idle" as const, results: [] };
   return (
     <section aria-labelledby="add-h" className="grid gap-5">
-      <SectionHeading id="add-h" numeral="III" eyebrow="Anywhere with airline service" title="Add an airport" lede={`Follow up to ${MAX_AIRPORTS}. ${count ? `You're watching ${count}.` : ""}`} />
+      <SectionHeading id="add-h" eyebrow="Anywhere with airline service" title="Add an airport" lede={`Follow up to ${MAX_AIRPORTS}. ${count ? `You're watching ${count}.` : ""}`} />
       <div className="max-w-xl">
         <Field label="Find an airport" hint="A code, a city, or a name: SAN, Monterey, Heathrow.">
           {(a) => (
