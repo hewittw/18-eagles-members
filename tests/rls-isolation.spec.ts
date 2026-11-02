@@ -124,3 +124,55 @@ test("golfer-a can't read, delete, or forge golfer-b's followed players", async 
     await b.page.context().close();
   }
 });
+
+// ───────── A5: followed airports ─────────
+// The same four checks for followed_airports. Its airport column references public.airports, so the test can't
+// invent a code: it uses a real one golfer-b doesn't already follow, and removes it again at the end.
+test("golfer-a can't read, delete, or forge golfer-b's followed airports", async ({ browser, request }) => {
+  const b = await golferToken(browser, "golfer-b");
+  const before = await request.get(rest("followed_airports?select=airport"), { headers: headers(b.token) });
+  const bHas = new Set(((await before.json()) as { airport: string }[]).map((r) => r.airport));
+  const [code, forgedCode] = ["INV", "BQK", "SAV", "MRY", "HHH", "CHS"].filter((c) => !bHas.has(c));
+  expect(forgedCode, "two test airports golfer-b doesn't follow").toBeTruthy();
+
+  // 1. golfer-b follows an airport (user_id is filled in by the database from b's token).
+  const add = await request.post(rest("followed_airports"), {
+    headers: headers(b.token, { "Content-Type": "application/json", Prefer: "return=minimal" }),
+    data: { airport: code },
+  });
+  expect(add.status(), "golfer-b should be able to follow an airport").toBe(201);
+
+  const a = await golferToken(browser, "golfer-a");
+  try {
+    // 2. golfer-a reads everything RLS allows: only golfer-a's own rows, never b's.
+    const all = await request.get(rest("followed_airports?select=airport,user_id"), { headers: headers(a.token) });
+    expect(all.ok()).toBe(true);
+    const rows = (await all.json()) as { airport: string; user_id: string }[];
+    expect(rows.filter((r) => r.user_id === b.userId), "golfer-a must NOT see golfer-b's airports").toEqual([]);
+    expect(rows.every((r) => r.user_id === a.userId), "every airport golfer-a sees is golfer-a's own").toBe(true);
+
+    // 3. golfer-a tries to delete b's follow: RLS hides the row, so nothing of b's is deleted.
+    const del = await request.delete(rest(`followed_airports?airport=eq.${code}&user_id=eq.${b.userId}`), { headers: headers(a.token, { Prefer: "return=representation" }) });
+    expect(await del.json(), "golfer-a's delete must remove nothing").toEqual([]);
+
+    // 4. golfer-a tries to insert a follow in golfer-b's name: the insert policy refuses it.
+    const forged = await request.post(rest("followed_airports"), {
+      headers: headers(a.token, { "Content-Type": "application/json", Prefer: "return=minimal" }),
+      data: { user_id: b.userId, airport: forgedCode },
+    });
+    expect(forged.ok(), `forged insert returned ${forged.status()}`).toBe(false);
+
+    // 5. golfer-b still has the follow they made, and nothing forged.
+    const mine = await request.get(rest(`followed_airports?select=airport&airport=in.(${code},${forgedCode})`), { headers: headers(b.token) });
+    expect(await mine.json(), "golfer-b's follow survives, and the forged one doesn't exist").toEqual([{ airport: code }]);
+
+    // 6. Signed out (publishable key, no token): nothing at all.
+    const anon = await request.get(rest("followed_airports?select=airport"), { headers: headers() });
+    expect(anon.ok() ? await anon.json() : [], `anon read returned ${anon.status()}`).toEqual([]);
+  } finally {
+    // Clean up with b's own token: only the rows this test made.
+    await request.delete(rest(`followed_airports?airport=in.(${code},${forgedCode})`), { headers: headers(b.token) });
+    await a.page.context().close();
+    await b.page.context().close();
+  }
+});
