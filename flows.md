@@ -92,3 +92,118 @@ flowchart TD
 - **Validation:** putts ≤ score; shot count vs score reconciled; fairway hidden on par 3s; scores 1–15; dates not in the future;
   index −10.0 to 54.0; slope 55–155; rating within reach of par. Every error sits next to its field and says what to do.
 - **Destructive:** delete a round → Undo. Erase everything (Locker) → the one confirmation dialog.
+
+## Assignment 5: the live system
+
+Two live pages under `/clubhouse`, fed by workers on Supabase: **Tour** (the PGA TOUR leaderboard from ESPN and the
+world ranking from OWGR) and **Flights** ("Getting there": aircraft around the airports a golfer follows, from adsb.lol,
+with adsb.fi as the fallback). Each golfer picks what they follow, and the page updates without a refresh. The
+backend chart, as planned and as built, is in `docs/data-flow.md`.
+
+### 4 · Follow a tour player and watch them live
+```mermaid
+flowchart TD
+  T0([Open /clubhouse/tour]) --> T1["Checking for the latest…<br/>event band · Your players · leaderboard · world ranking"]
+  T1 --> T2{"An event this week?"}
+  T2 -- "No" --> T3["No tournament this week<br/>the leaderboard goes up when ESPN posts the next field"]
+  T2 -- "Yes" --> T4{"Following anyone yet?"}
+  T4 -- "No" --> T5["Nobody followed yet<br/>Press Follow beside any player"]
+  T5 --> T6["Find a player<br/>one search over the leaderboard and the world ranking"]
+  T4 -- "Yes" --> T9
+  T6 --> T7["Press Follow<br/>the button flips at once"]
+  T7 --> V1{"Saved?<br/>Server Action · Clerk token · RLS · limit trigger"}
+  V1 -- "The 21st player" --> E1["Toast: You're following 20 players, the most we keep.<br/>Unfollow one to add another. The button flips back."]
+  V1 -- "Network or database error" --> E2["Toast: Couldn't save that. Try again in a moment."]
+  V1 -- "Yes" --> T9["Your players, first<br/>position · to par · today · thru · world rank"]
+  T9 --> T10{"In this week's field?"}
+  T10 -- "No" --> T11["Not in this week's field<br/>world rank still shown"]
+  T10 -- "Yes" --> T12["A score is posted<br/>the row washes Fairway Tint once<br/>a screen reader hears the new position and score"]
+  T12 --> F1{"The freshness line"}
+  F1 -- "fresh" --> F2["Updated 8 seconds ago"]
+  F1 -- "stale" --> F3["Last updated 2 minutes ago.<br/>Waiting for the next update."]
+  F1 -- "down" --> F4["The feed is down.<br/>Showing the last update, from 3 minutes ago."]
+  T9 -- "Unfollow" --> U1["Removed · Undo"]
+```
+
+### 5 · Follow an airport near my course and watch traffic
+```mermaid
+flowchart TD
+  A0([Open /clubhouse/flights]) --> A1["Near your courses<br/>Torrey Pines: Fly into SAN, 14 mi"]
+  A1 -- "No course has a map pin" --> A2["None of your courses has a location yet<br/>Browse the courses"]
+  A0 --> A3{"Watching any airports?"}
+  A3 -- "No" --> A4["You're not watching any airports yet<br/>Follow ORD: Chicago is always watched"]
+  A0 --> A5["Add an airport<br/>search by code, city or name"]
+  A1 -- "Follow SAN" --> V1
+  A4 -- "Follow ORD" --> V1
+  A5 -- "Follow" --> V1{"Saved?<br/>Server Action · Clerk token · RLS · limit trigger"}
+  V1 -- "The 7th airport" --> E1["Toast: You're following 6 airports, the most we watch.<br/>Unfollow one to add another."]
+  V1 -- "Unknown code" --> E2["We don't have that airport.<br/>Try a major airport's code, like ORD or SAN."]
+  V1 -- "Yes" --> B1["SAN's board: Waiting for the first check.<br/>A new airport fills in within 30 seconds."]
+  B1 --> B2{"SAN in the last sweep?"}
+  B2 -- "Planes nearby" --> B3["Arriving · departing · on the ground · passing over<br/>arrivals nearest the field first"]
+  B2 -- "Nothing within 15 nm" --> B4["Quiet skies"]
+  B2 -- "Both sources failed" --> B5["SAN didn't answer, or Asked to slow down<br/>the last good board stays, marked"]
+  B2 -- "Not among the 6 most followed" --> B6["Not watched right now<br/>it joins when one drops off"]
+  B3 --> B7["A plane crosses a 1 nm or 1,000 ft line<br/>its row updates and washes once<br/>a plane that left drops off the board"]
+  B7 --> B2
+```
+
+### 6 · Freshness: what each state looks like
+```mermaid
+stateDiagram-v2
+  [*] --> loading
+  loading: loading · dashed ring · Checking for the latest…
+  fresh: fresh · filled dot · Updated 8 seconds ago
+  stale: stale · open ring · Last updated 2 minutes ago. Waiting for the next update.
+  down: down · struck ring · The feed is down. Showing the last update.
+  loading --> fresh: first read, latest run ok and finished within 3 intervals
+  loading --> stale: first read, no ok run within 3 intervals, or the read failed
+  loading --> down: first read, latest run has ok = false
+  fresh --> stale: no ok run for 3 intervals (tour 30 s, flights 90 s, rankings 3 h), checked every 5 s
+  stale --> fresh: an ok run arrives by Realtime
+  fresh --> down: a run with ok = false arrives
+  stale --> down: a run with ok = false arrives
+  down --> fresh: the next ok run arrives
+```
+Thresholds, from `src/lib/live/useWorkerHealth.ts`: one interval is the cron schedule, so **fresh** means the last
+ok run finished within 30 s for the leaderboard (10 s × 3), 90 s for flights (30 s × 3) and 3 hours for the world
+ranking (1 hour × 3). **Down** wins over the clock: it holds until the next ok run. A request without the worker
+secret writes no run at all, so a broken secret shows as **stale**, not down. The line ticks every 5 s; only a change
+of state is announced (`aria-live="polite"`).
+
+### 7 · Trace one update: a birdie at the WWT Championship reaches my screen
+```mermaid
+sequenceDiagram
+  autonumber
+  participant E as ESPN
+  participant C as pg_cron
+  participant N as pg_net
+  participant W as poll-tour
+  participant D as diffRows
+  participant P as Postgres
+  participant R as Realtime
+  participant B as Browser channel
+  participant U as React state
+  Note over E: Round 1, live.<br/>A birdie on the 7th:<br/>-3 to -4, thru 6 to 7
+  C->>N: 10 s tick<br/>secret from Vault
+  N->>W: POST poll-tour<br/>x-worker-secret
+  W->>P: worker_secret_ok(p)
+  P-->>W: true (else 401,<br/>nothing written)
+  W->>P: read tour_events
+  P-->>W: state in: live,<br/>fetch this tick
+  W->>E: GET leaderboard<br/>8 s timeout
+  E-->>W: ~230 KB JSON
+  Note over W: parseLeaderboard<br/>1 event + 1 row a player
+  W->>P: read saved rows
+  W->>D: saved vs new<br/>key event_id + player_key
+  D-->>W: 1 upsert (his row),<br/>0 deletes
+  W->>P: upsert tour_leaderboard<br/>(secret key)
+  W->>P: insert worker_runs<br/>ok, rows_changed 1
+  P->>R: WAL change,<br/>in supabase_realtime
+  Note over R: filter event_id=eq.id<br/>RLS as each golfer's<br/>Clerk token
+  R->>B: UPDATE over<br/>the WebSocket
+  B->>U: onRow: setBoardMap,<br/>touch, setLastChange
+  Note over U: his row washes<br/>Fairway Tint once.<br/>Followed? The live<br/>region reads his score.
+  R->>B: worker_runs INSERT<br/>source=eq.tour
+  B->>U: useWorkerHealth:<br/>Updated just now
+```
