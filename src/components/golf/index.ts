@@ -2,6 +2,7 @@
 export { AppShell, type AppShellProps } from "./AppShell";
 export { AppNav, NAV, NavIcon, type AppNavProps, type NavKey } from "./AppNav";
 export { PageHeader, type PageHeaderProps } from "./PageHeader";
+export { PhotoBand, type BandPhoto, type PhotoBandProps } from "./PhotoBand";
 export { FocusClear, RouteFocus } from "./RouteFocus";
 export { Wordmark, Roundel, type WordmarkProps } from "./Wordmark";
 export { BigNumber, type BigNumberProps } from "./BigNumber";

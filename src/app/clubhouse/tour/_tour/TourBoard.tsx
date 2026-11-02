@@ -2,7 +2,7 @@
 // /clubhouse/tour: this week's PGA TOUR event (ESPN) and the world ranking (OWGR), with the golfer's own players
 // first. Everything arrives through Supabase: a snapshot, then Realtime pushes of only the rows the worker changed.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ApiState, Freshness, LivePauseNotice, PageHeader } from "@/components/golf";
+import { ApiState, Freshness, LivePauseNotice, PageHeader, PhotoBand } from "@/components/golf";
 import { FollowToggle } from "@/components/golf/FollowToggle";
 import { isOut, OUT_LABEL, OUT_WORDS, sayThru, sayToPar, shortDate, showThru, showToPar, toParTone } from "@/components/golf/tour/format";
 import { Button, cx, Field, SectionHeading, TextInput } from "@/components/ui";
@@ -17,6 +17,8 @@ import { useTourLive, type BoardRow, type RankRow, type TourEvent, type TourLive
 // Both lists open on their top 25 with a "Show all N" toggle (a search always shows every match).
 const RANK_PREVIEW = 25;
 const BOARD_PREVIEW = 25;
+// The band's photo: Augusta's 18th green beside the white LEADERS board (docs/credits.md, Augusta National g2.jpg).
+const BAND_PHOTO = { src: "/courses/augusta-national/graded/g2.jpg", credit: "Dan Perry, CC BY 2.0" };
 
 export function TourBoard() {
   const db = useSupabaseBrowser();
@@ -31,43 +33,51 @@ export function TourBoard() {
   const boardByKey = useMemo(() => new Map(live.board.map((r) => [r.player_key, r])), [live.board]);
 
   return (
-    <Page className="grid gap-10 md:gap-14">
-      <PageHeader
-        eyebrow="On tour this week"
-        title="Tour"
-        lede={`The PGA TOUR leaderboard as it's posted, and the world ranking. Follow up to ${MAX_PLAYERS} players and they come first.`}
-      />
-
-      <EventBand live={live} health={tourHealth} />
-
-      <YourPlayers follows={follows} boardByKey={boardByKey} rankByKey={rankByKey} live={live} />
-
-      <FollowAnnouncer live={live} follows={follows} />
-
-      <div className="grid gap-6">
-        <div className="max-w-md">
-          <Field label="Find a player" hint="Searches the leaderboard and the world ranking.">
-            {(a) => (
-              <TextInput {...a} type="search" autoComplete="off" spellCheck={false} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Scheffler, Åberg, Kim…" />
-            )}
-          </Field>
+    <>
+      <PhotoBand aria-label="Tour" photo={BAND_PHOTO}>
+        <div className="mx-auto max-w-ledger px-4 pb-12 pt-10 sm:px-6 md:pb-20 md:pt-16 lg:px-8">
+          <PageHeader
+            tone="green"
+            className="bg-transparent"
+            eyebrow="On tour this week"
+            title="Tour"
+            lede={`The PGA TOUR leaderboard as it's posted, and the world ranking. Follow up to ${MAX_PLAYERS} players and they come first.`}
+          />
         </div>
-        <div className="grid gap-14 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] xl:gap-10 [&>*]:min-w-0">
-          <Leaderboard live={live} health={tourHealth} follows={follows} query={query} onClear={() => setQuery("")} rankByKey={rankByKey} />
-          <WorldRanking live={live} health={rankHealth} follows={follows} query={query} onClear={() => setQuery("")} />
+      </PhotoBand>
+      <Page className="grid gap-10 md:gap-14">
+
+        <EventBand live={live} health={tourHealth} />
+
+        <YourPlayers follows={follows} boardByKey={boardByKey} rankByKey={rankByKey} live={live} />
+
+        <FollowAnnouncer live={live} follows={follows} />
+
+        <div className="grid gap-6">
+          <div className="max-w-md">
+            <Field label="Find a player" hint="Searches the leaderboard and the world ranking.">
+              {(a) => (
+                <TextInput {...a} type="search" autoComplete="off" spellCheck={false} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Scheffler, Åberg, Kim…" />
+              )}
+            </Field>
+          </div>
+          <div className="grid gap-14 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] xl:gap-10 [&>*]:min-w-0">
+            <Leaderboard live={live} health={tourHealth} follows={follows} query={query} onClear={() => setQuery("")} rankByKey={rankByKey} />
+            <WorldRanking live={live} health={rankHealth} follows={follows} query={query} onClear={() => setQuery("")} />
+          </div>
         </div>
-      </div>
 
-      <p className="max-w-measure text-[0.85rem] leading-relaxed text-ink-2">
-        Leaderboard data from{" "}
-        <a className="link" href="https://www.espn.com/golf/leaderboard" target="_blank" rel="noreferrer">ESPN<span className="sr-only"> (opens in a new tab)</span></a>.
-        World ranking from the{" "}
-        <a className="link" href="https://www.owgr.com/" target="_blank" rel="noreferrer">Official World Golf Ranking<span className="sr-only"> (opens in a new tab)</span></a>.
-        Our server checks both on a schedule and saves only what changed; your browser never calls them.
-      </p>
+        <p className="max-w-measure text-[0.85rem] leading-relaxed text-ink-2">
+          Leaderboard data from{" "}
+          <a className="link" href="https://www.espn.com/golf/leaderboard" target="_blank" rel="noreferrer">ESPN<span className="sr-only"> (opens in a new tab)</span></a>.
+          World ranking from the{" "}
+          <a className="link" href="https://www.owgr.com/" target="_blank" rel="noreferrer">Official World Golf Ranking<span className="sr-only"> (opens in a new tab)</span></a>.
+          Our server checks both on a schedule and saves only what changed; your browser never calls them.
+        </p>
 
-      <LivePauseNotice what="the leaderboard and the ranking" />
-    </Page>
+        <LivePauseNotice what="the leaderboard and the ranking" />
+      </Page>
+    </>
   );
 }
 

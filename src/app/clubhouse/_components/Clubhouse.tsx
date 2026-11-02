@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { BigNumber, HoleIllustration, placeOf, toParText } from "@/components/golf";
+import { BigNumber, HoleIllustration, PhotoBand, placeOf, toParText } from "@/components/golf";
 import { fmtDate } from "@/components/golf/charts";
 import { ActionList, ActionRow, ActionTile, Button, Chevron, ButtonLink, Card, ChoiceGroup, Field, focusInvalid, NumberInput, SectionHeading } from "@/components/ui";
 import { defaultHome, holesFor } from "@/lib/courses";
@@ -194,15 +194,7 @@ function Hero({ store, welcomed, step, handicap, done, photo, live }: { store: S
   const halfWaiting = handicap.roundsToFirst > 0 && done.filter((d) => d.holes.length === 9).length % 2 === 1;
 
   return (
-    <section aria-labelledby="hero-title" className="tex-locker on-green relative isolate overflow-hidden">
-      {photo && (
-        <>
-          <Image src={photo.src} alt="" fill loading="eager" fetchPriority="high" sizes="100vw" className="-z-20 object-cover" />
-          {/* A Masters-green wash, deepest behind the text, so every word keeps its contrast over the photo */}
-          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(0_72_50/0.94)_0%,rgb(0_88_61/0.86)_45%,rgb(0_103_71/0.72)_100%)] max-md:bg-[linear-gradient(180deg,rgb(0_72_50/0.9)_0%,rgb(0_88_61/0.92)_100%)]" />
-          <p className="absolute bottom-2 right-3 rounded-xs bg-black/55 px-1.5 py-0.5 text-[0.7rem] text-white">Photo: {photo.credit}</p>
-        </>
-      )}
+    <PhotoBand aria-labelledby="hero-title" photo={photo}>
       <div className="mx-auto grid max-w-ledger gap-10 px-4 pb-12 pt-10 sm:px-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:items-center md:pb-16 md:pt-14 lg:px-8">
         <div className="min-w-0">
           <p className="caps text-balance text-label text-gold">{live ? "Round in progress" : "The Clubhouse"}</p>
@@ -254,7 +246,7 @@ function Hero({ store, welcomed, step, handicap, done, photo, live }: { store: S
         </div>
         {!welcomed ? <IndexQuestion /> : step < 3 ? <SetupSteps step={step} homeCourse={store.profile.homeCourse} /> : <MiniBoard done={done} className={live ? "max-md:hidden" : undefined} />}
       </div>
-    </section>
+    </PhotoBand>
   );
 }
 

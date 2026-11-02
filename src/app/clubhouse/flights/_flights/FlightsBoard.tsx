@@ -4,7 +4,7 @@
 // Realtime pushes of only the rows the poll-flights worker changed. The browser never calls adsb.lol.
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ApiState, Freshness, LivePauseNotice, PageHeader } from "@/components/golf";
+import { ApiState, Freshness, LivePauseNotice, PageHeader, PhotoBand } from "@/components/golf";
 import { FollowToggle } from "@/components/golf/FollowToggle";
 import { PHASE_LABEL, PhaseMark, type Phase } from "@/components/golf/flights/PhaseMark";
 import { Button, cx, Field, SectionHeading, Tag, TextInput } from "@/components/ui";
@@ -23,6 +23,8 @@ const EVERY_SEC = 30;
 const PHASES: Phase[] = ["arriving", "departing", "ground", "overhead"];
 const TILE_LABEL: Record<Phase, string> = { arriving: "Arriving", departing: "Departing", ground: "On the ground", overhead: "Passing" };
 const PREVIEW = 6;
+// The band's photo: Pebble Beach's 18th along Carmel Bay, the trip a golfer flies in for (docs/credits.md, Pebble Beach hero.jpg).
+const BAND_PHOTO = { src: "/courses/pebble-beach/graded/hero.jpg", credit: "Bernard Gagnon, CC BY-SA 3.0" };
 
 export function FlightsBoard() {
   const db = useSupabaseBrowser();
@@ -34,41 +36,49 @@ export function FlightsBoard() {
   const info = useAirportInfo(db, codes);
 
   return (
-    <Page className="grid gap-12 md:gap-16">
-      <div className="grid gap-5">
-        <PageHeader
-          eyebrow="Getting there"
-          title="Flights"
-          lede="The airport nearest each of your courses, and what's moving around the ones you follow, as it happens."
-        />
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-rule py-3">
-          <Freshness health={health} what="The flights board" />
-          <p className="text-[0.92rem] text-ink-2">
-            Live traffic within 15 nm. Data from{" "}
-            <a className="link" href="https://adsb.lol/" target="_blank" rel="noreferrer">adsb.lol<span className="sr-only"> (opens in a new tab)</span></a> and{" "}
-            <a className="link" href="https://adsb.fi/" target="_blank" rel="noreferrer">adsb.fi<span className="sr-only"> (opens in a new tab)</span></a>.
-          </p>
+    <>
+      <PhotoBand aria-label="Flights" photo={BAND_PHOTO}>
+        <div className="mx-auto max-w-ledger px-4 pb-12 pt-10 sm:px-6 md:pb-20 md:pt-16 lg:px-8">
+          <PageHeader
+            tone="green"
+            className="bg-transparent"
+            eyebrow="Getting there"
+            title="Flights"
+            lede="The airport nearest each of your courses, and what's moving around the ones you follow, as it happens."
+          />
         </div>
-      </div>
+      </PhotoBand>
+      <Page className="grid gap-12 md:gap-16">
+        <div className="grid gap-5">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-rule py-3">
+            <Freshness health={health} what="The flights board" />
+            <p className="text-[0.92rem] text-ink-2">
+              Live traffic within 15 nm. Data from{" "}
+              <a className="link" href="https://adsb.lol/" target="_blank" rel="noreferrer">adsb.lol<span className="sr-only"> (opens in a new tab)</span></a> and{" "}
+              <a className="link" href="https://adsb.fi/" target="_blank" rel="noreferrer">adsb.fi<span className="sr-only"> (opens in a new tab)</span></a>.
+            </p>
+          </div>
+        </div>
 
-      <NearYourCourses follows={follows} />
+        <NearYourCourses follows={follows} />
 
-      <YourAirports follows={follows} live={live} info={info} health={health} />
+        <YourAirports follows={follows} live={live} info={info} health={health} />
 
-      <AddAirport follows={follows} />
+        <AddAirport follows={follows} />
 
-      <p className="max-w-measure text-[0.85rem] leading-relaxed text-ink-2">
-        Aircraft positions from{" "}
-        <a className="link" href="https://adsb.lol/" target="_blank" rel="noreferrer">adsb.lol<span className="sr-only"> (opens in a new tab)</span></a>{" "}
-        (ODbL 1.0), or from{" "}
-        <a className="link" href="https://adsb.fi/" target="_blank" rel="noreferrer">adsb.fi<span className="sr-only"> (opens in a new tab)</span></a>{" "}
-        when adsb.lol can&apos;t answer, checked every 30 seconds for the airports golfers follow. Airport list from{" "}
-        <a className="link" href="https://ourairports.com/data/" target="_blank" rel="noreferrer">OurAirports<span className="sr-only"> (opens in a new tab)</span></a>{" "}
-        (public domain). Positions only: arriving and departing are read from height and climb near the field, not from a timetable.
-      </p>
+        <p className="max-w-measure text-[0.85rem] leading-relaxed text-ink-2">
+          Aircraft positions from{" "}
+          <a className="link" href="https://adsb.lol/" target="_blank" rel="noreferrer">adsb.lol<span className="sr-only"> (opens in a new tab)</span></a>{" "}
+          (ODbL 1.0), or from{" "}
+          <a className="link" href="https://adsb.fi/" target="_blank" rel="noreferrer">adsb.fi<span className="sr-only"> (opens in a new tab)</span></a>{" "}
+          when adsb.lol can&apos;t answer, checked every 30 seconds for the airports golfers follow. Airport list from{" "}
+          <a className="link" href="https://ourairports.com/data/" target="_blank" rel="noreferrer">OurAirports<span className="sr-only"> (opens in a new tab)</span></a>{" "}
+          (public domain). Positions only: arriving and departing are read from height and climb near the field, not from a timetable.
+        </p>
 
-      <LivePauseNotice what="the flights board" />
-    </Page>
+        <LivePauseNotice what="the flights board" />
+      </Page>
+    </>
   );
 }
 
