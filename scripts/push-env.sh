@@ -2,7 +2,8 @@
 # Run by the USER (the agent may not read .env files): copies this app's keys from .env.local into the
 # Vercel project 18-eagles-members, without printing any value.
 # Usage: scripts/push-env.sh                     → Production
-#        scripts/push-env.sh preview live-data   → Preview, only for the live-data branch (Assignment 5)
+#        scripts/push-env.sh preview             → Preview, all branches (Assignment 5 deploys the live-data branch as a
+#        preview). Branch-scoped vars need a Git-connected project, which this one isn't.
 # CLERK_SECRET_KEY is added as --sensitive (write-only in the Vercel dashboard).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -15,5 +16,5 @@ for name in "${VARS[@]}"; do
   if [ -z "$value" ]; then echo "skip   $name (not in .env.local)"; continue; fi
   vercel env rm "$name" "$TARGET" $BRANCH --yes >/dev/null 2>&1 || true
   flag=""; [ "$name" = "CLERK_SECRET_KEY" ] && flag="--sensitive"
-  printf '%s' "$value" | vercel env add "$name" "$TARGET" $BRANCH $flag >/dev/null 2>&1 && echo "added  $name → $TARGET $BRANCH" || echo "FAILED $name → $TARGET $BRANCH"
+  printf '%s' "$value" | vercel env add "$name" "$TARGET" $BRANCH $flag >/dev/null 2>/tmp/push-env.err && echo "added  $name → $TARGET $BRANCH" || { echo "FAILED $name → $TARGET $BRANCH:"; grep -iE "error|message" /tmp/push-env.err | grep -v -i key | head -2; }
 done
