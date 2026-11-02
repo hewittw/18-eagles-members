@@ -130,8 +130,8 @@ keep `worker_runs` to 2 days and `cron.job_run_details` to 1 day.
 
 ## Live numbers (read-only SQL, 2026-11-02 20:45 UTC)
 - Cron jobs: `poll-tour` `10 seconds`, `poll-rankings` `7 * * * *`, `worker-runs-cleanup` `17 4 * * *`,
-  `cron-history-cleanup` `23 4 * * *`, all active. `poll-flights` (`30 seconds`) is in
-  `20261102140100_cron_flights.sql`, being applied now; the flight runs so far were test calls.
+  `cron-history-cleanup` `23 4 * * *`, and `poll-flights` `30 seconds` (applied at 20:55 UTC from
+  `20261102140100_cron_flights.sql`; the flight runs before that were test calls), all active.
 - 104 runs recorded, 90 of them `idle`, 2 failed (both adsb.lol 429s). Tables: 1 event, 120 leaderboard rows,
   200 rankings, 1,955 airports, 56 live flights. Database: 13 MB of 500 MB.
 - Realtime publication: `airport_flights`, `tour_events`, `tour_leaderboard`, `tour_rankings`, `worker_runs`.
