@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { diffRows } from "../_shared/diff.ts";
 import { airlineFor } from "../poll-flights/airlines.ts";
 import { FLIGHT_FIELDS, FLIGHT_KEY, parseFlights, phaseOf, selectAirports, type FlightRow } from "../poll-flights/parse.ts";
+import { fetchFirst, SOURCES, Spacer, spacersFor, type Clock } from "../poll-flights/sources.ts";
 
 type Raw = { hex: string; flight?: string; r?: string; alt_baro?: number | "ground"; gs?: number; lat?: number; lon?: number; dst?: number };
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8")) as { ac: Raw[] };
@@ -141,4 +142,69 @@ test("selectAirports: dedupes across golfers, ranks by followers, caps at 6, alw
   assert.ok(picked.includes("ORD"));
   assert.deepEqual(selectAirports([]), ["ORD"]);
   assert.deepEqual(selectAirports([{ airport: "ORD" }, { airport: "ORD" }, { airport: "SAN" }]), ["ORD", "SAN"]);
+});
+
+// ───────── The adsb.fi fallback ─────────
+
+// adsb.fi answers with the same readsb fields under `aircraft` instead of `ac` (fixtures/adsbfi-ord.json, a real O'Hare
+// response saved 2026-11-02). The parser must read it the same way, or a fallback tick would empty the board.
+test("adsb.fi response: the `aircraft` list parses like adsb.lol's `ac`", () => {
+  const fi = JSON.parse(readFileSync(new URL("./fixtures/adsbfi-ord.json", import.meta.url), "utf8")) as { aircraft: Raw[] };
+  const rows = parseFlights(fi, "ORD");
+  const positioned = new Set(fi.aircraft.filter((a) => typeof a.lat === "number" && typeof a.lon === "number").map((a) => a.hex));
+  assert.equal(rows.length, positioned.size);
+  assert.ok(rows.length >= 10, `${rows.length} rows`);
+  assert.ok(rows.some((r) => r.phase === "ground"));
+  assert.ok(rows.some((r) => r.airline !== null));
+  // And fixture A with its list renamed gives exactly fixture A's rows.
+  assert.deepEqual(parseFlights({ aircraft: A.ac }, "ORD"), rowsA);
+});
+
+/** A fake clock: sleep advances time instantly and records each wait. */
+function fakeClock(): Clock & { waits: number[] } {
+  let t = 0;
+  const waits: number[] = [];
+  return { waits, now: () => t, sleep: async (ms) => { waits.push(ms); t += ms; } };
+}
+const http = (status: number) => Object.assign(new Error(`HTTP ${status}`), { status });
+const describe = (e: unknown) => String((e as { status?: number }).status ?? "error");
+const ORD = { lat: 41.9786, lon: -87.9048 };
+
+// The fallback decision: adsb.lol first; adsb.fi only when adsb.lol fails (429 or anything else); both failing is a
+// failure that names both reasons (the worker then keeps that airport's rows).
+test("fetchFirst: adsb.lol answers → adsb.fi is never called", async () => {
+  const calls: string[] = [];
+  const got = await fetchFirst(ORD, async (u) => { calls.push(u); return { ac: [] }; }, spacersFor(fakeClock()), describe);
+  assert.equal(got.ok && got.source, "lol");
+  assert.equal(calls.length, 1);
+  assert.match(calls[0], /api\.adsb\.lol\/v2\/point\/41\.9786\/-87\.9048\/15$/);
+});
+
+test("fetchFirst: adsb.lol 429 → the same airport from adsb.fi", async () => {
+  const calls: string[] = [];
+  const got = await fetchFirst(ORD, async (u) => { calls.push(u); if (u.includes("adsb.lol")) throw http(429); return { aircraft: [] }; }, spacersFor(fakeClock()), describe);
+  assert.ok(got.ok);
+  assert.equal(got.ok && got.source, "fi");
+  assert.deepEqual(got.tried, ["lol 429"]);
+  assert.match(calls[1], /opendata\.adsb\.fi\/api\/v2\/lat\/41\.9786\/lon\/-87\.9048\/dist\/15$/);
+});
+
+test("fetchFirst: any adsb.lol error falls back; both failing reports both", async () => {
+  const both = await fetchFirst(ORD, async (u) => { throw http(u.includes("adsb.lol") ? 503 : 429); }, spacersFor(fakeClock()), describe);
+  assert.deepEqual(both, { ok: false, tried: ["lol 503", "fi 429"] });
+});
+
+// adsb.fi asks for at most one request a second: fallbacks from several airports in the same run (even two at once)
+// are queued at least 1.1 s apart; adsb.lol calls aren't held back.
+test("adsb.fi calls in one run are spaced at least 1.1 s apart, even in parallel", async () => {
+  const clock = fakeClock();
+  const spacers = spacersFor(clock);
+  const fiTimes: number[] = [];
+  const fetcher = async (u: string) => { if (u.includes("adsb.lol")) throw http(429); fiTimes.push(clock.now()); return { aircraft: [] }; };
+  await Promise.all([fetchFirst(ORD, fetcher, spacers, describe), fetchFirst({ lat: 33.1, lon: -117.3 }, fetcher, spacers, describe)]);
+  await fetchFirst(ORD, fetcher, spacers, describe);
+  assert.equal(fiTimes.length, 3);
+  for (let i = 1; i < fiTimes.length; i++) assert.ok(fiTimes[i] - fiTimes[i - 1] >= 1100, `gap ${fiTimes[i] - fiTimes[i - 1]}`);
+  assert.equal(SOURCES.find((s) => s.id === "lol")?.minGapMs, 0);
+  assert.ok(new Spacer(1100, clock) instanceof Spacer);
 });

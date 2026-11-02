@@ -1,23 +1,36 @@
 // poll-flights: the Flights worker. Supabase Cron POSTs here every 30 s. Each run: check the Vault secret, pick the
-// airports golfers follow (most-followed first, max 6, always ORD), ask adsb.lol once per airport for the aircraft
-// within 15 nm, parse and coarsen them (parse.ts, pure), compare with what's saved (diffRows), write only what
-// changed, delete the planes that left, and record one worker_runs row, ok or not.
-// One call per airport per tick, shared by every golfer who follows it; browsers never call adsb.lol.
+// airports golfers follow (most-followed first, max 6, always ORD), ask adsb.lol for the aircraft within 15 nm of
+// each (falling back to adsb.fi for that airport on a 429 or any error: sources.ts), parse and coarsen them
+// (parse.ts, pure), compare with what's saved (diffRows), write only what changed, delete the planes that left, and
+// record one worker_runs row, ok or not. One answer per airport per tick, shared by every golfer who follows it;
+// browsers never call either source.
 import { checkWorkerSecret } from "../_shared/auth.ts";
 import { serviceClient, type SupabaseClient } from "../_shared/db.ts";
 import { diffRows } from "../_shared/diff.ts";
-import { fetchJson, isRateLimited } from "../_shared/http.ts";
+import { FetchError, fetchJson } from "../_shared/http.ts";
 import { recordRun } from "../_shared/runs.ts";
-import { FLIGHT_FIELDS, FLIGHT_KEY, parseFlights, selectAirports, type FlightRow } from "./parse.ts";
+import { aircraftList, FLIGHT_FIELDS, FLIGHT_KEY, parseFlights, selectAirports, type FlightRow } from "./parse.ts";
+import { fetchFirst, spacersFor, type SourceId, type Spacer } from "./sources.ts";
 
-const RADIUS_NM = 15;
-const pointUrl = (lat: number, lon: number) => `https://api.adsb.lol/v2/point/${lat.toFixed(4)}/${lon.toFixed(4)}/${RADIUS_NM}`;
-/** Two airports at a time: quick enough for 6 in one tick, gentle enough on a free, keyless API. */
+/** Two airports at a time: quick enough for 6 in one tick, gentle enough on free, keyless APIs. */
 const PARALLEL = 2;
+const clock = { now: () => Date.now(), sleep: (ms: number) => new Promise<void>((r) => setTimeout(r, ms)) };
 
 type AirportResult =
-  | { code: string; ok: true; total: number; inserted: number; updated: number; deleted: number }
-  | { code: string; ok: false; detail: string; rateLimited?: boolean };
+  | { code: string; ok: true; source: SourceId; total: number; inserted: number; updated: number; deleted: number }
+  | { code: string; ok: false; detail: string };
+
+/** A short reason for the run detail: "429", "HTTP 503", "timed out", "unreachable", "bad JSON". */
+function reason(e: unknown): string {
+  if (e instanceof FetchError) {
+    if (e.kind === "http") return e.status === 429 ? "429" : `HTTP ${e.status}`;
+    return e.kind === "timeout" ? "timed out" : e.kind === "json" ? "bad JSON" : "unreachable";
+  }
+  return ((e as Error)?.message ?? String(e)).slice(0, 40);
+}
+
+/** A source "answered" only if the body has an aircraft list; otherwise fall through to the next source. */
+const fetchAircraft = async (url: string) => { const j = await fetchJson(url); aircraftList(j); return j; };
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -62,18 +75,13 @@ async function poll(db: SupabaseClient): Promise<{ ok: boolean; rowsChanged: num
   if (places.error) throw new Error(`read airports: ${places.error.message}`);
   const where = new Map((places.data ?? []).map((p) => [p.code as string, { lat: p.lat as number, lon: p.lon as number }]));
 
-  // Two at a time; a 429 stops the rest of this tick (no retry storm), and those airports keep their rows.
+  // Two at a time. Each airport falls back on its own (no retry of the same source); adsb.fi calls are queued at
+  // least 1.1 s apart across the whole run. An airport only fails if both sources do, and then it keeps its rows.
+  const spacers = spacersFor(clock);
   const results: AirportResult[] = [];
-  let rateLimited = false;
   for (let i = 0; i < codes.length; i += PARALLEL) {
     const batch = codes.slice(i, i + PARALLEL);
-    if (rateLimited) {
-      for (const code of batch) results.push({ code, ok: false, detail: "skipped after 429" });
-      continue;
-    }
-    const done = await Promise.all(batch.map((code) => pollAirport(db, code, where.get(code))));
-    results.push(...done);
-    if (done.some((r) => !r.ok && r.rateLimited)) rateLimited = true;
+    results.push(...(await Promise.all(batch.map((code) => pollAirport(db, code, where.get(code), spacers)))));
   }
 
   // Airports nobody follows any more: clear their boards (one delete, and each row is a Realtime message once).
@@ -84,20 +92,26 @@ async function poll(db: SupabaseClient): Promise<{ ok: boolean; rowsChanged: num
   const okCount = results.filter((r) => r.ok).length;
   const changed = results.reduce((n, r) => n + (r.ok ? r.inserted + r.updated + r.deleted : 0), 0) + cleared;
   const parts = results.map((r) =>
-    r.ok ? `${r.code} ${r.total} (+${r.inserted} −${r.deleted} ~${r.updated})` : `${r.code} failed: ${r.detail}`,
+    r.ok ? `${r.code} ${r.total} ${r.source} (+${r.inserted} −${r.deleted} ~${r.updated})` : `${r.code} failed: ${r.detail}`,
   );
   if (cleared) parts.push(`cleared ${cleared} unfollowed`);
   return { ok: okCount > 0, rowsChanged: changed, detail: parts.join(", ") || "no airports" };
 }
 
-async function pollAirport(db: SupabaseClient, code: string, at: { lat: number; lon: number } | undefined): Promise<AirportResult> {
+async function pollAirport(
+  db: SupabaseClient,
+  code: string,
+  at: { lat: number; lon: number } | undefined,
+  spacers: ReadonlyMap<SourceId, Spacer>,
+): Promise<AirportResult> {
   if (!at) return { code, ok: false, detail: "not in airports" };
+  const got = await fetchFirst(at, fetchAircraft, spacers, reason);
+  if (!got.ok) return { code, ok: false, detail: got.tried.join("; ") };
   let incoming: FlightRow[];
   try {
-    incoming = parseFlights(await fetchJson(pointUrl(at.lat, at.lon)), code, at);
+    incoming = parseFlights(got.json, code, at);
   } catch (e) {
-    if (isRateLimited(e)) return { code, ok: false, detail: "429, skipped this tick", rateLimited: true };
-    return { code, ok: false, detail: ((e as Error)?.message ?? String(e)).slice(0, 80) };
+    return { code, ok: false, detail: `${got.source} ${reason(e)}` };
   }
 
   // Only after a good response: compare with what's saved. A failed airport never reaches here, so it keeps its rows.
@@ -118,5 +132,5 @@ async function pollAirport(db: SupabaseClient, code: string, at: { lat: number; 
     if (error) return { code, ok: false, detail: `delete: ${error.message}`.slice(0, 80) };
   }
   const total = new Set(incoming.map((r) => r.hex)).size;
-  return { code, ok: true, total, inserted, updated: upserts.length - inserted, deleted: deletes.length };
+  return { code, ok: true, source: got.source, total, inserted, updated: upserts.length - inserted, deleted: deletes.length };
 }

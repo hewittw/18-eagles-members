@@ -1,9 +1,9 @@
-// adsb.lol → airport_flights rows, and which airports to poll. Pure: no Deno or npm imports, so the Node tests import
+// adsb.lol / adsb.fi → airport_flights rows, and which airports to poll. Pure: no Deno or npm imports, so the Node tests import
 // it. adsb.lol has live positions only (no routes or schedules), so "arriving" and "departing" are read from what the
 // plane is doing near the field: low and descending, or low and climbing.
 import { airlineFor } from "./airlines.ts";
 
-/** The fields of one adsb.lol `ac[]` entry we use (https://api.adsb.lol/v2/point/{lat}/{lon}/{nm}). */
+/** The fields of one readsb aircraft entry we use (adsb.lol `ac[]`, adsb.fi `aircraft[]`). */
 export type AdsbAircraft = {
   hex?: string;
   flight?: string; // callsign, space-padded to 8
@@ -18,7 +18,16 @@ export type AdsbAircraft = {
   lon?: number;
   dst?: number; // nm from the point we asked about
 };
-export type AdsbResponse = { ac?: AdsbAircraft[] | null; now?: number };
+/** adsb.lol calls the list `ac`; adsb.fi calls it `aircraft`. Same readsb fields inside. */
+export type AdsbResponse = { ac?: AdsbAircraft[] | null; aircraft?: AdsbAircraft[] | null; now?: number };
+
+/** The aircraft list from either source's response. Throws if there is none (a changed or broken response). */
+export function aircraftList(json: unknown): AdsbAircraft[] {
+  const r = json as AdsbResponse | null;
+  const list = r?.ac ?? r?.aircraft;
+  if (!Array.isArray(list)) throw new Error("response has no ac[] or aircraft[] list");
+  return list;
+}
 
 export type Phase = "arriving" | "departing" | "ground" | "overhead";
 
@@ -68,8 +77,7 @@ export function phaseOf(a: AdsbAircraft): Phase {
  * board), as are malformed hex ids. `center` is the airport's lat/lon, used only if adsb.lol leaves out `dst`.
  */
 export function parseFlights(json: unknown, airport: string, center?: { lat: number; lon: number }): FlightRow[] {
-  const list = (json as AdsbResponse | null)?.ac;
-  if (!Array.isArray(list)) throw new Error("adsb.lol response has no ac[] list");
+  const list = aircraftList(json);
   const rows: FlightRow[] = [];
   for (const a of list) {
     if (!a || typeof a !== "object") continue;
