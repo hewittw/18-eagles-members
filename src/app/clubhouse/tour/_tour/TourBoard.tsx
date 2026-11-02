@@ -14,7 +14,9 @@ import { Page } from "../../_components/Placeholder";
 import { useFollows, type FollowsState } from "./useFollows";
 import { useTourLive, type BoardRow, type RankRow, type TourEvent, type TourLive } from "./useTourLive";
 
+// Both lists open on their top 25 with a "Show all N" toggle (a search always shows every match).
 const RANK_PREVIEW = 25;
+const BOARD_PREVIEW = 25;
 
 export function TourBoard() {
   const db = useSupabaseBrowser();
@@ -248,13 +250,17 @@ const matches = (name: string, q: string) => !q || playerKey(name).includes(play
 
 function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { live: TourLive; health: WorkerHealth; follows: FollowsState; query: string; onClear: () => void; rankByKey: Map<string, RankRow> }) {
   const [showOut, setShowOut] = useState(false);
+  const [all, setAll] = useState(false);
   const q = query.trim();
   const matched = live.board.filter((r) => matches(r.name, q));
   // Players out of the event (cut, withdrawn) fold away unless asked for, or a search finds them.
   const outCount = matched.filter((r) => isOut(r.status)).length;
   const foldOut = !q && !showOut && outCount > 0 && outCount < matched.length;
   const rows = foldOut ? matched.filter((r) => !isOut(r.status)) : matched;
-  const firstOut = rows.findIndex((r) => isOut(r.status));
+  // Then the top 25 until "Show all" (the same pattern as the world ranking). A search shows every match.
+  const preview = !q && !all && rows.length > BOARD_PREVIEW;
+  const shown = preview ? rows.slice(0, BOARD_PREVIEW) : rows;
+  const firstOut = shown.findIndex((r) => isOut(r.status));
   const final = live.event?.state === "post";
 
   let content: ReactNode;
@@ -267,7 +273,7 @@ function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { liv
     content = (
       <div className="scroll-x rounded-xl border border-rule bg-paper-2 shadow-card">
         <table className="w-full border-collapse text-left">
-          <caption className="sr-only">{live.event.name} leaderboard{final ? ", final" : ""}{q ? `, players matching ${q}` : ""}</caption>
+          <caption className="sr-only">{live.event.name} leaderboard{final ? ", final" : ""}{q ? `, players matching ${q}` : preview ? `, top ${BOARD_PREVIEW}` : ""}</caption>
           <thead>
             <tr className="border-b border-rule-strong">
               <Th className="w-11 pl-3 sm:w-14 sm:pl-4">Pos</Th>
@@ -279,12 +285,12 @@ function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { liv
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
+            {shown.map((r, i) => (
               <BoardTr key={r.player_key} r={r} cutLine={i === firstOut && i > 0} follows={follows} flashAt={live.touched.get(r.player_key)} rank={rankByKey.get(r.player_key)?.rank} />
             ))}
           </tbody>
         </table>
-        {!q && outCount > 0 && outCount < matched.length && (
+        {!q && !preview && outCount > 0 && outCount < matched.length && (
           <div className="border-t border-rule-strong bg-paper-3 px-3 py-2 sm:px-4">
             <Button variant="quiet" size="sm" aria-expanded={!foldOut} onClick={() => setShowOut((v) => !v)}>
               {foldOut ? `Show the ${outCount} who missed the cut or withdrew` : "Hide the players who missed the cut"}
@@ -293,6 +299,18 @@ function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { liv
         )}
       </div>
     );
+    if (!q && rows.length > BOARD_PREVIEW) {
+      content = (
+        <>
+          {content}
+          <div>
+            <Button variant="secondary" size="sm" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+              {all ? `Show the top ${BOARD_PREVIEW}` : `Show all ${rows.length}`}
+            </Button>
+          </div>
+        </>
+      );
+    }
   }
 
   return (
