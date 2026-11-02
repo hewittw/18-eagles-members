@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ApiState, Freshness, PageHeader } from "@/components/golf";
-import { FollowToggle } from "@/components/golf/flights/FollowToggle";
+import { FollowToggle } from "@/components/golf/FollowToggle";
 import { PHASE_LABEL, PhaseMark, type Phase } from "@/components/golf/flights/PhaseMark";
 import { Button, cx, Field, SectionHeading, Tag, TextInput } from "@/components/ui";
 import { courseGeo, defaultHome } from "@/lib/courses";
@@ -45,7 +45,8 @@ export function FlightsBoard() {
           <Freshness health={health} what="The flights board" />
           <p className="text-[0.92rem] text-ink-2">
             Live traffic within 15 nm. Data from{" "}
-            <a className="link" href="https://adsb.lol/" target="_blank" rel="noreferrer">adsb.lol<span className="sr-only"> (opens in a new tab)</span></a>.
+            <a className="link" href="https://adsb.lol/" target="_blank" rel="noreferrer">adsb.lol<span className="sr-only"> (opens in a new tab)</span></a> and{" "}
+            <a className="link" href="https://adsb.fi/" target="_blank" rel="noreferrer">adsb.fi<span className="sr-only"> (opens in a new tab)</span></a>.
           </p>
         </div>
       </div>
@@ -160,7 +161,7 @@ function CourseAirport({ course, home, near, follows }: { course: Course; home: 
     <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-4">
       <div className="min-w-0">
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="font-display text-[1.45rem] leading-tight text-ink">{course.shortName || course.name}</span>
+          <span className="font-serif text-[1.2rem] font-bold leading-snug text-ink">{course.shortName || course.name}</span>
           {home && <Tag tone="gold">Home</Tag>}
         </p>
         {near.state === "loading" && <span className="mt-2 block h-4 w-48 max-w-full animate-pulse rounded-xs bg-paper-3 motion-reduce:animate-none" aria-hidden="true" />}
@@ -199,7 +200,7 @@ type Sweep =
 
 function sweepOf(code: string, run: WorkerRun | null, followedAt: string | undefined): Sweep {
   const d = run?.detail ?? "";
-  const ok = new RegExp(`(?:^|, )${code} (\\d+) \\(`).exec(d);
+  const ok = new RegExp(`(?:^|, )${code} (\\d+) (?:[a-z]+ )?\\(`).exec(d);
   if (ok) return { kind: "swept", count: Number(ok[1]) };
   const bad = new RegExp(`(?:^|, )${code} failed: ([^,]*)`).exec(d);
   if (bad) return { kind: "failed", why: bad[1] };
@@ -228,7 +229,7 @@ function YourAirports({ follows, live, info, health }: { follows: AirportFollows
           title="You're not watching any airports yet"
           action={<FollowToggle label="ORD, Chicago O'Hare International Airport" text="Follow ORD" following={false} busy={follows.busy.has("ORD")} onToggle={() => follows.toggle("ORD")} />}
         >
-          Follow the airport near one of your courses above, or find one below. Chicago O&apos;Hare is always on the sweep, if you want to see a busy board right now.
+          Follow the airport near one of your courses above, or find one below. Chicago O&apos;Hare is always watched, if you want to see a busy board right now.
         </ApiState>
       ) : (
         <div className="grid gap-8 xl:grid-cols-2 xl:items-start [&>*]:min-w-0">
@@ -274,7 +275,7 @@ function AirportBoard({ code, airport, rows, loading, loadFailed, sweep, health,
   const titleId = `ap-${code}`;
 
   return (
-    <article aria-labelledby={titleId} className={cx("min-w-0 overflow-hidden border bg-paper-2", held ? "border-dashed border-rule-strong" : "border-rule")}>
+    <article aria-labelledby={titleId} className={cx("min-w-0 overflow-hidden rounded-2xl border bg-paper-2 shadow-card", held ? "border-dashed border-rule-strong" : "border-rule")}>
       <header className="tex-locker on-green grid gap-5 px-4 pb-4 pt-5 sm:px-6">
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
           <div className="min-w-0">
@@ -289,12 +290,12 @@ function AirportBoard({ code, airport, rows, loading, loadFailed, sweep, health,
         <dl className="grid grid-cols-2 gap-1.5 min-[400px]:grid-cols-4 sm:gap-2" aria-label={`${code} right now`}>
           {groups.map(({ phase, rows: g }) => (
             <div key={phase} className="tile flex min-w-0 flex-col-reverse items-center justify-end gap-1 rounded-xs px-1 py-2 text-center text-ink">
-              <dt className="caps text-[0.72rem] leading-tight text-ink-2 text-balance">{TILE_LABEL[phase]}</dt>
+              <dt className="caps text-label leading-tight text-ink-2 text-balance">{TILE_LABEL[phase]}</dt>
               <dd className="font-numeral text-[clamp(1.5rem,4vw,2rem)] font-semibold leading-none tabular-nums">{waiting ? "–" : g.length}</dd>
             </div>
           ))}
         </dl>
-        {held && <p className="caps text-[0.74rem] text-gold">Held from the last good sweep</p>}
+        {held && <p className="caps text-label text-gold">Showing the last good update</p>}
       </header>
 
       <div className="px-4 py-4 sm:px-6 sm:py-5">
@@ -316,19 +317,19 @@ function EmptyBoard({ code, sweep, loading, loadFailed }: { code: string; sweep:
   if (loading) return <ApiState kind="loading" shape="list" label={`Loading traffic at ${code}`} />;
   if (loadFailed) return <ApiState kind="down" title="The board didn't load">Check your connection; it fills in as soon as the next update arrives.</ApiState>;
   if (sweep.kind === "swept") {
-    return <ApiState kind="empty" title="Quiet skies">Nothing within 15 nm of {code} on the last sweep. A new arrival shows up here within 30 seconds.</ApiState>;
+    return <ApiState kind="empty" title="Quiet skies">Nothing within 15 nm of {code} on the last check. A new arrival shows up here within 30 seconds.</ApiState>;
   }
   if (sweep.kind === "failed") {
     const slow = sweep.why.includes("429");
     return (
       <ApiState kind="down" title={slow ? "Asked to slow down" : `${code} didn't answer`}>
-        {slow ? "adsb.lol asked us to wait, so this sweep was skipped. The next one tries again in 30 seconds." : "The last sweep couldn't reach this airport's traffic. The next one tries again in 30 seconds."}
+        {slow ? "adsb.lol asked us to wait, so this check was skipped. The next one tries again in 30 seconds." : "The last check couldn’t reach this airport’s traffic. The next one tries again in 30 seconds."}
       </ApiState>
     );
   }
   if (sweep.kind === "unswept") {
     return (
-      <ApiState kind="empty" title="Not on this sweep">
+      <ApiState kind="empty" title="Not watched right now">
         We watch the six airports golfers follow most, and {code} isn&apos;t among them right now. It joins when one drops off.
       </ApiState>
     );
@@ -338,7 +339,7 @@ function EmptyBoard({ code, sweep, loading, loadFailed }: { code: string; sweep:
     <div className="grid gap-3" role="status">
       <p className="flex items-center gap-2.5 text-[0.98rem] text-ink-2">
         <svg viewBox="0 0 16 16" className="size-4 shrink-0 text-green" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="8" cy="8" r="5.5" strokeDasharray="2.2 2.4" /></svg>
-        <span><span className="font-semibold text-ink">Waiting for the first sweep.</span> New airports join the next run, within 30 seconds.</span>
+        <span><span className="font-semibold text-ink">Waiting for the first check.</span> A new airport fills in within 30 seconds.</span>
       </p>
       <ul aria-hidden="true" className="grid gap-2">
         {[64, 48, 56].map((w, i) => (
