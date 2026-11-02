@@ -2,7 +2,7 @@
 // The live pages' freshness line: "Updated 8 seconds ago", or plainly stale, or plainly down (the last good data stays
 // on screen, marked). Fed by useWorkerHealth (src/lib/live/useWorkerHealth.ts). The visible time ticks every 5 s, but
 // only a change of state is announced (a polite live region), so a screen reader isn't read the clock.
-import { useEffect, useState } from "react";
+import { useNow } from "@/lib/live/useNow";
 import type { WorkerHealth } from "@/lib/live/useWorkerHealth";
 import { cx } from "../ui/cx";
 
@@ -16,10 +16,10 @@ export type FreshnessProps = {
 
 /** One quiet line under a live section's heading. A drawn mark and words for every state, never colour alone. */
 export function Freshness({ health, what = "The live data", tone = "paper", className }: FreshnessProps) {
-  const now = useNow(5000);
+  const now = useNow();
   const green = tone === "green";
   const { state, lastOkAt } = health;
-  const ago = lastOkAt ? since(lastOkAt, now) : null;
+  const ago = lastOkAt && now ? since(lastOkAt, now) : null;
 
   const line =
     state === "loading" ? "Checking for the latest…"
@@ -70,14 +70,4 @@ export function since(t: Date, now: number): string {
   if (h < 24) return h === 1 ? "1 hour ago" : `${h} hours ago`;
   const d = Math.floor(h / 24);
   return d === 1 ? "yesterday" : `${d} days ago`;
-}
-
-/** The time, refreshed every `ms` (read only in the browser, after mount). */
-function useNow(ms: number): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), ms);
-    return () => clearInterval(t);
-  }, [ms]);
-  return now;
 }

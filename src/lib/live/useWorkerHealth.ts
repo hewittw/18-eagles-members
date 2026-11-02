@@ -1,8 +1,9 @@
 "use client";
 // Is the worker for this source alive? Reads the latest worker_runs row, then listens for new ones (Realtime), and
-// re-evaluates every 5 s so "fresh" turns "stale" on its own when runs stop arriving.
+// re-evaluates on the shared 5 s clock (useNow) so "fresh" turns "stale" on its own when runs stop arriving.
 import { useEffect, useState } from "react";
 import { useSupabaseBrowser } from "./browser";
+import { tickNow, useNow } from "./useNow";
 
 export type WorkerSource = "tour" | "rankings" | "flights";
 export type WorkerHealthState = "loading" | "fresh" | "stale" | "down";
@@ -27,7 +28,6 @@ export type WorkerHealth = {
   lastRun: WorkerRun | null;
 };
 
-const TICK_MS = 5000;
 const COLUMNS = "id, source, started_at, finished_at, ok, rows_changed, detail";
 
 // key: the source this snapshot belongs to (a new source starts over at loading).
@@ -44,12 +44,7 @@ const doneAt = (r: WorkerRun) => Date.parse(r.finished_at ?? r.started_at);
 export function useWorkerHealth(source: WorkerSource, everySec: number): WorkerHealth {
   const db = useSupabaseBrowser();
   const [snap, setSnap] = useState<Snap>({ key: "", lastRun: null, lastOk: null, loaded: false });
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), TICK_MS);
-    return () => clearInterval(t);
-  }, []);
+  const now = useNow();
 
   useEffect(() => {
     if (!db) return;
@@ -75,7 +70,7 @@ export function useWorkerHealth(source: WorkerSource, everySec: number): WorkerH
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "worker_runs", filter: `source=eq.${source}` }, (payload) => {
         const run = payload.new as WorkerRun;
         merge(run, run.ok ? run : null);
-        setNow(Date.now());
+        tickNow();
       })
       .subscribe((status) => {
         // SUBSCRIBED fires again after a reconnect: refetch, since inserts during the drop were missed.
@@ -93,7 +88,8 @@ export function useWorkerHealth(source: WorkerSource, everySec: number): WorkerH
   const lastOk = current?.lastOk ?? null;
   const lastOkAt = lastOk ? new Date(doneAt(lastOk)) : null;
   let state: WorkerHealthState;
-  if (!current?.loaded) state = "loading";
+  // now is 0 until the clock starts (server render, hydration): too early to call anything fresh or stale.
+  if (!current?.loaded || !now) state = "loading";
   else if (lastRun && !lastRun.ok) state = "down";
   else if (lastOkAt && now - lastOkAt.getTime() <= 3 * everySec * 1000) state = "fresh";
   else state = "stale";
