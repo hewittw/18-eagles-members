@@ -19,7 +19,7 @@ export type AppShellProps = {
 };
 
 /**
- * The tool's frame: skip link, the Locker Green bar with the wordmark and the five places, <main id="main">,
+ * The tool's frame: skip link, the Locker Green bar with the wordmark and the seven places, <main id="main">,
  * and a quiet footer. Phones get a bottom tab bar in thumb reach; from md up the places sit in the top bar.
  */
 export function AppShell({ children, current, preview, previewLayout = "phone" }: AppShellProps) {

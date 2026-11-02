@@ -12,6 +12,8 @@ export function CurrentNav({ variant }: { variant: "bar" | "tabs" }) {
     path.startsWith("/clubhouse/courses") || path.startsWith("/clubhouse/play") ? "courses"
     : path.startsWith("/clubhouse/rounds") || path.startsWith("/clubhouse/round") ? "cards"
     : path.startsWith("/clubhouse/stats") ? "stats"
+    : path.startsWith("/clubhouse/tour") ? "tour"
+    : path.startsWith("/clubhouse/flights") ? "flights"
     : path.startsWith("/clubhouse/locker") ? "locker"
     : path === "/clubhouse" || path === "/clubhouse/" || path.startsWith("/clubhouse/trophies") ? "clubhouse"
     : undefined;

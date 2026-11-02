@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Your golf journal: your handicap, every card, and the next round.",
 };
 
-// The tool's shared frame: skip link, the wordmark, the same five tabs on every page, the toast region,
+// The tool's shared frame: skip link, the wordmark, the same seven tabs on every page, the toast region,
 // focus moved to each new page's <h1> after a client-side route change, and focus kept clear of the sticky bars.
 export default function ClubhouseLayout({ children }: LayoutProps<"/clubhouse">) {
   return (
