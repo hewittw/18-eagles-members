@@ -155,7 +155,7 @@ function NearYourCourses({ follows }: { follows: AirportFollows }) {
         </ApiState>
       ) : (
         <>
-          <ul className="divide-y divide-rule border-y border-rule">
+          <ul className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
             {shown.map((c) => (
               <CourseAirport key={c.slug} course={c} home={c.slug === homeSlug} near={nearest.get(c.slug) ?? { state: "loading" }} follows={follows} />
             ))}
@@ -169,36 +169,52 @@ function NearYourCourses({ follows }: { follows: AirportFollows }) {
   );
 }
 
+/** One course and its airport, as a card in the same build as Tour's player cards (name + toggle, then the tile row). */
 function CourseAirport({ course, home, near, follows }: { course: Course; home: boolean; near: Nearest; follows: AirportFollows }) {
   const atLimit = (follows.list?.length ?? 0) >= MAX_AIRPORTS;
+  const name = course.shortName || course.name;
   return (
-    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-4">
-      <div className="min-w-0">
-        <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="font-serif text-[1.2rem] font-bold leading-snug text-ink">{course.shortName || course.name}</span>
-          {home && <Tag tone="gold">Home</Tag>}
-        </p>
-        {near.state === "loading" && <span className="mt-2 block h-4 w-48 max-w-full animate-pulse rounded-xs bg-paper-3 motion-reduce:animate-none" aria-hidden="true" />}
+    <li className="grid min-w-0 content-start gap-3 rounded-xl border border-rule bg-paper-2 p-4 shadow-card">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0 pt-1">
+          <h3 className="font-serif text-[1.15rem] font-bold leading-snug text-balance text-ink">{name}</h3>
+          {home && <Tag tone="gold" className="mt-1.5">Home</Tag>}
+        </div>
         {near.state === "ok" && (
-          <p className="mt-0.5 text-[1rem] text-ink-2">
-            <span className="sr-only">{course.shortName || course.name}: </span>
-            Fly into <span className="font-numeral text-[1.1rem] font-semibold tracking-wide text-ink">{near.airport.code}</span>,{" "}
-            <span className="font-numeral tabular-nums text-ink">{Math.max(1, Math.round(near.miles))} mi</span>
-            <span className="block text-[0.9rem] text-pretty">{near.airport.name}</span>
-          </p>
+          <FollowToggle
+            label={spokenName(near.airport.code, near.airport)}
+            following={follows.isFollowing(near.airport.code)}
+            busy={follows.busy.has(near.airport.code)}
+            disabled={atLimit && !follows.isFollowing(near.airport.code)}
+            onToggle={() => follows.toggle(near.airport.code)}
+            compact
+          />
         )}
-        {near.state === "none" && <p className="mt-0.5 text-[0.95rem] text-ink-2">No airport with airline service within a few hundred miles.</p>}
-        {near.state === "error" && <p className="mt-0.5 text-[0.95rem] text-ink-2">Couldn&apos;t look up the nearest airport. It will try again when you come back.</p>}
       </div>
-      {near.state === "ok" && (
-        <FollowToggle
-          label={spokenName(near.airport.code, near.airport)}
-          following={follows.isFollowing(near.airport.code)}
-          busy={follows.busy.has(near.airport.code)}
-          disabled={atLimit && !follows.isFollowing(near.airport.code)}
-          onToggle={() => follows.toggle(near.airport.code)}
-        />
-      )}
+      <div className="flex min-w-0 items-center gap-3 border-t border-rule pt-3">
+        {near.state === "loading" && (
+          <>
+            <span className="tile grid min-h-12 min-w-14 shrink-0 place-items-center rounded-xs" aria-hidden="true" />
+            <span className="block h-4 w-40 max-w-full animate-pulse rounded-xs bg-paper-3 motion-reduce:animate-none" aria-hidden="true" />
+            <span className="sr-only">Finding the airport nearest {name}</span>
+          </>
+        )}
+        {near.state === "ok" && (
+          <>
+            <p className="tile grid min-h-12 min-w-14 shrink-0 place-items-center rounded-xs px-2 font-numeral text-[1.2rem] font-semibold leading-none tracking-wide text-ink" aria-hidden="true">
+              {near.airport.code}
+            </p>
+            <p className="min-w-0 text-[0.92rem] leading-snug text-ink-2">
+              <span className="sr-only">{name}: </span>
+              <span className="text-[1rem] text-ink">Fly into <span className="font-numeral text-[1.05rem] font-semibold tracking-wide">{near.airport.code}</span>{" "}
+                <span aria-hidden="true">·</span> <span className="whitespace-nowrap font-numeral tabular-nums">{Math.max(1, Math.round(near.miles))} mi</span></span>
+              <span className="block text-pretty">{near.airport.name}</span>
+            </p>
+          </>
+        )}
+        {near.state === "none" && <p className="min-w-0 text-[0.95rem] leading-snug text-ink-2">No airport with airline service within a few hundred miles.</p>}
+        {near.state === "error" && <p className="min-w-0 text-[0.95rem] leading-snug text-ink-2">Couldn&apos;t look up the nearest airport. It will try again when you come back.</p>}
+      </div>
     </li>
   );
 }
