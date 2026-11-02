@@ -20,3 +20,4 @@ export { StoreSync } from "./StoreSync";
 export { WeatherGlyph, WindArrow, WeatherNow, ForecastStrip, TeeSheetForecast, type WeatherGlyphProps, type WindArrowProps, type WeatherNowProps, type ForecastStripProps, type TeeSheetForecastProps } from "./Weather";
 export { ApiState, ApiCredit, type ApiStateProps, type ApiCreditProps } from "./ApiState";
 export { CourseHits, type CourseHitsProps } from "./CourseHits";
+export { Freshness, since, type FreshnessProps } from "./Freshness";
