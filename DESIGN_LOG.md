@@ -290,3 +290,25 @@ Append as decisions happen, newest at the bottom.
   stretch to the same bottom: the tee sheet's rows share any spare height, the conditions card spreads it between its
   parts, and the tee sheet's key and credit move inside its card (like the conditions card). Measured 0px difference on
   8 courses at 1024-2560. Phones unchanged.
+
+## 2026-11-02 · A5 foundation (worker plumbing, follows, two new tabs)
+- **Shared contract first.** Migrations (files only, applied later by the user through the Supabase MCP): `worker_runs`
+  (read-only for golfers, in the realtime publication, daily cleanup of runs older than 2 days as its own cron
+  migration), the Vault `worker_secret` made inside the database from `gen_random_bytes` (nobody sees it), and
+  `worker_secret_ok()`, which only `service_role` may call. `followed_players` and `followed_airports` follow the hw4 RLS
+  convention. `followed_airports` sits in its own later file because it references the Flights agent's `airports` table.
+- **Limits live in the database.** The 20-player and 6-airport caps are plain before-insert triggers. They count the caller's
+  own rows, take a per-golfer advisory lock so two quick taps can't both become the 21st, and let a re-follow pass. The
+  error starts with `follow_limit`, so the Server Action can say it in words. Rejected: a security-definer trigger,
+  since the caller's own RLS-visible rows are exactly the rows to count.
+- **One `playerKey`, two copies.** `supabase/` is outside the app's tsconfig, so the app keeps a copy. A Node test
+  proves the two agree on every name in the saved ESPN and OWGR responses. `ø`/`æ`/`ß` are folded by hand, because
+  NFKD leaves "Højgaard" as "h-jgaard".
+- **`diffRows` compares loosely on purpose.** A database round-trip (`"12.5"` vs `12.5`, `…Z` vs `…+00:00`) must not
+  count as a change, or every 10-second tick would send a Realtime message for every row.
+- **Seven tabs at 320 px.** With seven equal columns, "Clubhouse" and "Courses" broke mid-word, at 390 as well. The tabs
+  now size to their labels. Below 400 px, the icon pill narrows and labels drop to 10 px (iOS's tab-label size).
+  Measured first: the old layout needed 327 px at 320. The **desktop bar** also wrapped to two rows at 768 and 1024.
+  md gets tighter caps, lg keeps the old spacing without icons, and icons return from xl (1280). Rejected: moving the
+  phone tab bar up to lg (it touches ~10 sticky bars in other pages) and hiding the wordmark's name on tablets.
+- `npm run test:worker` globs the test folder, because Node 25's `--test` doesn't expand a bare directory.
