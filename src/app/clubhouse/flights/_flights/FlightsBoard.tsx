@@ -60,7 +60,9 @@ export function FlightsBoard() {
       <p className="max-w-measure text-[0.85rem] leading-relaxed text-ink-2">
         Aircraft positions from{" "}
         <a className="link" href="https://adsb.lol/" target="_blank" rel="noreferrer">adsb.lol<span className="sr-only"> (opens in a new tab)</span></a>{" "}
-        (ODbL 1.0), swept every 30 seconds for the airports golfers follow. Airport list from{" "}
+        (ODbL 1.0), or from{" "}
+        <a className="link" href="https://adsb.fi/" target="_blank" rel="noreferrer">adsb.fi<span className="sr-only"> (opens in a new tab)</span></a>{" "}
+        when adsb.lol can&apos;t answer, checked every 30 seconds for the airports golfers follow. Airport list from{" "}
         <a className="link" href="https://ourairports.com/data/" target="_blank" rel="noreferrer">OurAirports<span className="sr-only"> (opens in a new tab)</span></a>{" "}
         (public domain). Positions only: arriving and departing are read from height and climb near the field, not from a timetable.
       </p>
@@ -297,7 +299,7 @@ function AirportBoard({ code, airport, rows, loading, loadFailed, sweep, health,
             </div>
           ))}
         </dl>
-        {held && <p className="caps text-label text-gold">Showing the last good update</p>}
+        {held && <p className="caps text-label text-gold">{sweep.kind === "failed" ? "Couldn’t reach the flight feeds; showing the last good update" : "Showing the last good update"}</p>}
       </header>
 
       <div className="px-4 py-4 sm:px-6 sm:py-5">
@@ -322,10 +324,10 @@ function EmptyBoard({ code, sweep, loading, loadFailed }: { code: string; sweep:
     return <ApiState kind="empty" title="Quiet skies">Nothing within 15 nm of {code} on the last check. A new arrival shows up here within 30 seconds.</ApiState>;
   }
   if (sweep.kind === "failed") {
-    const slow = sweep.why.includes("429");
+    // A failed airport means both feeds missed it (adsb.lol first, then adsb.fi: "ORD failed: lol 429; fi timed out").
     return (
-      <ApiState kind="down" title={slow ? "Asked to slow down" : `${code} didn't answer`}>
-        {slow ? "adsb.lol asked us to wait, so this check was skipped. The next one tries again in 30 seconds." : "The last check couldn’t reach this airport’s traffic. The next one tries again in 30 seconds."}
+      <ApiState kind="down" title="Couldn’t reach the flight feeds">
+        Neither flight feed answered for {code} on the last check. The next one tries again in 30 seconds.
       </ApiState>
     );
   }
