@@ -194,39 +194,37 @@ function PlayerCard({ name, row, rank, follows, boardReady, hasEvent, flashAt }:
   const worldRank = rank ? `World No. ${rank.rank}` : "Outside the world top 200";
 
   return (
-    <li ref={ref} className="flex min-w-0 items-center gap-4 rounded-xl border border-rule bg-paper-2 p-4 shadow-card">
-      <p className={cx("tile grid min-h-tile min-w-14 shrink-0 place-items-center rounded-xs px-2 font-numeral text-[1.35rem] font-semibold leading-none tabular-nums", out || !row ? "text-ink-2" : "text-ink")}>
-        <span aria-hidden="true">{pos}</span>
-        <span className="sr-only">{row ? (out ? OUT_WORDS[row.status!] : row.position ? `Position ${row.position}` : "No position yet") : "Not playing"}</span>
-      </p>
-      <div className="min-w-0 flex-1">
-        <h3 className="truncate font-serif text-[1.15rem] font-bold leading-snug text-ink">{display}</h3>
-        {row ? (
-          <p className="mt-0.5 text-[0.92rem] leading-snug text-ink-2">
-            {out ? (
-              <>{OUT_WORDS[row.status!]} · {worldRank}</>
-            ) : (
-              <>
-                <span>Today </span><span className={cx("font-numeral font-semibold tabular-nums", toParTone(row.today))}>{showToPar(row.today)}</span>
-                <span aria-hidden="true"> · </span>
-                <span>{row.thru && /^\d{4}-/.test(row.thru) ? "Tees off " : "Thru "}</span><span className="font-numeral font-semibold tabular-nums text-ink">{showThru(row.thru, row.status)}</span>
-                <span aria-hidden="true"> · </span>{worldRank}
-              </>
-            )}
-          </p>
+    <li ref={ref} className="grid min-w-0 gap-3 rounded-xl border border-rule bg-paper-2 p-4 shadow-card">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0 pt-1">
+          <h3 className="font-serif text-[1.15rem] font-bold leading-snug text-balance text-ink">{display}</h3>
+          <p className="text-[0.88rem] leading-snug text-ink-2">{[row?.country ?? rank?.country, worldRank].filter(Boolean).join(" · ")}</p>
+        </div>
+        <FollowButton name={display} following onToggle={() => follows.toggle(display)} busy={follows.busy.has(key)} compact />
+      </div>
+      <div className="flex min-w-0 items-center gap-3 border-t border-rule pt-3">
+        <p className={cx("tile grid min-h-12 min-w-12 shrink-0 place-items-center rounded-xs px-2 font-numeral text-[1.2rem] font-semibold leading-none tabular-nums", out || !row ? "text-ink-2" : "text-ink")}>
+          <span aria-hidden="true">{pos}</span>
+          <span className="sr-only">{row ? (out ? OUT_WORDS[row.status!] : row.position ? `Position ${row.position}` : "No position yet") : "Not playing"}</span>
+        </p>
+        {row && !out ? (
+          <>
+            <p className="shrink-0 font-numeral text-[1.9rem] font-semibold leading-none tabular-nums">
+              <span className={toParTone(row.to_par)} aria-hidden="true">{showToPar(row.to_par)}</span>
+              <span className="sr-only">{sayToPar(row.to_par)}</span>
+            </p>
+            <p className="min-w-0 text-[0.92rem] leading-snug text-ink-2">
+              <span className="whitespace-nowrap">Today <span className={cx("font-numeral text-[1.02rem] font-semibold tabular-nums", toParTone(row.today))}>{showToPar(row.today)}</span></span>
+              <span aria-hidden="true"> · </span>
+              <span className="whitespace-nowrap">{row.thru && /^\d{4}-/.test(row.thru) ? "Tees off " : "Thru "}<span className="font-numeral text-[1.02rem] font-semibold tabular-nums text-ink">{showThru(row.thru, row.status)}</span></span>
+            </p>
+          </>
         ) : (
-          <p className="mt-0.5 text-[0.92rem] leading-snug text-ink-2">
-            {!boardReady ? "Checking this week's field…" : hasEvent ? "Not in this week's field" : "No tournament this week"} · {worldRank}
+          <p className="min-w-0 text-[0.95rem] leading-snug text-ink-2">
+            {row ? OUT_WORDS[row.status!] : !boardReady ? "Checking this week's field…" : hasEvent ? "Not in this week's field" : "No tournament this week"}
           </p>
         )}
       </div>
-      {row && !out && (
-        <p className="shrink-0 text-right font-numeral text-[1.9rem] font-semibold leading-none tabular-nums">
-          <span className={toParTone(row.to_par)} aria-hidden="true">{showToPar(row.to_par)}</span>
-          <span className="sr-only">{sayToPar(row.to_par)}</span>
-        </p>
-      )}
-      <FollowButton name={display} following onToggle={() => follows.toggle(display)} busy={follows.busy.has(key)} compact />
     </li>
   );
 }
@@ -247,8 +245,13 @@ function FollowAnnouncer({ live, follows }: { live: TourLive; follows: FollowsSt
 const matches = (name: string, q: string) => !q || playerKey(name).includes(playerKey(q));
 
 function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { live: TourLive; health: WorkerHealth; follows: FollowsState; query: string; onClear: () => void; rankByKey: Map<string, RankRow> }) {
+  const [showOut, setShowOut] = useState(false);
   const q = query.trim();
-  const rows = live.board.filter((r) => matches(r.name, q));
+  const matched = live.board.filter((r) => matches(r.name, q));
+  // Players out of the event (cut, withdrawn) fold away unless asked for, or a search finds them.
+  const outCount = matched.filter((r) => isOut(r.status)).length;
+  const foldOut = !q && !showOut && outCount > 0 && outCount < matched.length;
+  const rows = foldOut ? matched.filter((r) => !isOut(r.status)) : matched;
   const firstOut = rows.findIndex((r) => isOut(r.status));
   const final = live.event?.state === "post";
 
@@ -257,7 +260,7 @@ function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { liv
   else if (live.boardLoad === "error" && !live.board.length) content = <ApiState kind="down" title="We couldn't read the leaderboard">Reload the page in a moment. If it keeps happening, the board&rsquo;s feed may be down.</ApiState>;
   else if (!live.event) content = <ApiState kind="empty" title="No tournament this week">The leaderboard goes up when ESPN posts the next field.</ApiState>;
   else if (!live.board.length) content = <ApiState kind="empty" title="The field isn't posted yet">Tee times and the field usually go up a day or two before the first round.</ApiState>;
-  else if (!rows.length) content = <ApiState kind="empty" title={`No one called “${q}” in this week's field`} action={<Button size="sm" variant="secondary" onClick={onClear}>Clear the search</Button>}>Check the spelling, or look in the world ranking.</ApiState>;
+  else if (!matched.length) content = <ApiState kind="empty" title={`No one called “${q}” in this week's field`} action={<Button size="sm" variant="secondary" onClick={onClear}>Clear the search</Button>}>Check the spelling, or look in the world ranking.</ApiState>;
   else {
     content = (
       <div className="scroll-x rounded-xl border border-rule bg-paper-2 shadow-card">
@@ -267,7 +270,7 @@ function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { liv
             <tr className="border-b border-rule-strong">
               <Th className="w-14 pl-3 sm:pl-4">Pos</Th>
               <Th>Player</Th>
-              <Th className="text-right">To par</Th>
+              <Th className="whitespace-nowrap text-right">To par</Th>
               <Th className="hidden text-right sm:table-cell">Today</Th>
               <Th className="hidden text-right sm:table-cell">Thru</Th>
               <Th className="w-0 pr-3 sm:pr-4"><span className="sr-only">Follow</span></Th>
@@ -279,6 +282,13 @@ function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { liv
             ))}
           </tbody>
         </table>
+        {!q && outCount > 0 && outCount < matched.length && (
+          <div className="border-t border-rule-strong bg-paper-3 px-3 py-2 sm:px-4">
+            <Button variant="quiet" size="sm" aria-expanded={!foldOut} onClick={() => setShowOut((v) => !v)}>
+              {foldOut ? `Show the ${outCount} who missed the cut or withdrew` : "Hide the players who missed the cut"}
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
@@ -286,7 +296,7 @@ function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { liv
   return (
     <section aria-labelledby="board-h" className="grid content-start gap-4">
       <SectionHeading id="board-h" eyebrow={final ? "Final results" : "Live scoring"} title="Leaderboard"
-        action={live.board.length ? <p role="status" className="font-numeral text-[1.05rem] font-medium tabular-nums text-ink-2">{q ? `${rows.length} of ${live.board.length}` : `${live.board.length} players`}</p> : undefined} />
+        action={live.board.length ? <p role="status" className="font-numeral text-[1.05rem] font-medium tabular-nums text-ink-2">{q ? `${matched.length} of ${live.board.length}` : `${live.board.length} players`}</p> : undefined} />
       <Freshness health={health} what="The leaderboard" />
       {content}
     </section>
@@ -317,10 +327,12 @@ function BoardTr({ r, cutLine, follows, flashAt, rank }: { r: BoardRow; cutLine:
         <th scope="row" className="min-w-0 px-2 py-2 text-left font-normal">
           <span className="block font-medium leading-snug text-ink">{r.name}</span>
           <span className="block text-[0.85rem] leading-snug text-ink-2">
-            {[r.country, rank ? `World No. ${rank}` : null].filter(Boolean).join(" · ")}
+            <span className={out ? undefined : "hidden sm:inline"}>{r.country}</span>
+            {rank ? <span className="hidden sm:inline">{r.country ? " · " : ""}World No. {rank}</span> : null}
             {!out && (
               <span className="sm:hidden">
-                {r.country || rank ? " · " : ""}Today <span className={cx("font-numeral font-semibold", toParTone(r.today))}>{showToPar(r.today)}</span> · {showThru(r.thru, r.status)}
+                <span className="whitespace-nowrap">Today <span className={cx("font-numeral font-semibold", toParTone(r.today))}>{showToPar(r.today)}</span></span>
+                {" · "}<span className="whitespace-nowrap">{r.thru && /^\d{4}-/.test(r.thru) ? "" : "Thru "}{showThru(r.thru, r.status)}</span>
               </span>
             )}
           </span>
