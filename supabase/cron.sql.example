@@ -1,0 +1,71 @@
+-- TEMPLATE, not a migration: how to schedule a worker with Supabase Cron. Copy a block into a migration (or run it
+-- via apply_migration) once the Edge Function is deployed. pg_cron, pg_net and the Vault secret come from
+-- 20261102130000_worker_runs.sql and 20261102130100_worker_secret.sql.
+--
+-- pg_cron (1.5+, as on Supabase) accepts '<n> seconds' for sub-minute schedules (1-59 s), or a normal cron string.
+-- The secret is read from the Vault at each tick, so it never appears in this file, the job's text, or the repo.
+-- verify_jwt = false for both functions (supabase/config.toml), so no Authorization header is needed.
+-- cron.schedule with an existing job name replaces that job.
+
+-- Every 10 s: the live leaderboard (body {} = leaderboard).
+select cron.schedule(
+  'poll-tour',
+  '10 seconds',
+  $$
+  select net.http_post(
+    url := 'https://rihtmjtzrufkravyunuq.supabase.co/functions/v1/poll-tour',
+    headers := jsonb_build_object(
+      'content-type', 'application/json',
+      'x-worker-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'worker_secret')
+    ),
+    body := '{}'::jsonb,
+    timeout_milliseconds := 9000
+  );
+  $$
+);
+
+-- Hourly, at minute 7: the world ranking.
+select cron.schedule(
+  'poll-rankings',
+  '7 * * * *',
+  $$
+  select net.http_post(
+    url := 'https://rihtmjtzrufkravyunuq.supabase.co/functions/v1/poll-tour',
+    headers := jsonb_build_object(
+      'content-type', 'application/json',
+      'x-worker-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'worker_secret')
+    ),
+    body := '{"part":"rankings"}'::jsonb,
+    timeout_milliseconds := 15000
+  );
+  $$
+);
+
+-- Every 30 s: flights around the followed airports.
+select cron.schedule(
+  'poll-flights',
+  '30 seconds',
+  $$
+  select net.http_post(
+    url := 'https://rihtmjtzrufkravyunuq.supabase.co/functions/v1/poll-flights',
+    headers := jsonb_build_object(
+      'content-type', 'application/json',
+      'x-worker-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'worker_secret')
+    ),
+    body := '{}'::jsonb,
+    timeout_milliseconds := 20000
+  );
+  $$
+);
+
+-- The daily cleanup is already a real migration (20261102130300_worker_runs_cleanup.sql):
+--   select cron.schedule('worker-runs-cleanup', '17 4 * * *',
+--     $$delete from public.worker_runs where started_at < now() - interval '2 days'$$);
+
+-- Read-only checks (execute_sql is fine for these):
+--   select jobid, jobname, schedule, active from cron.job order by jobname;
+--   select jobid, status, return_message, start_time from cron.job_run_details order by start_time desc limit 20;
+--   select id, status_code, left(content, 200), created from net._http_response order by created desc limit 20;
+--   select source, ok, rows_changed, detail, started_at from public.worker_runs order by started_at desc limit 20;
+-- Stop a job:
+--   select cron.unschedule('poll-tour');

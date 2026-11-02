@@ -1,0 +1,10 @@
+# Minimal Supabase CLI config for 18 Eagles (project rihtmjtzrufkravyunuq). Only what deploys need.
+project_id = "rihtmjtzrufkravyunuq"
+
+# The workers are called by Supabase Cron, not by signed-in users, so there's no user JWT to verify.
+# They check the x-worker-secret header against the Vault instead (supabase/functions/_shared/auth.ts).
+[functions.poll-tour]
+verify_jwt = false
+
+[functions.poll-flights]
+verify_jwt = false
