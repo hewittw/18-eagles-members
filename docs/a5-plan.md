@@ -101,3 +101,23 @@ Also extend `npm run test:rls` (Playwright): golfer-a can't see or delete golfer
 - Flights: `supabase/functions/poll-flights/`, airports + flights migrations, `scripts/gen-airports.mjs`,
   `src/app/clubhouse/flights/`, flight tests.
 - Everyone: append to `DESIGN_LOG.md`, commit your own files only (`git add <paths>`, never `git add -A`), small commits.
+
+## API usage: once on the server, never per user (user requirement)
+- Browsers never call ESPN, OWGR, or adsb.lol. The only external calls are the workers' (and hw4's existing cached
+  `/api/golf` and `/api/weather` routes). Pages read Supabase once and then take Realtime pushes.
+- **Tour, adaptive polling:** Cron still ticks every 10 s, but when no round is in progress (the stored event's state
+  isn't `in`, and it isn't within 30 minutes of the start time), the worker fetches ESPN only if the last ESPN fetch was over
+  5 minutes ago. Otherwise it records an ok run with `detail = 'idle: no live round'` and `rows_changed = 0`, without calling ESPN.
+  During a live round, it fetches every tick. Use the small leaderboard endpoint (≈230 KB), not the scoreboard (≈700 KB).
+- **Rankings:** hourly, and it skips the upsert when nothing changed (OWGR updates weekly).
+- **Flights:** one call per distinct followed airport (max 6), shared by every golfer who follows it. A 429 skips the tick.
+- Realtime: write only changed rows, coarsened; pages subscribe with filters (`airport=in.(…)`, `event_id=eq.…`).
+
+## Diagrams and README (user requirement; graded)
+- `docs/data-flow.md`: the backend data flow (drawn before code). Keep it true to what was built.
+- `flows.md`: add the new user flows as Mermaid ("Follow a tour player and watch them live", "Follow an airport near my
+  course and watch traffic"), plus the "what each state looks like" for loading/fresh/stale/down. Render with
+  `node scripts/render-mermaid.mjs` into `public/flows/`, and show them on the site's existing `/flows` page.
+- The `/flows` page (or the hub) also shows the backend data-flow chart, rendered the same way.
+- `README.md`: an A5 section with the chart, how a change travels source → worker → DB → Realtime → screen, the API
+  budget table, the freshness rules, how to run `npm run test:worker` and what each test checks, and the deployed URL.
