@@ -268,12 +268,12 @@ function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { liv
           <caption className="sr-only">{live.event.name} leaderboard{final ? ", final" : ""}{q ? `, players matching ${q}` : ""}</caption>
           <thead>
             <tr className="border-b border-rule-strong">
-              <Th className="w-14 pl-3 sm:pl-4">Pos</Th>
+              <Th className="w-11 pl-3 sm:w-14 sm:pl-4">Pos</Th>
               <Th>Player</Th>
-              <Th className="whitespace-nowrap text-right">To par</Th>
+              <Th className="text-right leading-tight sm:whitespace-nowrap">To par</Th>
               <Th className="hidden text-right sm:table-cell">Today</Th>
               <Th className="hidden text-right sm:table-cell">Thru</Th>
-              <Th className="w-0 pr-3 sm:pr-4"><span className="sr-only">Follow</span></Th>
+              <Th className="w-0 pr-2 sm:pr-4"><span className="sr-only">Follow</span></Th>
             </tr>
           </thead>
           <tbody>
@@ -349,7 +349,7 @@ function BoardTr({ r, cutLine, follows, flashAt, rank }: { r: BoardRow; cutLine:
           <span aria-hidden="true">{showThru(r.thru, r.status)}</span>
           <span className="sr-only">{sayThru(r.thru, r.status)}</span>
         </td>
-        <td className="py-1.5 pl-2 pr-3 text-right sm:pr-4">
+        <td className="py-1.5 pl-1 pr-2 text-right sm:pl-2 sm:pr-4">
           <FollowToggle label={r.name} following={following} onToggle={() => follows.toggle(r.name)} busy={follows.busy.has(r.player_key)} compact />
         </td>
       </tr>
@@ -378,11 +378,11 @@ function WorldRanking({ live, health, follows, query, onClear }: { live: TourLiv
             <caption className="sr-only">Official World Golf Ranking{q ? `, players matching ${q}` : all ? ", top 200" : `, top ${RANK_PREVIEW}`}</caption>
             <thead>
               <tr className="border-b border-rule-strong">
-                <Th className="w-14 pl-3 sm:pl-4">Rank</Th>
-                <Th className="w-16">Move</Th>
+                <Th className="w-11 pl-3 sm:w-14 sm:pl-4">Rank</Th>
+                <Th className="w-10 sm:w-16">Move</Th>
                 <Th>Player</Th>
                 <Th className="hidden text-right sm:table-cell">Avg pts</Th>
-                <Th className="w-0 pr-3 sm:pr-4"><span className="sr-only">Follow</span></Th>
+                <Th className="w-0 pr-2 sm:pr-4"><span className="sr-only">Follow</span></Th>
               </tr>
             </thead>
             <tbody>
@@ -426,7 +426,7 @@ function RankTr({ r, follows, flashAt }: { r: RankRow; follows: FollowsState; fl
         </span>
       </th>
       <td className="hidden px-2 py-2 text-right font-numeral text-[1.05rem] font-medium tabular-nums text-ink sm:table-cell">{pts == null ? "–" : pts.toFixed(2)}</td>
-      <td className="py-1.5 pl-2 pr-3 text-right sm:pr-4">
+      <td className="py-1.5 pl-1 pr-2 text-right sm:pl-2 sm:pr-4">
         <FollowToggle label={r.name} following={following} onToggle={() => follows.toggle(r.name)} busy={follows.busy.has(r.player_key)} compact />
       </td>
     </tr>
