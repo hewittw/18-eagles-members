@@ -22,7 +22,10 @@ export function LivePauseNotice({ what = "the scores" }: { /** What stopped upda
     requestAnimationFrame(() => {
       const h = document.querySelector<HTMLElement>("main h1");
       if (!h) return;
-      if (!h.hasAttribute("tabindex")) h.setAttribute("tabindex", "-1");
+      if (!h.hasAttribute("tabindex")) {
+        h.setAttribute("tabindex", "-1");
+        h.style.outline = "none"; // a heading isn't a control (as in RouteFocus): the next Tab shows the ring
+      }
       h.focus({ preventScroll: true });
     });
   };
@@ -39,7 +42,7 @@ export function LivePauseNotice({ what = "the scores" }: { /** What stopped upda
           <svg viewBox="0 0 16 16" className="size-3.5 shrink-0 text-gold" aria-hidden="true" fill="none" stroke="currentColor" strokeLinecap="round">
             {idle ? <path d="M5.75 3.5 V12.5 M10.25 3.5 V12.5" strokeWidth="2.2" /> : <circle cx="8" cy="8" r="4.5" fill="currentColor" />}
           </svg>
-          <p className="min-w-0 flex-1 py-1.5 text-[0.98rem] leading-snug text-on-green">
+          <p className="min-w-0 flex-1 basis-[15rem] py-1.5 text-[0.98rem] leading-snug text-on-green">
             {idle ? <>Live updates to {what} paused after 30 quiet minutes.</> : <>Live updates are back on.</>}
           </p>
           {idle && (
