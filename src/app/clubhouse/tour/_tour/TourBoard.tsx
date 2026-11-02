@@ -1,7 +1,7 @@
 "use client";
 // /clubhouse/tour: this week's PGA TOUR event (ESPN) and the world ranking (OWGR), with the golfer's own players
 // first. Everything arrives through Supabase: a snapshot, then Realtime pushes of only the rows the worker changed.
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { ApiState, Freshness, LivePauseNotice, PageHeader, PhotoBand } from "@/components/golf";
 import { FollowToggle } from "@/components/golf/FollowToggle";
 import { isOut, OUT_LABEL, OUT_WORDS, sayThru, sayToPar, shortDate, showThru, showToPar, toParTone } from "@/components/golf/tour/format";
@@ -28,6 +28,9 @@ export function TourBoard() {
   const live = useTourLive(db);
   const follows = useFollows(!!db);
   const [query, setQuery] = useState("");
+  // "Show all" on either list (lifted here so the ranking knows whether to hold still beside the leaderboard).
+  const [boardAll, setBoardAll] = useState(false);
+  const [rankAll, setRankAll] = useState(false);
 
   const rankByKey = useMemo(() => new Map(live.rankings.map((r) => [r.player_key, r])), [live.rankings]);
   const boardByKey = useMemo(() => new Map(live.board.map((r) => [r.player_key, r])), [live.board]);
@@ -62,8 +65,8 @@ export function TourBoard() {
             </Field>
           </div>
           <div className="grid gap-14 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] xl:gap-10 [&>*]:min-w-0">
-            <Leaderboard live={live} health={tourHealth} follows={follows} query={query} onClear={() => setQuery("")} rankByKey={rankByKey} />
-            <WorldRanking live={live} health={rankHealth} follows={follows} query={query} onClear={() => setQuery("")} />
+            <Leaderboard live={live} health={tourHealth} follows={follows} query={query} onClear={() => setQuery("")} rankByKey={rankByKey} all={boardAll} setAll={setBoardAll} />
+            <WorldRanking live={live} health={rankHealth} follows={follows} query={query} onClear={() => setQuery("")} all={rankAll} setAll={setRankAll} hold={!boardAll && !rankAll} />
           </div>
         </div>
 
@@ -258,9 +261,8 @@ function FollowAnnouncer({ live, follows }: { live: TourLive; follows: FollowsSt
 
 const matches = (name: string, q: string) => !q || playerKey(name).includes(playerKey(q));
 
-function Leaderboard({ live, health, follows, query, onClear, rankByKey }: { live: TourLive; health: WorkerHealth; follows: FollowsState; query: string; onClear: () => void; rankByKey: Map<string, RankRow> }) {
+function Leaderboard({ live, health, follows, query, onClear, rankByKey, all, setAll }: { live: TourLive; health: WorkerHealth; follows: FollowsState; query: string; onClear: () => void; rankByKey: Map<string, RankRow>; all: boolean; setAll: (f: (v: boolean) => boolean) => void }) {
   const [showOut, setShowOut] = useState(false);
-  const [all, setAll] = useState(false);
   const q = query.trim();
   const matched = live.board.filter((r) => matches(r.name, q));
   // Players out of the event (cut, withdrawn) fold away unless asked for, or a search finds them.
@@ -389,8 +391,12 @@ function BoardTr({ r, cutLine, follows, flashAt, rank }: { r: BoardRow; cutLine:
 
 // ───────── The world ranking ─────────
 
-function WorldRanking({ live, health, follows, query, onClear }: { live: TourLive; health: WorkerHealth; follows: FollowsState; query: string; onClear: () => void }) {
-  const [all, setAll] = useState(false);
+function WorldRanking({ live, health, follows, query, onClear, all, setAll, hold }: { live: TourLive; health: WorkerHealth; follows: FollowsState; query: string; onClear: () => void; all: boolean; setAll: (f: (v: boolean) => boolean) => void; hold: boolean }) {
+  // From xl the ranking sits beside the (usually longer) leaderboard. When it fits on screen it stays in view
+  // (sticky, clear of the top bar) instead of ending early beside an empty column; with either list open in full,
+  // or when it's taller than the window, both columns scroll normally.
+  const ref = useRef<HTMLElement>(null);
+  const fits = useFitsWindow(ref, STICKY_TOP_PX);
   const q = query.trim();
   const matched = live.rankings.filter((r) => matches(r.name, q));
   const shown = q || all ? matched : matched.slice(0, RANK_PREVIEW);
@@ -432,7 +438,7 @@ function WorldRanking({ live, health, follows, query, onClear }: { live: TourLiv
   }
 
   return (
-    <section aria-labelledby="owgr-h" className="grid content-start gap-4">
+    <section ref={ref} aria-labelledby="owgr-h" className={cx("grid content-start gap-4 xl:self-start", hold && fits && "xl:sticky xl:top-24")}>
       <SectionHeading id="owgr-h" eyebrow="Official World Golf Ranking" title="World ranking" />
       <Freshness health={health} what="The world ranking" />
       {content}
@@ -478,6 +484,24 @@ function Movement({ rank, prev }: { rank: number; prev: number | null }) {
       <span className="sr-only">{up ? "Up" : "Down"} {Math.abs(d)} from {prev} last week</span>
     </span>
   );
+}
+
+// xl:top-24 (6rem) clears the sticky top bar; the extra 1rem keeps the ranking's last row off the window's edge.
+const STICKY_TOP_PX = 96 + 16;
+
+/** Whether the element is short enough to stay stuck `top` px down without its bottom running off the window. */
+function useFitsWindow(ref: RefObject<HTMLElement | null>, top: number): boolean {
+  const [fits, setFits] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setFits(el.offsetHeight <= window.innerHeight - top);
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    window.addEventListener("resize", check);
+    return () => { ro.disconnect(); window.removeEventListener("resize", check); };
+  }, [ref, top]);
+  return fits;
 }
 
 // ───────── The brief highlight ─────────
