@@ -55,3 +55,72 @@ test("two golfers each save a card, and neither can see the other's", async ({ b
     await page.context().close();
   }
 });
+
+// ───────── A5: followed players ─────────
+// The follows go through the same door as the live pages: the Data API with the publishable key plus the golfer's own
+// Clerk token (what src/lib/live/browser.ts sends). The app never filters by user_id, so only RLS can keep golfer-b's
+// follows away from golfer-a: these checks fail if any followed_players policy is loosened.
+type Golfer = { page: Page; token: string; userId: string };
+
+async function golferToken(browser: Browser, who: string): Promise<Golfer> {
+  const page = await signedIn(browser, who);
+  const { token, userId } = await page.evaluate(async () => {
+    const c = (window as unknown as { Clerk: { session: { getToken(): Promise<string | null> }; user: { id: string } } }).Clerk;
+    return { token: (await c.session.getToken()) ?? "", userId: c.user.id };
+  });
+  expect(token, `${who} should have a Clerk session token`).not.toBe("");
+  return { page, token, userId };
+}
+
+const rest = (path: string) => `${process.env.NEXT_PUBLIC_SUPABASE_URL!}/rest/v1/${path}`;
+const headers = (token?: string, extra: Record<string, string> = {}) => ({
+  apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  ...extra,
+});
+
+test("golfer-a can't read, delete, or forge golfer-b's followed players", async ({ browser, request }) => {
+  const key = `rls-test-${RUN}`; // a key no real player has, so the test never touches real follows
+  const b = await golferToken(browser, "golfer-b");
+
+  // 1. golfer-b follows a player (user_id is filled in by the database from b's token).
+  const add = await request.post(rest("followed_players"), {
+    headers: headers(b.token, { "Content-Type": "application/json", Prefer: "return=minimal" }),
+    data: { player_key: key, name: "RLS Test Player" },
+  });
+  expect(add.status(), "golfer-b should be able to follow a player").toBe(201);
+
+  const a = await golferToken(browser, "golfer-a");
+  try {
+    // 2. golfer-a reads everything RLS allows: b's follow must not be there.
+    const all = await request.get(rest("followed_players?select=player_key,user_id"), { headers: headers(a.token) });
+    expect(all.ok()).toBe(true);
+    const rows = (await all.json()) as { player_key: string; user_id: string }[];
+    expect(rows.filter((r) => r.player_key === key), "golfer-a must NOT see golfer-b's follow").toEqual([]);
+    expect(rows.every((r) => r.user_id === a.userId), "every follow golfer-a sees is golfer-a's own").toBe(true);
+
+    // 3. golfer-a tries to delete it: RLS hides the row, so nothing is deleted.
+    const del = await request.delete(rest(`followed_players?player_key=eq.${key}`), { headers: headers(a.token, { Prefer: "return=representation" }) });
+    expect(await del.json(), "golfer-a's delete must remove nothing").toEqual([]);
+
+    // 4. golfer-a tries to insert a follow in golfer-b's name: the insert policy refuses it.
+    const forged = await request.post(rest("followed_players"), {
+      headers: headers(a.token, { "Content-Type": "application/json", Prefer: "return=minimal" }),
+      data: { user_id: b.userId, player_key: `${key}-forged`, name: "Forged" },
+    });
+    expect(forged.ok(), `forged insert returned ${forged.status()}`).toBe(false);
+
+    // 5. golfer-b still has exactly the follow they made.
+    const mine = await request.get(rest(`followed_players?select=player_key&player_key=like.${key}*`), { headers: headers(b.token) });
+    expect(await mine.json(), "golfer-b's follow survives golfer-a's delete").toEqual([{ player_key: key }]);
+
+    // 6. Signed out (publishable key, no token): nothing at all.
+    const anon = await request.get(rest("followed_players?select=player_key"), { headers: headers() });
+    expect(anon.ok() ? await anon.json() : [], `anon read returned ${anon.status()}`).toEqual([]);
+  } finally {
+    // Clean up with b's own token (only b can).
+    await request.delete(rest(`followed_players?player_key=eq.${key}`), { headers: headers(b.token) });
+    await a.page.context().close();
+    await b.page.context().close();
+  }
+});
