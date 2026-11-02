@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "prebuild": "node scripts/gen-course-index.mjs",
-    "test:rls": "playwright test"
+    "test:rls": "playwright test",
+    "test:worker": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"supabase/functions/tests/**/*.test.ts\""
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.21",
