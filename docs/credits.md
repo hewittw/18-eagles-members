@@ -154,3 +154,10 @@ Courses with no photo show a drawn yardage-book illustration instead.
 ## Research
 
 App screenshots in `public/research/<app>/` are store listing images, used as screenshot, for study. Sources are listed in each study in `docs/research/`.
+
+## Live data (A5)
+
+| Source | Used for | Terms |
+|---|---|---|
+| ESPN (`site.web.api.espn.com` golf leaderboard) | The live PGA TOUR leaderboard on `/clubhouse/tour` | Data from ESPN, credited and linked on the page. Called only by our worker, at most every 10 s during a live round and every 5 min otherwise |
+| Official World Golf Ranking (`apiweb.owgr.com`) | The world ranking top 200 on `/clubhouse/tour` | Data from the OWGR, credited and linked on the page. Called by our worker once an hour |

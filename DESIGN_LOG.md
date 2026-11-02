@@ -312,3 +312,34 @@ Append as decisions happen, newest at the bottom.
   md gets tighter caps, lg keeps the old spacing without icons, and icons return from xl (1280). Rejected: moving the
   phone tab bar up to lg (it touches ~10 sticky bars in other pages) and hiding the wordmark's name on tablets.
 - `npm run test:worker` globs the test folder, because Node 25's `--test` doesn't expand a bare directory.
+
+## 2026-11-02 · A5 Tour: poll-tour worker and the live /clubhouse/tour page
+- **Tables** (`20261102132000_tour.sql`, applied): `tour_events`, `tour_leaderboard`, `tour_rankings`, exactly per the
+  plan. Read-only for `authenticated`, nothing for `anon`, `service_role` granted explicitly (the project doesn't
+  auto-expose tables), all three in `supabase_realtime`. Advisors: no security findings; only "unused index" infos on
+  the brand-new indexes.
+- **One event at a time.** When ESPN moves to next week's event, the worker deletes the old event row and the cascade
+  clears its leaderboard. A week with no event leaves last week's board up, marked Final. Rejected: keeping every
+  event (the page only ever shows one, and each kept row costs storage and Realtime traffic for nothing).
+- **Adaptive polling, with one refinement.** The plan says "within 30 minutes of the start time", but ESPN's event
+  date is midnight ET, hours before anyone tees off. Polling every 10 s from then on would waste about 2,500 calls. The
+  decision (`shouldFetchLeaderboard`, pure and tested) uses the earliest stored tee time when there is one, and the event
+  date only before the field is posted. "Last real fetch" counts failed fetches too, so a source that's down is retried
+  every 5 minutes, not every tick.
+- **What a row stores.** `thru` is the hole count, `F`, or the tee time as an ISO instant (the page shows it in the
+  golfer's own time). A withdrawal before any shot shows "E" on ESPN with every round "-", which we store as no score,
+  not even par. Cut and withdrawn players get no position and no "today". OWGR points are the average, rounded to 2
+  decimals so float noise never counts as a change. The ranking deletes players who drop out of the top 200, but only
+  when OWGR sends a full page (at least 100 rows), so a short, broken response can't wipe the table.
+- **Proved on the deployed function** (v1): first call 121 rows (event + 120 players) and 200 rankings. Second call: the
+  leaderboard was `idle: no live round` (no ESPN call) and the rankings 0 (`unchanged`). After 5 minutes a real ESPN
+  refetch came back `0 up, 0 gone`. A call without the header got 401 and wrote no run.
+- **Page.** It starts with the event band on Locker Green (name, course, dates, a Final/Round pill, the leader on a
+  hand-hung tile). Then Your players, then one search box over the leaderboard and the world ranking (side by side
+  from xl). Players who missed the cut or withdrew fold behind a toggle: the first full-field render was 8,400 px tall at
+  1440. The follow toggles are real buttons with `aria-pressed`, always named "Follow <player>", so the visible
+  label stays inside the accessible name. Phones get the drawn mark only, still 44 px. Rows a push changed wash Fairway
+  Tint once (Web Animations, skipped under reduced motion). Only changes to a followed player's position or score
+  are announced. Unfollow offers Undo, not a confirm.
+- **Realtime deletes can't be filtered**, so the leaderboard channel listens to inserts and updates filtered
+  `event_id=eq.<id>` and to deletes unfiltered, then drops any delete for another event (the old record carries the key).
