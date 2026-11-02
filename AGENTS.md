@@ -2,7 +2,9 @@
 
 **Now (A5, due Tue Nov 3, 5:30 PM):** branch `live-data` of the same repo, copied to `week5/hw5`. Adds a live Tour page
 (ESPN leaderboard + OWGR) and a live Flights page (adsb.lol), fed by Supabase Edge Function workers on Supabase Cron.
-Read `docs/assignment-a5.md`, `docs/data-flow.md`, and `docs/a5-plan.md` first. Deploy: preview of `live-data`.
+Read `docs/assignment-a5.md`, `docs/data-flow.md`, and `docs/a5-plan.md` first. Deploy: preview of `live-data`, live at **https://18-eagles-live.vercel.app** (a project domain, so Standard Protection
+leaves it public). The project isn't Git-connected: redeploy with `vercel deploy --yes`, then
+`vercel alias set <new-preview-url> 18-eagles-live.vercel.app`. Never `--prod` (production is A4's site).
 **A5 rule changes:** the workers (and only the workers, on Supabase's servers) use the Supabase secret key; the Next.js
 app still never has it. The agent may use `execute_sql` for read-only checks (logs, cron runs, row counts); every
 schema change is a migration file applied with `apply_migration`. No Railway.
