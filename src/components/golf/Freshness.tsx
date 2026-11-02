@@ -1,5 +1,6 @@
 "use client";
-// The live pages' freshness line: "Updated 8 seconds ago", or plainly stale, or plainly down (the last good data stays
+// The live pages' freshness line: "Updated 8 seconds ago" ("Checked 8 seconds ago · no round in play" when the tour
+// worker only confirmed there's no live round), or plainly stale, or plainly down (the last good data stays
 // on screen, marked), or paused (nobody was looking: src/lib/live/useLivePause.ts). Fed by useWorkerHealth (src/lib/live/useWorkerHealth.ts). The visible time ticks every 5 s, but
 // only a change of state is announced (a polite live region), so a screen reader isn't read the clock.
 import { useNow } from "@/lib/live/useNow";
@@ -20,10 +21,12 @@ export function Freshness({ health, what = "The live data", tone = "paper", clas
   const green = tone === "green";
   const { state, lastOkAt } = health;
   const ago = lastOkAt && now ? since(lastOkAt, now) : null;
+  // The tour worker skips ESPN when no round is in play and records "idle: …": we checked, but didn't re-fetch.
+  const idle = !!health.lastOk?.detail?.startsWith("idle");
 
   const line =
     state === "loading" ? "Checking for the latest…"
-    : state === "fresh" ? `Updated ${ago}`
+    : state === "fresh" ? (idle ? `Checked ${ago} · no round in play` : `Updated ${ago}`)
     : state === "paused" ? (ago ? `Live updates paused. Last updated ${ago}.` : "Live updates paused.")
     : state === "stale" ? (ago ? `Last updated ${ago}. Waiting for the next update.` : "No updates yet. Waiting for the first one.")
     : ago ? `The feed is down. Showing the last update, from ${ago}.` : "The feed is down. We'll show it as soon as it's back.";
