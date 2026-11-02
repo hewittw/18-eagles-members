@@ -402,3 +402,37 @@ Evidence and contact sheets: `screenshots/a5/review/` (gitignored).
   page has the photograph/illustration band the Clubhouse and course pages lead with. Not fixed either: both live pages
   log a Next dev error for `Date.now()` in a `useState` initialiser (useWorkerHealth, Freshness), which is the live
   logic another agent owns.
+
+## 2026-11-02 · Finishing the live pages: the Realtime budget guard, and the review's leftovers
+- **Stop listening when nobody is looking.** One Flights tab left open took ~5–9k Realtime messages an hour, so one
+  forgotten tab for a month is past Supabase Free's 2M. `src/lib/live/useLivePause.ts` (one module-level store, used by
+  `useWorkerHealth`, `useTourLive`, `useFlightsLive`) pauses after **60 s hidden** (resumes by itself when the tab is
+  visible) or **30 minutes with no pointer/key/scroll/focus** on a visible tab (resumes only with the
+  "Resume live updates" button in `golf/LivePauseNotice`: a real button in a polite live region, in the Toast's look,
+  above the phone tab bar; after resume, focus goes to the page's h1 and the slip says "Live updates are back on").
+  Paused = each hook's effect returns early, so its cleanup removes the channel; realtime-js then closes the socket
+  itself ~50 s later. Resume re-runs the effects: subscribe first, refetch on SUBSCRIBED, the same order as on mount.
+  The Freshness line says "Live updates paused. Last updated …" with a drawn pause mark, never stale or down.
+  **Proved with Playwright** by counting `phx_join`/`phx_leave` frames on the Realtime WebSocket (no hook in the app):
+  Tour 5 channels → hidden 30 s still 5 → hidden 63 s **0** → socket closed at ~118 s → visible: 5 joins, then the 7
+  snapshot reads. Flights idle (Playwright clock jumped 31 minutes): 2 → **0** → Resume (keyboard Enter) → 2, then reads.
+  Rejected: closing on `blur` (a second monitor still shows the board) and auto-resuming idle on any mouse move (a
+  cat on the keyboard shouldn't restart a month of pushes; one button press is cheap).
+- **Next dev issue fixed.** `Date.now()` in two `useState` initialisers (useWorkerHealth, Freshness) tripped Cache
+  Components' prerender check. One shared 5 s clock (`useNow`, useSyncExternalStore, 0 on the server and during
+  hydration, treated as "loading") replaces both.
+- **Honest freshness on idle weeks.** When the latest ok tour run is `idle: …` the worker only confirmed no round is in
+  play, so the line reads "Checked 8 seconds ago · no round in play", not "Updated".
+- **Flights failure copy.** With the adsb.fi fallback, a failed airport means both feeds missed it, so "adsb.lol asked us
+  to wait" became "Couldn't reach the flight feeds; showing the last good update". The footer says "checked", and cites
+  and links both adsb.lol (ODbL) and adsb.fi (its terms require it).
+- **Tour leaderboard opens on its top 25** with "Show all N", the same pattern as the world ranking; search covers every
+  row and shows every match. From xl the ranking is sticky (top-24, clear of the bar) only when it fits the window and
+  neither list is open in full. Measured at 1280/1440/1920/2560: the two previews end within 1 px of each other. With the
+  leaderboard's "Show all" open the ranking ends ~2,500 px early by design (the user asked for normal scrolling then).
+- **Consistency:** Flights' I/II/III numerals removed. "Near your courses" is now cards built like Tour's player cards.
+  Both pages lead with a photograph band: the Clubhouse hero's photo + wash + credit became `golf/PhotoBand`, and Tour uses
+  Augusta's 18th beside the LEADERS board, Flights Pebble Beach's 18th (both already graded and credited; nothing downloaded).
+- **RLS:** `test:rls` now runs the followed_players checks for `followed_airports` too (read, delete, forge, signed out).
+  5 passed, twice, against the dev server.
+- Screenshots (gitignored): `screenshots/a5/final/` (both pages at 320–2560, paused/resumed, the column measurements).
