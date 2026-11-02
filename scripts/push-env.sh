@@ -16,5 +16,5 @@ for name in "${VARS[@]}"; do
   if [ -z "$value" ]; then echo "skip   $name (not in .env.local)"; continue; fi
   vercel env rm "$name" "$TARGET" $BRANCH --yes >/dev/null 2>&1 || true
   flag=""; [ "$name" = "CLERK_SECRET_KEY" ] && flag="--sensitive"
-  printf '%s' "$value" | vercel env add "$name" "$TARGET" $BRANCH $flag >/dev/null 2>/tmp/push-env.err && echo "added  $name → $TARGET $BRANCH" || { echo "FAILED $name → $TARGET $BRANCH:"; grep -iE "error|message" /tmp/push-env.err | grep -v -i key | head -2; }
+  printf '%s' "$value" | vercel env add "$name" "$TARGET" $BRANCH $flag >/dev/null 2>"${TMPDIR:-/tmp}/push-env.err" && echo "added  $name → $TARGET $BRANCH" || { echo "FAILED $name → $TARGET $BRANCH:"; grep -iE "error|message" "${TMPDIR:-/tmp}/push-env.err" | grep -v -i key | head -2; }
 done
