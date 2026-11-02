@@ -366,3 +366,39 @@ Append as decisions happen, newest at the bottom.
 - **The board:** four hand-hung count tiles on a Locker Green band (2×2 below 400 px, where four clipped their labels),
   then arrivals nearest the field first. A pushed row washes Fairway Tint once (none under reduced motion). An
   airborne plane rounded to 0 ft reads "Under 500 ft", not "0 ft".
+
+## 2026-11-02 · Design review of the two live pages (Tour, Flights) against the rest of the site
+A fresh-eyes pass by a reviewer agent that didn't build them, signed in as golfer-a (2 players, ORD + CLD) and golfer-b
+(follows nothing), at all 11 sizes, compared with /clubhouse/stats and /clubhouse/courses at the same widths. States were
+forced with Playwright route interception, never by touching the database: Supabase websocket + REST held open
+(loading), REST aborted (down), worker_runs aged 40 minutes (stale), the follow Server Action aborted (failed follow).
+Evidence and contact sheets: `screenshots/a5/review/` (gitignored).
+- **Two follow buttons that pressed differently.** Tour's was Locker Green with a brass tick and the word "Follow"; Flights'
+  went Fairway with "Following". Now one `golf/FollowToggle`, in ToggleChip's grammar (pressed = Locker Green + brass
+  tick, the same as every filter on the site) and Button's condensed caps. The word stays "Follow", so the visible label
+  is inside the accessible name ("Follow Scottie Scheffler"); `aria-pressed` carries the state. Rejected: "Following"
+  as the pressed word (speech users say what they see, and it isn't the name). It has its own spec on /design-system.
+- **Flights' airport boards were square-cornered with no lift** while every other surface on the site (Card, the Tour
+  event band, the Stats board) is rounded with the card shadow. They now match.
+- **Below the 12 px floor:** table heads, count-tile labels, "New", the cut row and the held-data note were 11.5 px;
+  now `text-label` (12.5 px). That made four count tiles clip "Departing" at 430, so they go 4-up from sm (640), not 400.
+- **Layout at 1024:** one airport board stretched to 1,000 px with callsigns and altitudes 800 px apart; boards now sit
+  side by side from lg instead of xl.
+- **Type rule:** the course name in "Near your courses" was Caslon Display at 23 px (Display is 28 px and up); now Caslon
+  Text bold, like Tour's player cards. Airport names wrap at 320 instead of truncating ("McClellan-Palomar Airp…").
+- **Voice:** "sweep" is the worker's word, not the clubhouse's. Visible copy now says "check" or "update" ("Showing the last
+  good update", "Waiting for the first check", "Not watched right now"). The data-credit lines were left alone (another
+  agent was editing them); the footer credit still says "swept every 30 seconds".
+- **States:** the event band's error was a hand-made heading; it now uses ApiState (tone green) like every other down
+  state. A followed player read "Outside the world top 200" while the ranking was still loading or had failed; that line
+  now waits until the ranking has actually loaded.
+- **Checked and fine:** no horizontal overflow at any size; focus ring on every stop (ink on paper, yellow on green),
+  logical order, `aria-pressed` on every toggle, real labels on both search fields, `<th scope>` and captions on the
+  tables. New pairs measured: brass tick on Locker Green 5.32:1, Fairway on Tint 5.95:1, Pencil on a followed row
+  (Tint 60%) 6.74:1, red on it 6.03:1, the toggle's border 3.56:1. Toasts (Undo, failed follow) are the shared Toast,
+  above the tab bar.
+- **Left for the user (judgment, not fixed):** the full leaderboard (68 rows) pushes the world ranking ~6,000 px down
+  below xl and costs 68 Tab stops; Flights numbers its sections I/II/III while Tour and the older pages don't; neither
+  page has the photograph/illustration band the Clubhouse and course pages lead with. Not fixed either: both live pages
+  log a Next dev error for `Date.now()` in a `useState` initialiser (useWorkerHealth, Freshness), which is the live
+  logic another agent owns.
