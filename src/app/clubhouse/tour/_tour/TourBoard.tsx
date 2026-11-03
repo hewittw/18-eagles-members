@@ -123,7 +123,7 @@ function EventBand({ live, health }: { live: TourLive; health: WorkerHealth }) {
           <p className="caps text-label text-gold">
             PGA TOUR{e.round && e.state !== "pre" ? ` · Round ${e.round}` : ""}
           </p>
-          <h2 className="mt-1 font-display text-display-2 text-balance text-on-green">{e.name}</h2>
+          <h2 className="mt-1 font-display text-display-2 text-balance text-on-green">{eventTitle(e.name)}</h2>
           <p className="mt-2 text-[1rem] text-paper-3">
             {[e.course, dates].filter(Boolean).join(" · ")}
           </p>
@@ -503,4 +503,10 @@ function useFitsWindow(ref: RefObject<HTMLElement | null>, top: number): boolean
     return () => { ro.disconnect(); window.removeEventListener("resize", check); };
   }, [ref, top]);
   return fits;
+}
+
+/** Sponsors that write their name as one word read as a typo in a big serif title, so the heading spaces them. */
+const SPACED: Record<string, string> = { VidantaWorld: "Vidanta World" };
+function eventTitle(name: string): string {
+  return name.replace(/\b[A-Za-z]+\b/g, (w) => SPACED[w] ?? w);
 }
