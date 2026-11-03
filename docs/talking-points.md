@@ -67,6 +67,10 @@ The chart: `docs/data-flow.md` (before code, as built, and after the pivot to th
   changed:* the upsert fails or duplicates. The tests on saved responses catch the parse side first.
 - **Database → Realtime → page:** each change, if the table is in the publication, `authenticated` has `select`, and a
   select policy allows it. *If any one of the three is missing:* the page gets nothing, with no error.
+- **The token on the socket:** Realtime checks the golfer's Clerk token for every message. *If it lapses* (Clerk's
+  tokens live 60 s; Realtime re-sends one only every 25 s), the server closes the channels and the page stops updating
+  with no error. We hit exactly that, read it in the page's WebSocket frames ("Token has expired 0 seconds ago"), and
+  fixed it in `src/lib/live/browser.ts`: never hand over a token with under 35 s left.
 - **Page → database (follows):** a Server Action with the golfer's Clerk token. *If RLS were wrong:* one golfer could see
   another's follows. `npm run test:rls` checks that.
 

@@ -577,3 +577,12 @@ Evidence and contact sheets: `screenshots/a5/review/` (gitignored).
   `20261102170000`); tables, rows and the deployed function kept (destructive DDL needs the user). The page,
   components, airport/trip client code and their tests removed; `/clubhouse/flights` redirects to `/clubhouse/shop`.
   The Shop tab (a drawn swing tag) replaces Flights; "Shop", not "Pro Shop", so seven tabs still fit at 320 px.
+- **A Realtime bug the Pro Shop exposed (it was Tour's too).** A 6-minute watch of the open shop showed the freshness
+  line going from "1 minute ago" to "7 minutes ago": the 04:35 run never arrived. Logging the page's own WebSocket
+  frames found it: ~2 minutes after load the server sent `"Token has expired 0 seconds ago"` and `phx_close` on both
+  channels, and nothing rejoined. Clerk's session tokens live 60 s and `getToken()` can return a cached one with ~20 s
+  left; realtime-js re-sends the token only on its 25 s heartbeat, so one lapses between heartbeats. On Tour (a run every
+  10 s) it hid behind short checks. Fix in `src/lib/live/browser.ts`: never hand over a token with < 35 s left (then
+  `getToken({ skipCache: true })`). After: 8 minutes, a token refresh on schedule, no expiry, the 04:50 and 04:55 runs
+  both pushed to the page. Rejected: rejoining channels after a close (it would hide the cause and still drop changes
+  in the gap).

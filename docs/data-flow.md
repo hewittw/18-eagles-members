@@ -223,6 +223,7 @@ flowchart TB
 | Flights tables in the Realtime publication, cron `poll-flights` | Both removed by `20261102170000_stop_flights.sql`; the tables, rows and the deployed function stay | Nothing destructive without the user. |
 | `worker_runs.source` in (tour, rankings, flights) | plus `deals` | One freshness line per source. |
 | A failed run = down | A Pro Shop run is ok if any store answered; the failed ones keep their rows and are named in `detail` | One store's outage shouldn't blank the other five, or call the whole shop down. |
+| The browser client hands Realtime whatever `getToken()` returns | It never hands over a Clerk token with < 35 s left (`src/lib/live/browser.ts`) | Clerk tokens live 60 s; Realtime re-sends only on its 25 s heartbeat. A lapsed token made the server close every channel ("Token has expired", `phx_close`) about 2 minutes after load, silently. Found watching the Pro Shop's WebSocket frames; it affected Tour too. |
 
 ## Live numbers after the pivot (read-only SQL, 2026-11-03 04:15 UTC)
 - `poll-deals` v1, deployed, then two signed test runs: `138 on sale (bad-birdie 34, good-good 28, lag-shot 55,
