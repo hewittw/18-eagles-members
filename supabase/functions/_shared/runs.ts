@@ -1,7 +1,7 @@
 // One worker_runs row per run, success or failure: it's what the pages' freshness line reads.
 import type { SupabaseClient } from "./db.ts";
 
-export type RunSource = "tour" | "rankings" | "flights";
+export type RunSource = "tour" | "rankings" | "flights" | "deals";
 
 /**
  * Records one run. finished_at is now; detail is trimmed to 300 characters (say what failed, never a key or a body).

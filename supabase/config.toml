@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.poll-flights]
 verify_jwt = false
+
+[functions.poll-deals]
+verify_jwt = false
