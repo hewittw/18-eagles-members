@@ -16,6 +16,7 @@ export type AdsbAircraft = {
   lat?: number;
   lon?: number;
   dst?: number; // nm from the point we asked about
+  track?: number; // degrees true, the direction it's moving over the ground
 };
 /** adsb.lol calls the list `ac`; adsb.fi's point API calls it `aircraft`. Same readsb fields inside. */
 export type AdsbResponse = { ac?: AdsbAircraft[] | null; aircraft?: AdsbAircraft[] | null; now?: number };
@@ -44,6 +45,14 @@ export const verticalRate = (a: AdsbAircraft): number | null => num(a.baro_rate)
 
 export const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 export const HEX = /^~?[0-9a-f]{6}$/;
+
+/** Initial great-circle bearing from one point to another, degrees true (0–360). */
+export function bearingDeg(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const rad = Math.PI / 180;
+  const y = Math.sin((lon2 - lon1) * rad) * Math.cos(lat2 * rad);
+  const x = Math.cos(lat1 * rad) * Math.sin(lat2 * rad) - Math.sin(lat1 * rad) * Math.cos(lat2 * rad) * Math.cos((lon2 - lon1) * rad);
+  return ((Math.atan2(y, x) / rad) + 360) % 360;
+}
 
 /** Great-circle distance in nautical miles. */
 export function haversineNm(lat1: number, lon1: number, lat2: number, lon2: number): number {

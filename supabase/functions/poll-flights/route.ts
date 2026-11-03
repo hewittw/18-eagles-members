@@ -3,7 +3,7 @@
 // Each run: which pairs to watch, which airline flights near their airports to look up (adsbdb, a budget per run),
 // which of those fly the pair, where each one is on the route (phase + progress), and which old rows to drop.
 import { airlineFor, isAirlineCallsign } from "./airlines.ts";
-import { altitudeOf, haversineNm, HEX, num, onGround, verticalRate, type AdsbAircraft } from "./parse.ts";
+import { altitudeOf, bearingDeg, haversineNm, HEX, num, onGround, verticalRate, type AdsbAircraft } from "./parse.ts";
 
 export type Pt = { lat: number; lon: number };
 export type Pair = { key: string; a: string; b: string; trips: number };
@@ -67,6 +67,8 @@ export type Seen = {
   alt: number | null;
   ground: boolean;
   rate: number | null;
+  /** Direction over the ground, degrees true (null if not reported). */
+  track?: number | null;
   /** The airport whose circle it was seen in ("" when found by hex), and how far from it, nm. */
   near: string;
   dist: number;
@@ -84,7 +86,7 @@ export function seenAircraft(list: readonly AdsbAircraft[], airport: string, at?
     const dist = num(a.dst) ?? (at ? haversineNm(at.lat, at.lon, lat, lon) : 0);
     out.push({
       hex, callsign, type: String(a.t ?? "").trim().toUpperCase().slice(0, 8) || null, lat, lon,
-      alt: altitudeOf(a), ground: onGround(a), rate: verticalRate(a), near: airport, dist,
+      alt: altitudeOf(a), ground: onGround(a), rate: verticalRate(a), track: num(a.track), near: airport, dist,
     });
   }
   return out;
@@ -192,11 +194,12 @@ const ON_FIELD_NM = 10;
  *   arriving:  airborne within 80 nm of the destination, in the second half, descending or under 15,000 ft.
  *   en_route:  everything else in the air.
  *   alt_ft:    to the nearest 1,000 ft; 0 on the ground; at least 1,000 in the air.
- * On the ground anywhere else (a diversion, a stale position) → null: not on this route right now. Also null: climbing
- * away near the destination, or descending near the origin. Airlines reuse a flight number for every leg of a day
- * (WN 3224 MDW→SAN→…), and adsbdb knows one route per callsign, so that is the next (or previous) leg, not this one.
+ * On the ground anywhere else (a diversion, a stale position) → null: not on this route right now. Also null, because
+ * it's the same flight number's next or previous leg (airlines reuse a number all day, WN 3224 MDW→SAN→…, and adsbdb
+ * knows one route per callsign): descending near the origin (landing there); climbing away near the destination; or
+ * at cruise, outside both terminal areas, with its track more than 100° off the bearing to the destination.
  */
-export function flightState(s: Pick<Seen, "lat" | "lon" | "alt" | "ground" | "rate">, origin: Pt, destination: Pt): FlightState | null {
+export function flightState(s: Pick<Seen, "lat" | "lon" | "alt" | "ground" | "rate" | "track">, origin: Pt, destination: Pt): FlightState | null {
   const dO = haversineNm(s.lat, s.lon, origin.lat, origin.lon);
   const dD = haversineNm(s.lat, s.lon, destination.lat, destination.lon);
   const raw = dO + dD > 0 ? dO / (dO + dD) : 0;
@@ -209,7 +212,12 @@ export function flightState(s: Pick<Seen, "lat" | "lon" | "alt" | "ground" | "ra
   const alt = s.alt === null ? null : Math.min(60_000, Math.max(1000, Math.round(s.alt / 1000) * 1000));
   const low = s.alt !== null && s.alt < TERMINAL_FT;
   const rate = s.rate ?? 0;
-  if (s.alt !== null && s.alt > 8000 && ((raw >= 0.85 && rate > 500) || (raw <= 0.15 && rate < -500))) return null;
+  if (raw <= 0.15 && rate < -500) return null; // landing at the origin
+  if (s.alt !== null && s.alt > 8000 && raw >= 0.85 && rate > 500) return null; // climbing out of the destination
+  if (s.track != null && s.alt !== null && s.alt > 8000 && dO > 40 && dD > 40) {
+    const off = Math.abs(((s.track - bearingDeg(s.lat, s.lon, destination.lat, destination.lon) + 540) % 360) - 180);
+    if (off > 100) return null; // heading somewhere else
+  }
   let phase: Phase = "en_route";
   if (dD < TERMINAL_NM && raw >= 0.5 && (rate < -300 || low)) phase = "arriving";
   else if (dO < TERMINAL_NM && raw < 0.5 && (rate > 300 || low)) phase = "departing";
