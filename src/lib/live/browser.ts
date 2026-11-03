@@ -38,6 +38,30 @@ export function useSupabaseBrowser(): SupabaseClient | null {
   return useMemo(() => {
     if (!sessionId) return null;
     // clerk.session is always the live session, so the token is never a stale one captured at creation.
-    return clientFor(sessionId, async () => (await clerk.session?.getToken()) ?? null);
+    return clientFor(sessionId, async () => {
+      const session = clerk.session;
+      if (!session) return null;
+      const token = await session.getToken();
+      // Clerk's session tokens live 60 s and getToken() may hand back a cached one with only seconds left. Realtime
+      // re-sends the token only on its 25 s heartbeat, so a token that lapses between two heartbeats gets every channel
+      // closed by the server ("Token has expired", phx_close), silently: the page stops updating. Found on the Pro
+      // Shop (5-minute runs never arrived); Tour had the same gap. So never hand over one with < MIN_LIFE_S left.
+      if (token && secondsLeft(token) < MIN_LIFE_S) return (await session.getToken({ skipCache: true })) ?? null;
+      return token ?? null;
+    });
   }, [sessionId, clerk]);
+}
+
+/** Longer than Realtime's 25 s heartbeat, with room for latency and clock skew. */
+const MIN_LIFE_S = 35;
+
+/** Seconds until a JWT's `exp` (by this device's clock); 0 if it can't be read, which forces a fresh token. */
+function secondsLeft(jwt: string): number {
+  try {
+    const part = jwt.split(".")[1]?.replace(/-/g, "+").replace(/_/g, "/") ?? "";
+    const exp = Number((JSON.parse(atob(part.padEnd(part.length + ((4 - (part.length % 4)) % 4), "="))) as { exp?: unknown }).exp);
+    return Number.isFinite(exp) ? exp - Date.now() / 1000 : 0;
+  } catch {
+    return 0;
+  }
 }
