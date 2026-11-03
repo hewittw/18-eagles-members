@@ -510,3 +510,27 @@ Evidence and contact sheets: `screenshots/a5/review/` (gitignored).
   one worker-health caller (no duplication), but it shares the one-read change, and its `getTrip` read moved to the
   browser for the same queueing reason. Realtime: Tour still joins 5 channels, all "Subscribed to PostgreSQL".
 - Screenshots (gitignored): `screenshots/a5/alt/` (Chicago and Pebble Beach at 320/390/1280/2560, swaps, focus ring, Tour).
+
+## 2026-11-03 · Routes from adsb.im, not adsbdb (poll-flights v7)
+- **Why:** adsbdb's route data "may not be copied, published, or incorporated into other databases without the explicit
+  permission of David J Taylor", and `callsign_routes` was exactly that. The user chose adsb.im's batch **routeset**
+  (`POST http://adsb.im/api/0/routeset`), whose routes are Virtual Radar Server's standing data (CC0-1.0).
+- **Checked with curl first** (real User-Agent; fixtures `adsbim-routeset-small.json` and 138 callsigns around MDW in
+  one call, `adsbim-routeset-mdw*.json`, 0.5 s): an array in request order; `_airport_codes_iata` ("SAN-ORD", "SAN-ORD-SAN",
+  "unknown"), `_airports` with each stop's `iata/lat/lon`, `airline_code`, `number`, `plausible`; some entries `null`.
+  111 of 138 plausible, 21 implausible (PHL-BOS over Chicago: stale data), 14 multi-stop.
+- **Unexpected, flagged for the user:** adsb.im's own API index says routeset data is "augmented with data from parsing
+  live ACARS messages as well as analyzing data from the adsb.lol API; as such the data returned should be considered to
+  be under the ODBL 1.0 license". So it isn't pure CC0. ODbL allows our cache with attribution, so the switch still
+  fixes the problem, but the credit says ODbL, and the source value is `'adsb.im'` rather than `'vrs-cc0'` (which would
+  claim a license the rows don't have). Usage notes from the same index: plain http, a contactable User-Agent, batch.
+- **What changed:** one POST per run with every uncached callsign and its position (chunks of 100, ≤ 200), instead of
+  ≤ 30 GETs 150 ms apart. Implausible, unknown and null answers cache as misses (1 day). The cache keeps every stop
+  (`route`, `stops` jsonb), and the board picks the leg each aircraft is flying (`pickLeg`: flightState's other-leg rules
+  per leg, then the leg whose phase fits the climb/descent, then the one it's nearest the line of). Flight numbers
+  print from a static ICAO→IATA map (UAL2486 → "UA 2486"). Migration `20261102160000` added `source`/`route`/`stops`
+  and deleted every adsbdb-derived row. The run detail now ends `routes adsb.im 162/200 found in 2 calls, traffic lol×3`.
+- **adsb.lol / adsb.fi health** (the user's priority): the 60 runs before the change had no 429, fallback or timeout,
+  p95 3.3 s over 24 h; the only 429s (2) were before the adsb.fi fallback existed. So the 100 nm circles and the one
+  comma-list hex call stay. One guard added: on a tick where adsb.lol already said 429, the hex lookup skips adsb.lol
+  and goes straight to adsb.fi (≤ 4, spaced 1.1 s), so a rate-limited tick isn't asked twice.

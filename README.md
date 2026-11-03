@@ -5,7 +5,7 @@
 18 Eagles now has two live pages. **Tour** shows this week's PGA TOUR leaderboard (ESPN) and the Official World Golf
 Ranking (OWGR), with the players you follow first. **Flights** ("Getting there") asks for your location, says which
 airport you're near, lets you pick where you're playing (your courses, or any airport), and shows the flights in the
-air between the two right now, or says you can drive (adsb.lol positions with adsb.fi as a fallback, routes from adsbdb). Workers on
+air between the two right now, or says you can drive (adsb.lol positions with adsb.fi as a fallback, routes from adsb.im). Workers on
 Supabase fetch each source on a schedule, save only what changed, and record every run. Supabase Realtime then pushes
 each change to the open pages, so they update without a refresh. Each golfer chooses what they follow, and row-level
 security keeps those choices private.
@@ -19,7 +19,7 @@ security keeps those choices private.
   Talking points for class: [`docs/talking-points.md`](docs/talking-points.md).
 
 ### The system
-![The system as built: ESPN, OWGR, adsb.lol and adsb.fi and adsbdb feed two Edge Functions run by Supabase Cron; they write changed rows to Postgres; Realtime pushes them to the Tour and Flights pages on Vercel; follows go through Server Actions with the Clerk token and RLS.](public/flows/system/flow-2.svg)
+![The system as built: ESPN, OWGR, adsb.lol and adsb.fi and a route source (adsbdb in this diagram, since replaced by adsb.im) feed two Edge Functions run by Supabase Cron; they write changed rows to Postgres; Realtime pushes them to the Tour and Flights pages on Vercel; follows go through Server Actions with the Clerk token and RLS.](public/flows/system/flow-2.svg)
 
 ### How one change travels
 1. **Source.** A player birdies the 7th. ESPN's leaderboard JSON now says -4, thru 7.
@@ -44,7 +44,7 @@ security keeps those choices private.
 | OWGR (`apiweb.owgr.com/.../getRankings`, top 200) | rank, last week's rank, average points | hourly at :07 | unpublished | 24 calls a day; 0 writes when nothing changed (it updates weekly) |
 | adsb.lol (`api.adsb.lol/v2/point/{lat}/{lon}/100`, `/v2/hex/{hex,hex…}`) | aircraft within 100 nm of each trip airport; known route flights by hex once they leave both circles | every 30 s: one call per airport in the watched pairs, plus one hex call | dynamic; it rate-limits Supabase's shared egress (we saw 429s) | only the 4 most-shared routes (A↔B is one route), so at most 8 point calls and 1 hex call a run, shared by everyone; no trips = no calls; a 429 never retries in a loop |
 | adsb.fi (`opendata.adsb.fi/api/v2/lat/{lat}/lon/{lon}/dist/100`, `/api/v2/hex/{hex}`) | the same data, same field names | only when adsb.lol answers 429 or fails | 1 request a second | calls spaced 1.1 s apart within a run; at most 4 hex fallbacks |
-| adsbdb (`api.adsbdb.com/v0/callsign/{CALLSIGN}`) | a callsign's route: origin and destination IATA codes, airline, flight number | only for airline callsigns with no cached answer | unpublished; keyless | at most 30 a run, 150 ms apart, climbing/descending aircraft first; cached in `callsign_routes` for 7 days (a miss for 1 day). After the first ~5 minutes runs needed 0–3 lookups. Cargo and business jets are never looked up. |
+| adsb.im routeset (`POST http://adsb.im/api/0/routeset`, Virtual Radar Server standing data CC0 + adsb.im's additions, ODbL) | a callsign's route: every stop's IATA code and position ("SAN-ORD-SAN"), and whether it's plausible for where the aircraft is | only for airline callsigns with no cached answer | none published; asks for plain http, a contactable User-Agent, and batching | one POST a run with every uncached callsign and its position (chunks of 100, at most 200), climbing/descending aircraft first; cached in `callsign_routes` (`source = 'adsb.im'`) for 7 days (a miss for 1 day); a failure stops that run's lookups. Replaced adsbdb on 2026-11-02, whose terms forbid caching its routes in a database. Cargo and business jets are never looked up. |
 | OurAirports | 1,955 airports (code, name, lat/lon) | once, as a seed migration | none (public domain) | it's a table, so the page never calls it |
 
 ### Free-tier budget
@@ -93,7 +93,7 @@ Each state has its own drawn mark (dot, ring, struck ring, dashed ring), never c
   `(select auth.jwt())->>'sub' = user_id`. The limits (20 players, 6 airports) are before-insert triggers.
 - **Shared tables are read-only.** `tour_*`, `trip_flights`, `trip_pairs`, `airports` and `worker_runs`: RLS on, one select
   policy for `authenticated`, `grant select` only. Only the worker's role (`service_role`) can write.
-- **anon gets nothing.** Every new table has `revoke all ... from anon`. Browsers never call ESPN, OWGR, adsb.lol, adsb.fi or adsbdb. `callsign_routes` (the adsbdb cache) has RLS on and no policies or grants for anyone but service_role.
+- **anon gets nothing.** Every new table has `revoke all ... from anon`. Browsers never call ESPN, OWGR, adsb.lol, adsb.fi or adsb.im. `callsign_routes` (the route cache) has RLS on and no policies or grants for anyone but service_role.
 
 ### Tests
 `npm run test:worker` runs the worker's pure code on saved real responses (`supabase/functions/tests/fixtures/`,
@@ -103,7 +103,7 @@ saved 2026-11-02) with Node's test runner. 56 tests pass today.
 | `diff.test.ts` | `diffRows`: the same rows twice give 0 upserts and 0 deletes; a first run saves everything; A then B upserts only new and changed rows and deletes the missing one; deletes can be turned off; only listed fields count; composite keys; duplicate keys; database round-trips (`"12.5"` vs `12.5`, `Z` vs `+00:00`) aren't changes |
 | `keys.test.ts` | `playerKey`: lowercase dash-joined keys, accents and letters like ø folded, punctuation collapsed, database length limits; the saved ESPN and OWGR responses join on it; the app's copy and the worker's agree on every saved name |
 | `tour.test.ts` | ESPN parse on the saved Mexico Open final: event fields, 120 rows, the winner (Andrew Novak, -25), ties ("T2"), a cut player, a withdrawal with no score, no event this week, a changed API throws; a live-round shape; OWGR parse (#1 Scottie Scheffler, points rounded) and a changed API throws; the ESPN-OWGR join; the same response twice writes nothing, one change writes one row; adaptive polling: live fetches every tick, idle waits 5 minutes, the first run fetches, the first tee time beats ESPN's midnight date |
-| `flights.test.ts` | The route board on saved real responses (adsb.lol 100 nm around ORD and SAN, adsbdb's answer for UAL1234 and its "unknown callsign" 404): only airline callsigns (no N-numbers, cargo or bizjets); one sighting per aircraft; adsbdb parse ("UA 1234", EWR → ORD) and misses; cache lifetimes (7 days, 1 day); pair normalisation (ORD→SAN = SAN→ORD, most-shared first, max 4, drives skipped); route match both ways; phase and progress (departing, en route, arriving, landed, rounded to 5 %; another leg of the same flight number is rejected by climb, descent or track); the lookup budget (≤ 30, unique, cached skipped, moving aircraft first); the whole board on real aircraft, a quiet second run writing nothing, tracking by hex, drops after 10 minutes, landed after 5; adsb.lol → adsb.fi fallback and its 1.1 s spacing. |
+| `flights.test.ts` | The route board on saved real responses (adsb.lol 100 nm around ORD and SAN; adsb.im routeset answers: a small one and 138 callsigns around MDW in one batch): only airline callsigns (no N-numbers, cargo or bizjets); one sighting per aircraft; routeset parse ("UA 2486", SAN → ORD; implausible, unknown and null entries cache as misses; multi-stop routes kept whole, answer order ignored); multi-leg selection (SAN-ORD-SAN, SFO-IAH-DEN-LGA: the leg fitting position, climb and heading); batching (138 callsigns = 2 POSTs of 100 + 38, a failed chunk stops, the time limit stops) and cache reuse; cache lifetimes (7 days, 1 day); pair normalisation (ORD→SAN = SAN→ORD, most-shared first, max 4, drives skipped); route match both ways; phase and progress (departing, en route, arriving, landed, rounded to 5 %; another leg of the same flight number is rejected by climb, descent or track); the lookup budget (≤ 200, unique, cached skipped, moving aircraft first); the whole board on real aircraft, a quiet second run writing nothing, tracking by hex, drops after 10 minutes, landed after 5; adsb.lol → adsb.fi fallback and its 1.1 s spacing. |
 | `trip.test.ts` | The suggestion rule on the real airport seed: Fairbanks Ranch and Rancho Santa Fe fly into SAN (not CLD); the Chicago Loop gets MDW (large, 9 mi; ORD is 15); Augusta falls back to AGS (no large airport within 75 mi); Pebble Beach gets SJC over MRY (a large airport within 75 mi wins); far places get a large airport within 250 mi or nothing. |
 
 `npm run test:rls` (Playwright, the Clerk test users) adds three tests to Assignment 4's: followed players, followed
