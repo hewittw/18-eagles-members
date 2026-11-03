@@ -61,7 +61,10 @@ The page reads the latest `worker_runs` row for its source (and gets new runs pu
 
 ---
 
-# As built (2026-11-02)
+# As built (2026-11-02), with Flights
+
+> Flights was retired later the same day for the Pro Shop: see **Pivot: Flights → Pro Shop** at the end. This section is
+> kept as the record of what ran.
 
 The chart above is the plan, drawn before any code. It stays as the record. This is the system as it runs now, read
 from the code (`supabase/migrations/`, `supabase/functions/`, `src/lib/live/`, the two pages) and checked against the
@@ -156,3 +159,75 @@ keep `worker_runs` to 2 days and `cron.job_run_details` to 1 day.
   cold cache spent all 30 lookups (≈ 9 s). 0 failed runs in the last hour; the longest took 9.1 s.
 - `callsign_routes` 403 (373 found), `trip_flights` 2, `trip_pairs` 2 (ORD-SAN: American, United; MDW-SAN: Southwest).
 - Realtime publication: `tour_events`, `tour_leaderboard`, `tour_rankings`, `trip_flights`, `trip_pairs`, `worker_runs`.
+
+---
+
+# Pivot: Flights → Pro Shop (as built, 2026-11-02 late)
+
+Flights was too complicated and too often wrong: free flight data is raw positions only, routes needed licensed or
+brittle sources (adsbdb's terms ruled out caching; adsb.im guesses multi-stop routes), and adsb.lol rate-limited
+Supabase's shared egress. The second live page is now the **Pro Shop**: what six golf brands have on sale, from each
+brand's public Shopify feed, with the categories a golfer watches first. Slickdeals was considered first and ruled out
+by its robots.txt and terms (README, "Pivot: Flights → Pro Shop"; per-store terms notes in `docs/credits.md`).
+The pattern is unchanged: Cron → worker → only what changed → Realtime → the open page.
+
+```mermaid
+flowchart TB
+  subgraph Sources["Live sources · keyless · only the workers call them"]
+    direction LR
+    ESPN["ESPN leaderboard<br/>~230 KB JSON"]
+    OWGR["OWGR ranking<br/>top 200, weekly"]
+    SHOP["6 brands' Shopify stores<br/>/products.json?limit=250<br/>Bad Birdie · Good Good · Lag Shot<br/>Malbon · Seed · SuperSpeed"]
+  end
+  CRON["Supabase Cron, in the database<br/>pg_cron + pg_net<br/>tour every 10 s<br/>rankings hourly at :07<br/>deals every 5 min<br/>x-worker-secret from Vault"]
+  subgraph Supabase["Supabase · project rihtmjtzrufkravyunuq · Free plan"]
+    TOUR["poll-tour<br/>Edge Function<br/>secret → live round? →<br/>parse → diffRows"]
+    DEALS["poll-deals<br/>Edge Function<br/>secret → 6 stores, 1.5 s apart →<br/>on sale ≥ 5 % → categorise → diffRows"]
+    SHARED[("Shared tables<br/>tour_events · tour_leaderboard<br/>tour_rankings · shop_deals<br/>worker_runs")]
+    RT["Realtime<br/>supabase_realtime<br/>RLS per subscriber"]
+    MINE[("Per-golfer tables<br/>followed_players ≤ 20<br/>watched_categories ≤ 4<br/>RLS: sub = user_id")]
+  end
+  subgraph Vercel["Vercel · Next.js · branch live-data"]
+    direction LR
+    TP["/clubhouse/tour"]
+    SP["/clubhouse/shop<br/>watch list first"]
+    SA["Server Actions<br/>follow-actions.ts"]
+  end
+  CDN["cdn.shopify.com<br/>product photos, 480 px"]
+  CLERK["Clerk<br/>sub, role authenticated"]
+
+  ESPN -->|"live: every tick<br/>idle: every 5 min"| TOUR
+  OWGR -->|hourly| TOUR
+  SHOP -->|"one GET per store per run"| DEALS
+  CRON -->|POST| TOUR
+  CRON -->|POST| DEALS
+  TOUR -->|"secret key<br/>changed rows + run row"| SHARED
+  DEALS -->|"secret key<br/>changed rows + run row"| SHARED
+  SHARED -->|WAL change| RT
+  RT -->|"source=eq.tour<br/>event_id=eq.id"| TP
+  RT -->|"source=eq.deals<br/>shop_deals *"| SP
+  CDN -.->|"img, lazy"| SP
+  TP -->|follow| SA
+  SP -->|"watch / unwatch"| SA
+  CLERK -->|getToken| SA
+  SA -->|"publishable key<br/>+ Clerk token"| MINE
+```
+
+## What changed in the pivot, and why
+| Before (Flights) | After (Pro Shop) | Why |
+|---|---|---|
+| `poll-flights` every 30 s: adsb.lol (adsb.fi fallback) + adsb.im routes, ≤ 9 calls a run | `poll-deals` every 5 min: one GET per store, six stores, 1.5 s apart | Sales change over hours, not seconds; one polite request per store is enough, and no source rate-limits us. |
+| `trip_flights`, `trip_pairs`, `callsign_routes` | `shop_deals` (id `brand:product`, title, category, price, was_price, pct_off, available, image, url, first_seen_at) | One small table (~140 rows), coarsened so a store re-saving a product isn't a change. |
+| `trips` (one per golfer), `followed_airports` | `watched_categories` (≤ 4 of 6, before-insert trigger), the hw4 RLS convention | "Watch Balls" is the golfer's whole choice; less is more. |
+| The flights page, geolocation, airport suggestions | `/clubhouse/shop`: a watch list, then everything else with category chips; `/clubhouse/flights` redirects | The user: Flights was "too complicated and isn't working very well." |
+| Flights tables in the Realtime publication, cron `poll-flights` | Both removed by `20261102170000_stop_flights.sql`; the tables, rows and the deployed function stay | Nothing destructive without the user. |
+| `worker_runs.source` in (tour, rankings, flights) | plus `deals` | One freshness line per source. |
+| A failed run = down | A Pro Shop run is ok if any store answered; the failed ones keep their rows and are named in `detail` | One store's outage shouldn't blank the other five, or call the whole shop down. |
+
+## Live numbers after the pivot (read-only SQL, 2026-11-03 04:15 UTC)
+- `poll-deals` v1, deployed, then two signed test runs: `138 on sale (bad-birdie 34, good-good 28, lag-shot 55,
+  malbon 0, seed 13, superspeed 8) · 138 up, 0 gone` (9.9 s), then the same `· 0 up, 0 gone` (9.1 s). Cron job
+  `poll-deals` `*/5 * * * *` active; `poll-flights` unscheduled.
+- `shop_deals`: 138 rows (apparel 51, training 62, balls 10, hats 9, bags 6), 10 sold out.
+- Realtime publication: `shop_deals`, `tour_events`, `tour_leaderboard`, `tour_rankings`, `worker_runs`.
+

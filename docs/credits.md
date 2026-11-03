@@ -157,6 +157,10 @@ App screenshots in `public/research/<app>/` are store listing images, used as sc
 
 ## Live data (A5)
 
+The Flights rows below (adsb.lol, adsb.im, adsbdb, adsb.fi, OurAirports) are **retired as of 2026-11-02**: the Flights
+page was replaced by the Pro Shop, its cron job unscheduled, and nothing calls them any more (README, "Pivot: Flights → Pro
+Shop"). Their credits stay because the retired tables still hold data that came from them.
+
 | Source | Used for | Terms |
 |---|---|---|
 | ESPN (`site.web.api.espn.com` golf leaderboard) | The live PGA TOUR leaderboard on `/clubhouse/tour` | Data from ESPN, credited and linked on the page. Called only by our worker, at most every 10 s during a live round and every 5 min otherwise |
@@ -166,3 +170,51 @@ App screenshots in `public/research/<app>/` are store listing images, used as sc
 | ~~adsbdb~~ (until 2026-11-02, removed) | Routes, per callsign | Its route data "may not be copied, published, or incorporated into other databases without the explicit permission of David J Taylor", and our cache did exactly that, so the worker moved to adsb.im and migration `20261102160000_callsign_routes_adsbim.sql` deleted every adsbdb-derived row. |
 | adsb.fi open data (`opendata.adsb.fi/api/v2/lat/…/lon/…/dist/100`, `/api/v2/hex/…`) | The same live aircraft, for an airport (or tracked flight) whose adsb.lol call failed (adsb.lol rate-limits Supabase's shared servers) | Personal, non-commercial use only; no reselling or licensing the data; provided as-is; must cite adsb.fi and link https://adsb.fi/ (done on the page). Public endpoints are limited to 1 request a second, so our fallback calls are spaced at least 1.1 s apart. Terms: https://github.com/adsbfi/opendata |
 | OurAirports (`ourairports.com/data`) | The airport list: codes, names, places, coordinates (seeded by `scripts/gen-airports.mjs`) | Public domain, credited on the page |
+
+## Pro Shop: brand stores
+
+The Pro Shop (`/clubhouse/shop`) shows what six golf brands have on sale, read by our worker (`poll-deals`) from each
+store's public Shopify feed (`https://{store}/products.json?limit=250`, one request per store every 5 minutes, a
+contactable User-Agent). The page credits each brand by name and links to its store; every card links straight to the
+brand's own product page. Product photos load from Shopify's CDN (`cdn.shopify.com`), the brands' own images, shown to
+send golfers to the brands; they are not copied into `public/` or our database (only their URL is saved). Prices,
+names and photos belong to the brands.
+
+Checked on 2026-11-02, before building: each store's `robots.txt` (none disallows `/products.json`) and its terms of
+service (none forbids automated access or showing its products elsewhere). Copies of what was read are kept with the
+session's working files, not in the repo.
+
+| Brand | Store (feed) | robots.txt | Terms of service (what we found) |
+|---|---|---|---|
+| Bad Birdie | badbirdiegolf.com (badbirdie.com redirects there) | allows `/products.json` | "Terms of Use", last updated 2022: age, privacy, links, IP ownership and reservation of rights; no clause on automated access, scraping, or showing products elsewhere |
+| Good Good Golf | goodgoodgolf.com | allows | The `/policies/terms-of-service` page holds only SMS marketing terms; no restriction on automated access or display |
+| Lag Shot | lagshotgolf.com | allows | A blog-style template (content you post, subscriptions, warranties); no clause on automated access, scraping, or display |
+| Malbon Golf | malbon.com | allows | Overview plus SMS-program terms; no clause on automated access, scraping, or display. (Nothing on sale on 2026-11-02: the page says so.) |
+| Seed Golf | seedgolf.co (US store; seedgolf.co.uk has the same terms) | allows | Copyright and trademark notices ("protected by International copyright laws"); no clause on automated access or display |
+| SuperSpeed Golf | superspeedgolf.com | allows | A standard template; "Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of the Company." We name the brand only to credit and link to it, and use no logo |
+
+**Left out because their terms forbid it** (robots.txt allowed the feed in every case):
+- Shopify's template terms, "to spam, phish, pharm, pretext, **spider, crawl, or scrape**": Snell, Sunday Golf, Stitch,
+  Takomo, Evnroll, Bettinardi, Vessel, Precision Pro, Holderness & Bourne.
+- The same template's "You agree not to **reproduce, duplicate, copy**, sell, resell or exploit any portion of the
+  Service…": Bogey Boys, Ghost Golf, Eyeline, Rypstick, Radmor, Arccos, Pinned, New Level, Edel.
+- Automated access forbidden outright: Vice ("through any automated means … scripts or web crawlers"), Blue Tees
+  ("scrape, crawl, harvest or use automated means"), Greyson ("robot, spider … crawl, scrape"), Swag ("harvesting bot,
+  robot, spider, script, crawler, or scraper").
+- Republishing or showing elsewhere forbidden: Seamus ("use of any such material on any other website … is
+  prohibited"), LAB Golf ("may not reproduce, duplicate, copy … exploit"), Orange Whip ("must not: republish material"),
+  Eastside ("reproduce or publicly display"), SKLZ ("reproduce, distribute, or publicly display"), Sun Mountain
+  ("may not otherwise be copied"), Voice Caddie ("banned from copying, transmitting and/or distributing"), Linksoul
+  (the "use license" template: no "public display" or mirroring).
+- No terms found, so not used: Tour Edge (the page is a warranty), MNML Golf (no terms page).
+- Not reachable or not a Shopify feed: Sub70, Stix, LA Golf, OnCore, Shot Scope, SuperStroke, Sacks Parente,
+  MacKenzie, Pinemeadow, Cut, Random Golf Club, PuttOut, Jones, Perfect Practice, Wazoo.
+
+**Slickdeals (considered first, not used).** Its search RSS (`/newsearch.php?…&rss=1`) works without a key, but
+`robots.txt` has `Disallow: /newsearch.php?*rss=*` and `Disallow: /search*` for every user agent. Its Terms of Service
+(effective 2026-03-05) say "do not copy or display Offers via any other website or app" and forbid accessing the
+service "via any automated means … and to comply with the instructions set out in any robots.txt file." So nothing
+from Slickdeals is used.
+
+The Pro Shop's band photo is Winged Foot's gate (`public/courses/winged-foot-west/graded/g1.jpg`, Anthony22,
+CC BY-SA 3.0), credited above in Courses and on the page.

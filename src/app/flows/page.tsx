@@ -38,11 +38,12 @@ export default function Flows() {
     return { title: (m?.[1] ?? "").replace(/^\d+ · /, ""), code: m?.[2] ?? "", note: (m?.[3] ?? "").trim(), src: `/flows/flow-${diagrams.length + i + 1}.svg` };
   });
   const dataFlow = readDoc("docs/data-flow.md");
-  const asBuilt = dataFlow.split("# As built")[1]?.match(/```mermaid\n([\s\S]*?)```/)?.[1] ?? "";
+  // The system as it runs now: the chart after the pivot from Flights to the Pro Shop (the third block, flow-3).
+  const asBuilt = dataFlow.split("# Pivot: Flights → Pro Shop")[1]?.match(/```mermaid\n([\s\S]*?)```/)?.[1] ?? "";
   const pick = (word: string) => a5Flows.find((f) => f.title.includes(word));
   const a5 = [
-    { title: "The system, as built", code: asBuilt, note: "Drawn before any code in docs/data-flow.md, then redrawn from the code once it ran. The table of what changed, and why, is in the same file.", src: "/flows/system/flow-2.svg" },
-    pick("Trace"), pick("Freshness"), pick("tour player"), pick("my route"),
+    { title: "The system, as built", code: asBuilt, note: "Drawn before any code in docs/data-flow.md, redrawn from the code once it ran, and redrawn again when the Pro Shop replaced Flights. The tables of what changed, and why, are in the same file.", src: "/flows/system/flow-3.svg" },
+    pick("Trace"), pick("Freshness"), pick("tour player"), pick("Watch a category"),
   ].filter((d): d is NonNullable<typeof d> => !!d && !!d.code).map((d) => ({ ...d, size: svgSize(d.src) }));
 
   return (
@@ -56,7 +57,7 @@ export default function Flows() {
         {a5.length > 0 && (
           <p className="mt-6 text-base">
             <a href="#a5" className="text-ink underline underline-offset-4 hover:text-green focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus rounded-sm">Assignment 5: the live system</a>
-            <span className="text-ink-2">: the Tour and Flights pages, the worker behind them, and how one change reaches the screen.</span>
+            <span className="text-ink-2">: the Tour and Pro Shop pages, the workers behind them, and how one change reaches the screen.</span>
           </p>
         )}
 

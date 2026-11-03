@@ -3,80 +3,126 @@
 ## Assignment 5: Live Data System
 
 18 Eagles now has two live pages. **Tour** shows this week's PGA TOUR leaderboard (ESPN) and the Official World Golf
-Ranking (OWGR), with the players you follow first. **Flights** ("Getting there") asks for your location, says which
-airport you're near, lets you pick where you're playing (your courses, or any airport), and shows the flights in the
-air between the two right now, or says you can drive (adsb.lol positions with adsb.fi as a fallback, routes from adsb.im). Workers on
-Supabase fetch each source on a schedule, save only what changed, and record every run. Supabase Realtime then pushes
-each change to the open pages, so they update without a refresh. Each golfer chooses what they follow, and row-level
-security keeps those choices private.
+Ranking (OWGR), with the players you follow first. **Pro Shop** shows what six golf brands have marked down right now,
+read from each brand's own public store feed, with the categories you watch first. Workers on Supabase fetch each
+source on a schedule, save only what changed, and record every run. Supabase Realtime then pushes each change to the
+open pages, so they update without a refresh: a birdie on the leaderboard, a new markdown, a price drop, a sell-out.
+Each golfer chooses what they follow, and row-level security keeps those choices private.
 
 - **Tour:** https://18-eagles-live.vercel.app/clubhouse/tour
-- **Flights:** https://18-eagles-live.vercel.app/clubhouse/flights
-- Sign in (any email; your follows and your trip are private to you), follow a player or plan a trip, and leave the
-  page open. Flights needs your location; it stays in the browser and only the airport code is saved.
-- Diagrams: [`docs/data-flow.md`](docs/data-flow.md) (the chart drawn before code, and the one as built),
+- **Pro Shop:** https://18-eagles-live.vercel.app/clubhouse/shop (the old `/clubhouse/flights` redirects here)
+- Sign in (any email; your follows and your watch list are private to you), follow a player or watch a category,
+  and leave the page open.
+- Diagrams: [`docs/data-flow.md`](docs/data-flow.md) (the chart drawn before code, the one as built, and the pivot),
   [`flows.md`](flows.md) (user flows, freshness states, one update traced), also on the site's `/flows` page.
   Talking points for class: [`docs/talking-points.md`](docs/talking-points.md).
 
+### Pivot: Flights → Pro Shop
+The second live page started as **Flights** ("Getting there": the flights in the air between your airport and the
+course you're playing). On 2026-11-02 we retired it and built the **Pro Shop** instead.
+
+**Why Flights went.**
+- **Free flight data is only raw positions.** adsb.lol and adsb.fi give every aircraft's position, altitude and
+  callsign, and nothing else. There are no schedules, no origins and destinations, and no "this is UA 2486 to Chicago".
+- **Routes needed licensed or brittle sources.** We tried adsbdb first; its terms forbid caching its routes in a
+  database, so we dropped it. Then adsb.im's routeset (Virtual Radar Server's standing data), which guesses from a
+  callsign and often doesn't know, or knows a multi-stop route. We had to pick the right leg from the plane's climb,
+  descent and heading. Real timetables need a paid, keyed API.
+- **Rate limits from shared egress.** adsb.lol rate-limits by IP, and Supabase's Edge Functions share their outbound
+  IPs, so we got 429s from other people's traffic (6 of 14 runs fell back to adsb.fi in one hour).
+- **The page got too complicated and still wasn't accurate.** Geolocation, airport suggestions, alternatives, legs,
+  phases and progress: a lot of machinery for a board that was often wrong or empty. The user's call: "the flights
+  just seems to be too complicated and isn't working very well at all."
+
+**What replaced it, and how we chose the source.**
+- **Slickdeals was the first idea, and its terms rule it out.** Its search RSS works without a key, but
+  `robots.txt` disallows `/newsearch.php?*rss=*` for every user agent (every Slickdeals feed redirects there). Its Terms
+  of Service (effective 2026-03-05) say: "do not copy or display Offers via any other website or app" and "not to
+  access … any of the Services via any automated means." A Pro Shop of their deals is exactly that, so we didn't
+  build it.
+- **The brands' own Shopify stores.** Every Shopify store serves its catalogue at `/products.json`, including each
+  variant's `price`, `compare_at_price` (the "was" price), and `available`. We screened about 50 golf direct-to-consumer
+  stores and read the `robots.txt` and the terms of service of the 37 that serve the feed. We kept only stores whose
+  robots.txt doesn't block it and whose terms don't forbid automated access or showing their products elsewhere. Six
+  passed: **Bad Birdie, Good Good Golf, Lag Shot, Malbon Golf, Seed Golf, SuperSpeed Golf**. The rest were left out,
+  among them Snell, Vice, Sunday, Stitch, Seamus, LAB Golf, Bettinardi and Blue Tees. Most use Shopify's template
+  terms ("spider, crawl, or scrape"), forbid automated access outright, or forbid republishing their material. Each store's note is in [`docs/credits.md`](docs/credits.md#pro-shop-brand-stores).
+- **Kept simple on purpose.** One page: your watch list (up to 4 categories) first, then everything else with one row
+  of category chips. Each card shows the markdown the way the hand-operated board shows a score under par: red
+  numerals on a white tile. It also shows the old price struck through, stock in words, and a link straight to the
+  brand's product page.
+- **What stayed.** The flights tables, their rows, and the deployed `poll-flights` function are untouched (dropping
+  them is destructive and needs the user). Only its cron job was unscheduled and its tables taken out of the Realtime
+  publication (`supabase/migrations/20261102170000_stop_flights.sql`). The page, its components, the airport and trip
+  client code, and their tests were removed from the app.
+
 ### The system
-![The system as built: ESPN, OWGR, adsb.lol and adsb.fi and adsb.im routes feed two Edge Functions run by Supabase Cron; they write changed rows to Postgres; Realtime pushes them to the Tour and Flights pages on Vercel; follows go through Server Actions with the Clerk token and RLS.](public/flows/system/flow-2.svg)
+![The system as built: ESPN and OWGR feed poll-tour, six brands' Shopify stores feed poll-deals, both run by Supabase Cron; they write changed rows to Postgres; Realtime pushes them to the Tour and Pro Shop pages on Vercel; follows and watches go through Server Actions with the Clerk token and RLS.](public/flows/system/flow-3.svg)
 
 ### How one change travels
-1. **Source.** A player birdies the 7th. ESPN's leaderboard JSON now says -4, thru 7.
-2. **Cron.** Every 10 seconds, `pg_cron` runs the `poll-tour` job. `pg_net` POSTs to the Edge Function with the
+1. **Source.** Bad Birdie marks the Mauve Chalk hat down from $23 to $19. Its `/products.json` now says
+   `"price": "19.00", "compare_at_price": "38.00"`.
+2. **Cron.** Every 5 minutes, `pg_cron` runs the `poll-deals` job. `pg_net` POSTs to the Edge Function with the
    `x-worker-secret` header, read from Supabase Vault at that moment.
-3. **Worker.** `poll-tour` asks the database whether the secret is right (`worker_secret_ok`). A round is live, so it
-   fetches ESPN (8 s timeout) and parses it into one event row and one row per player.
-4. **Only what changed.** `diffRows` compares the new rows with the saved ones and returns just his row. The worker
-   upserts that one row with the secret key and adds one `worker_runs` row (`ok`, `rows_changed = 1`).
-5. **Database to Realtime.** The update goes into Postgres's change log (WAL). `tour_leaderboard` is in the
+3. **Worker.** `poll-deals` asks the database whether the secret is right (`worker_secret_ok`). It then reads the six
+   stores one after another, 1.5 s apart (12 s timeout each). It keeps only products on sale by at least 5 %, one row
+   each, coarsened: prices to the cent, a whole-percent discount, one in-stock flag, and the image as a fixed-width
+   CDN URL without its cache-buster.
+4. **Only what changed.** `diffRows` compares those rows with the saved ones and returns just the hat. The worker
+   upserts that one row with the secret key and adds one `worker_runs` row (`ok`, `rows_changed = 1`). A store that
+   fails this run keeps its saved rows.
+5. **Database to Realtime.** The update goes into Postgres's change log (WAL). `shop_deals` is in the
    `supabase_realtime` publication, so Realtime picks it up.
-6. **Realtime to the browser.** For each open Tour page subscribed with `event_id=eq.<id>`, Realtime checks RLS as
-   that golfer's Clerk token (select grant + select policy) and sends the row over the WebSocket.
-7. **Screen.** `useTourLive` puts the row into React state. The row washes Fairway Tint once (no motion under
-   reduced motion). If you follow him, a polite live region reads his new position and score. The `worker_runs`
-   insert turns the freshness line to "Updated just now".
+6. **Realtime to the browser.** For each open Pro Shop page, Realtime checks RLS as that golfer's Clerk token
+   (select grant + select policy) and sends the row over the WebSocket.
+7. **Screen.** `useShopLive` puts the row into React state. The card washes Fairway Tint once (no motion under
+   reduced motion) and now reads −50 %. If you watch Hats, a polite live region says "Price drop: Active Bad Hat from
+   Bad Birdie, now $19." The `worker_runs` insert turns the freshness line to "Updated just now".
 
 ### Sources and how we stay under their limits
 | Source | What we take | How often | Limits | How we stay under them |
 |---|---|---|---|---|
 | ESPN leaderboard (`site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga`) | this week's event and every player's position, to par, today, thru | every 10 s during a live round (or within 30 min of the first tee time); otherwise at most every 5 min | unpublished; it blocks default User-Agents | one server-side call per tick for every golfer; a real User-Agent; the small leaderboard endpoint (~230 KB, not the ~700 KB scoreboard); idle runs make no call |
 | OWGR (`apiweb.owgr.com/.../getRankings`, top 200) | rank, last week's rank, average points | hourly at :07 | unpublished | 24 calls a day; 0 writes when nothing changed (it updates weekly) |
-| adsb.lol (`api.adsb.lol/v2/point/{lat}/{lon}/100`, `/v2/hex/{hex,hex…}`) | aircraft within 100 nm of each trip airport; known route flights by hex once they leave both circles | every 30 s: one call per airport in the watched pairs, plus one hex call | dynamic; it rate-limits Supabase's shared egress (we saw 429s) | only the 4 most-shared routes (A↔B is one route), so at most 8 point calls and 1 hex call a run, shared by everyone; no trips = no calls; a 429 never retries in a loop |
-| adsb.fi (`opendata.adsb.fi/api/v2/lat/{lat}/lon/{lon}/dist/100`, `/api/v2/hex/{hex}`) | the same data, same field names | only when adsb.lol answers 429 or fails | 1 request a second | calls spaced 1.1 s apart within a run; at most 4 hex fallbacks |
-| adsb.im routeset (`POST http://adsb.im/api/0/routeset`, Virtual Radar Server standing data CC0 + adsb.im's additions, ODbL) | a callsign's route: every stop's IATA code and position ("SAN-ORD-SAN"), and whether it's plausible for where the aircraft is | only for airline callsigns with no cached answer | none published; asks for plain http, a contactable User-Agent, and batching | one POST a run with every uncached callsign and its position (chunks of 100, at most 200), climbing/descending aircraft first; cached in `callsign_routes` (`source = 'adsb.im'`) for 7 days (a miss for 1 day); a failure stops that run's lookups. Replaced adsbdb on 2026-11-02, whose terms forbid caching its routes in a database. Cargo and business jets are never looked up. |
-| OurAirports | 1,955 airports (code, name, lat/lon) | once, as a seed migration | none (public domain) | it's a table, so the page never calls it |
+| Six brands' Shopify stores (`https://{store}/products.json?limit=250`: badbirdiegolf.com, goodgoodgolf.com, lagshotgolf.com, malbon.com, seedgolf.co, superspeedgolf.com) | each product on sale: title, sale price, compare-at price, stock, the first image, the product's handle | every 5 minutes | none published; robots.txt allows the feed; each store's terms read on 2026-11-02 | **one request per store per run** (6 a run, 1.5 s apart, a contactable User-Agent), so 288 a day per store and 1,728 in all; no retries; a store that fails keeps its last rows |
+| Shopify's image CDN (`cdn.shopify.com/…?width=480`) | the product photo | when a card scrolls into view (`loading="lazy"`) | the brands' own CDN, made for this | 480 px wide, fixed by the worker; never proxied or stored by us |
+
+All six stores sell in US dollars (checked on each store's `/meta.json`). A run reads the first 250 products per store,
+the one-request-per-store budget. Bad Birdie, Good Good and Malbon have more than that, so a sale deeper in their
+catalogues is missed. That's an honest limit of being polite.
 
 ### Free-tier budget
-- **Edge Function calls (Free: 500,000 a month).** `poll-tour` every 10 s = 8,640 a day; `poll-flights` every 30 s =
-  2,880; `poll-rankings` hourly = 24. That is 11,544 a day, about **346,000 in 30 days (69%)**. The adsb.fi fallback
-  runs inside the same call, so it adds nothing. Idle tour runs still count as calls; they save ESPN calls, not
-  Supabase ones.
+- **Edge Function calls (Free: 500,000 a month).** `poll-tour` every 10 s = 8,640 a day; `poll-deals` every 5 min =
+  288; `poll-rankings` hourly = 24. That is 8,952 a day, about **269,000 in 30 days (54%)**. Idle tour runs still
+  count as calls; they save ESPN calls, not Supabase ones. (With Flights it was 69 %.)
 - **Realtime messages (Free: 2 million a month).** Every change counts once for every open page that receives it.
   - An open Tour page gets 1 `worker_runs` message every 10 s (360 an hour) plus changed leaderboard rows. With no live
     round, that is about 360 an hour. In a live round, about 120 players × 18 holes = ~2,200 row updates over a ~10 h
     day, plus position shifts: roughly 500 more an hour, so **~900 an hour** per open page.
-  - An open Flights page now gets 120 run messages an hour plus only its own route's rows (`pair_key=eq.MDW-SAN`):
-    a handful of flights, each changing when it moves 5 % along the route or 1,000 ft. The live runs changed 0–2 rows
-    each, so **~150–350 an hour** per open page. (The first build's airport boards cost ~5,000–9,000 an hour.)
-  - So 2 million is about 6,000 hours of one Flights page, or ~2,000 hours of a Tour page on a live day. Tabs nobody is
-    looking at stop listening (useLivePause). If it ever runs hot: pause the `poll-flights` job (below).
-- **Database (Free: 500 MB).** 13 MB used. `worker_runs` grows ~11,500 rows a day and a daily job keeps 2 days;
-  `cron.job_run_details` keeps 1 day. Live tables stay small (one event, ~120 players, 200 rankings, a few hundred planes).
+  - An open Pro Shop page gets 12 run messages an hour plus the deals that changed: on our first runs, 138 on the first
+    fill and then 0. A busy hour of markdowns is a few dozen, so **~15–50 an hour** per open page.
+  - So 2 million is ~2,000 hours of a Tour page on a live day, or ~40,000 hours of the Pro Shop. Tabs nobody is
+    looking at stop listening (useLivePause).
+- **Database (Free: 500 MB).** 21 MB used (2026-11-03). `worker_runs` grows ~8,950 rows a day and a daily job keeps 2 days;
+  `cron.job_run_details` keeps 1 day. Live tables stay small (one event, ~120 players, 200 rankings, ~140 deals).
 - Vercel Hobby and Clerk's development instance: unchanged from Assignment 4. No payment method anywhere.
 
 ### Freshness rules
 The page reads the latest `worker_runs` row for its source, then gets each new run pushed by Realtime
-(`source=eq.tour`, `eq.flights`, `eq.rankings`), and re-checks every 5 s (`src/lib/live/useWorkerHealth.ts`).
+(`source=eq.tour`, `eq.rankings`, `eq.deals`), and re-checks every 5 s (`src/lib/live/useWorkerHealth.ts`).
 | State | Rule | The line says |
 |---|---|---|
 | loading | no answer from the database yet | "Checking for the latest…" |
-| fresh | the latest run is ok and the last ok run finished within 3 intervals: **30 s** for the leaderboard, **90 s** for flights, **3 h** for the world ranking | "Updated 8 seconds ago" |
-| stale | no ok run within 3 intervals (the worker stopped, or Cron stopped) | "Last updated 2 minutes ago. Waiting for the next update." |
-| down | the latest run failed (`ok = false`) | "The feed is down. Showing the last update, from 3 minutes ago." |
-An idle tour run (`idle: no live round`) is an ok run: it means the worker is alive and nothing could have changed.
-Down holds until the next ok run. A call without the secret writes no run, so a broken secret shows as stale.
-Each state has its own drawn mark (dot, ring, struck ring, dashed ring), never colour alone; only state changes are announced.
+| fresh | the latest run is ok and the last ok run finished within 3 intervals: **30 s** for the leaderboard, **15 min** for the Pro Shop, **3 h** for the world ranking | "Updated 4 minutes ago" |
+| stale | no ok run within 3 intervals (the worker stopped, or Cron stopped) | "Last updated 20 minutes ago. Waiting for the next update." |
+| down | the latest run failed (`ok = false`: every store failed, or the database write did) | "The feed is down. Showing the last update, from 6 minutes ago." |
+
+- An idle tour run (`idle: no live round`) is an ok run: it means the worker is alive and nothing could have changed.
+- A Pro Shop run where one or two stores fail is still ok. Its detail names them ("kept last for malbon HTTP 503"), and
+  their cards stay.
+- Down holds until the next ok run. A call without the secret writes no run, so a broken secret shows as stale.
+- Each state has its own drawn mark (dot, ring, struck ring, dashed ring), never colour alone; only state changes are
+  announced.
 
 ### Security
 - **The Vault secret.** A migration makes `worker_secret` inside the database from `gen_random_bytes(32)`, so no
@@ -89,26 +135,29 @@ Each state has its own drawn mark (dot, ring, struck ring, dashed ring), never c
   (`SUPABASE_SECRET_KEYS`, or `SUPABASE_SERVICE_ROLE_KEY`). It isn't in the code, the repo, Vercel, or the Next.js
   app. The app uses the publishable key plus the golfer's Clerk token, in the browser (`src/lib/live/browser.ts`) and
   in Server Actions (`src/lib/server/follow-actions.ts`).
-- **Follows and trips are private.** `followed_players`, `followed_airports` and `trips` have RLS on, with four policies requiring
-  `(select auth.jwt())->>'sub' = user_id`. The limits (20 players, 6 airports) are before-insert triggers.
-- **Shared tables are read-only.** `tour_*`, `trip_flights`, `trip_pairs`, `airports` and `worker_runs`: RLS on, one select
-  policy for `authenticated`, `grant select` only. Only the worker's role (`service_role`) can write.
-- **anon gets nothing.** Every new table has `revoke all ... from anon`. Browsers never call ESPN, OWGR, adsb.lol, adsb.fi or adsb.im. `callsign_routes` (the route cache) has RLS on and no policies or grants for anyone but service_role.
+- **Follows and watch lists are private.** `followed_players` and `watched_categories` (and the retired
+  `followed_airports` and `trips`) have RLS on, with four policies requiring `(select auth.jwt())->>'sub' = user_id`.
+  The limits (20 players, 4 categories) are before-insert triggers.
+- **Shared tables are read-only.** `tour_*`, `shop_deals` and `worker_runs`: RLS on, one select policy for
+  `authenticated`, `grant select` only. Only the worker's role (`service_role`) can write. `shop_deals` also checks
+  every row's shape: an id like `bad-birdie:1064…`, images only from `cdn.shopify.com`, a was-price above the price.
+- **anon gets nothing.** Every new table has `revoke all ... from anon`. Browsers never call ESPN, OWGR or the stores'
+  feeds. They load only the product photos, from Shopify's CDN, as any page linking to those stores would.
 
 ### Tests
 `npm run test:worker` runs the worker's pure code on saved real responses (`supabase/functions/tests/fixtures/`,
-saved 2026-11-02) with Node's test runner. 56 tests pass today.
+saved 2026-11-02) with Node's test runner. 49 tests pass today.
 | File | What it checks |
 |---|---|
 | `diff.test.ts` | `diffRows`: the same rows twice give 0 upserts and 0 deletes; a first run saves everything; A then B upserts only new and changed rows and deletes the missing one; deletes can be turned off; only listed fields count; composite keys; duplicate keys; database round-trips (`"12.5"` vs `12.5`, `Z` vs `+00:00`) aren't changes |
 | `keys.test.ts` | `playerKey`: lowercase dash-joined keys, accents and letters like ø folded, punctuation collapsed, database length limits; the saved ESPN and OWGR responses join on it; the app's copy and the worker's agree on every saved name |
 | `tour.test.ts` | ESPN parse on the saved Mexico Open final: event fields, 120 rows, the winner (Andrew Novak, -25), ties ("T2"), a cut player, a withdrawal with no score, no event this week, a changed API throws; a live-round shape; OWGR parse (#1 Scottie Scheffler, points rounded) and a changed API throws; the ESPN-OWGR join; the same response twice writes nothing, one change writes one row; adaptive polling: live fetches every tick, idle waits 5 minutes, the first run fetches, the first tee time beats ESPN's midnight date |
-| `flights.test.ts` | The route board on saved real responses (adsb.lol 100 nm around ORD and SAN; adsb.im routeset answers: a small one and 138 callsigns around MDW in one batch): only airline callsigns (no N-numbers, cargo or bizjets); one sighting per aircraft; routeset parse ("UA 2486", SAN → ORD; implausible, unknown and null entries cache as misses; multi-stop routes kept whole, answer order ignored); multi-leg selection (SAN-ORD-SAN, SFO-IAH-DEN-LGA: the leg fitting position, climb and heading); batching (138 callsigns = 2 POSTs of 100 + 38, a failed chunk stops, the time limit stops) and cache reuse; cache lifetimes (7 days, 1 day); pair normalisation (ORD→SAN = SAN→ORD, most-shared first, max 4, drives skipped); route match both ways; phase and progress (departing, en route, arriving, landed, rounded to 5 %; another leg of the same flight number is rejected by climb, descent or track); the lookup budget (≤ 200, unique, cached skipped, moving aircraft first); the whole board on real aircraft, a quiet second run writing nothing, tracking by hex, drops after 10 minutes, landed after 5; adsb.lol → adsb.fi fallback and its 1.1 s spacing. |
-| `trip.test.ts` | The suggestion rule on the real airport seed: Fairbanks Ranch and Rancho Santa Fe fly into SAN (not CLD); the Chicago Loop gets MDW (large, 9 mi; ORD is 15); Augusta falls back to AGS (no large airport within 75 mi); Pebble Beach gets SJC over MRY (a large airport within 75 mi wins); far places get a large airport within 250 mi or nothing. |
+| `deals.test.ts` | The six stores' saved feeds (`shopify-*-2026-11-02.json`; `body_html` dropped and full-price products trimmed to 15 per store, every kept record as served). Parse, field by field on one real hat: id `bad-birdie:<product id>`, $23 from $38 = 39 % off, in stock, the brand's product URL, the CDN image at 480 px. Only real sales (Malbon's full-price feed gives none; cents survive: $17.50); every row fits the table's checks; sold-out items stay, marked; subscriptions and duplicate "(Copy)" listings are filtered out (both are in the real feeds); only Shopify's CDN, no `?v=`; a malformed feed gives no rows. Categories: polos named after gear ("Divot Polo", "Tees Of Destiny Polo") stay apparel; real items from every category; "tee" vs "tees" vs "ball marker". The app's copy of the brands and categories matches the worker's. Diff: the same feeds twice → 0 upserts, 0 deletes; a database round-trip ("23.00") isn't a change; a price drop, a sell-out and an ended sale write exactly those rows, and a store re-saving everything (`updated_at`, image `?v=`) writes nothing. |
 
-`npm run test:rls` (Playwright, the Clerk test users) adds three tests to Assignment 4's: followed players, followed
-airports, and trips. golfer-a can't see golfer-b's rows, change or delete them, or write one in golfer-b's name (for
-trips, neither as an insert nor as an upsert); a signed-out caller gets nothing. 6 passed on 2026-11-03.
+`npm run test:rls` (Playwright, the Clerk test users) adds four tests to Assignment 4's: followed players, watched
+categories, and the retired followed airports and trips (the tables still hold rows, so they stay protected).
+golfer-a can't see golfer-b's rows, change or delete them, or write one in golfer-b's name; a signed-out caller gets
+nothing.
 
 ### Operating it
 Read-only checks in the Supabase SQL editor (or the MCP's `execute_sql`):
@@ -123,19 +172,20 @@ from cron.job_run_details d join cron.job j using (jobid) order by d.start_time 
 -- Failures in the last hour.
 select source, count(*) filter (where not ok) as failed, count(*) as runs
 from public.worker_runs where started_at > now() - interval '1 hour' group by source;
--- Row counts and the database size.
-select (select count(*) from public.tour_leaderboard) as board, (select count(*) from public.trip_flights) as flights,
-       (select count(*) from public.callsign_routes) as cached_routes,
-       pg_size_pretty(pg_database_size(current_database())) as db;
+-- What's on sale, by category, and the database size.
+select category, count(*), count(*) filter (where not available) as sold_out from public.shop_deals group by 1;
+select pg_size_pretty(pg_database_size(current_database())) as db;
 ```
 Pause and resume a job (a change to the schedule, so do it as a migration or by hand in the dashboard's Cron page):
 ```sql
-select cron.alter_job((select jobid from cron.job where jobname = 'poll-flights'), active := false);  -- pause
-select cron.alter_job((select jobid from cron.job where jobname = 'poll-flights'), active := true);   -- resume
+select cron.alter_job((select jobid from cron.job where jobname = 'poll-deals'), active := false);  -- pause
+select cron.alter_job((select jobid from cron.job where jobname = 'poll-deals'), active := true);   -- resume
 ```
 While a job is paused, its page goes **stale** within 3 intervals and says so. Nothing else breaks.
 
-Run it locally: `npx next dev -p 3400`, then `/clubhouse/tour` and `/clubhouse/flights`. The workers run only on Supabase.
+Run it locally: `npx next dev -p 3400`, then `/clubhouse/tour` and `/clubhouse/shop`. The workers run only on Supabase.
+`node scripts/shop-check.mjs` screenshots the Pro Shop signed in at every size and walks its interactions;
+`node scripts/shop-realtime-check.mjs` leaves it open across a cron tick and lists the Realtime messages that arrived.
 
 ---
 

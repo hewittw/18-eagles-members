@@ -1,7 +1,10 @@
 # Design, Build, Ship — Assignment 5: Live Data System (18 Eagles, continued)
 
 **Now (A5, due Tue Nov 3, 5:30 PM):** branch `live-data` of the same repo, copied to `week5/hw5`. Adds a live Tour page
-(ESPN leaderboard + OWGR) and a live Flights page (adsb.lol), fed by Supabase Edge Function workers on Supabase Cron.
+(ESPN leaderboard + OWGR) and a live Pro Shop (`/clubhouse/shop`: six golf brands' public Shopify feeds, the categories
+a golfer watches first), fed by Supabase Edge Function workers on Supabase Cron. The Pro Shop replaced a Flights page on
+2026-11-02 (README, "Pivot: Flights → Pro Shop"): its cron is off, its tables and deployed function are kept, its app
+code is gone.
 Read `docs/assignment-a5.md`, `docs/data-flow.md`, and `docs/a5-plan.md` first. Deploy: preview of `live-data`, live at **https://18-eagles-live.vercel.app** (a project domain, so Standard Protection
 leaves it public). The project isn't Git-connected: redeploy with `vercel deploy --yes`, then
 `vercel alias set <new-preview-url> 18-eagles-live.vercel.app`. Never `--prod` (production is A4's site).

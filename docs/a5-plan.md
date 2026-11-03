@@ -1,5 +1,9 @@
 # Assignment 5 Build Plan (shared contract for every agent)
 
+> **2026-11-02, later: Flights was replaced by the Pro Shop** (`/clubhouse/shop`, worker `poll-deals`, tables
+> `shop_deals` and `watched_categories`). The plan below is kept as written; what changed and why is in the README
+> ("Pivot: Flights → Pro Shop") and at the end of `docs/data-flow.md`.
+
 Read `AGENTS.md`, `docs/data-flow.md` (the chart), and this file before writing code. The brief is the PDF summarised
 in `docs/assignment-a5.md`. Branch: `live-data`. Supabase project: `rihtmjtzrufkravyunuq` (the same one as hw4).
 **No Railway.** The worker is Supabase Edge Functions run by Supabase Cron (pg_cron + pg_net).

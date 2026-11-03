@@ -26,31 +26,22 @@ We skip the rest: odds, broadcasts, every stroke, player photos.
 `rankingsList[].rank`, `.lastWeekRank`, `.pointsAverage`, `.player.fullName`, `.player.country.name`. It changes once a
 week (Monday). We store rank, last week's rank, average points (to 2 decimals), name and country.
 
-**adsb.lol** (`api.adsb.lol/v2/point/{lat}/{lon}/100`, and `/v2/hex/{hex,hex…}` for flights that left the circles)
-and **adsb.fi** (same data, the list is `aircraft` instead of `ac`). Saved copies: `adsblol-ord-100nm.json`,
-`adsblol-san-100nm.json` (the route board), `adsbfi-ord.json`; the first build's 15 nm `adsblol-ord-a/b.json` stay.
+**A brand's Shopify store** (`https://badbirdiegolf.com/products.json?limit=250`, and the same path on the other five
+stores; 60 KB–1.2 MB each). Saved copies: `shopify-<brand>-2026-11-02.json` (`body_html` dropped, full-price products
+trimmed to 15 per store). Parsed in `supabase/functions/poll-deals/parse.ts`. The response is `{ products: [...] }`:
 | Field | Means | Changes | We use it for |
 |---|---|---|---|
-| `hex` | the aircraft's transponder id | never | the key, with the pair (`MDW-SAN`) |
-| `flight`, `r` | callsign (space-padded), registration | per flight | the callsign, and the airline from its first three letters |
-| `t` | aircraft type (B738, E75L) | never | the type |
-| `alt_baro` ("ground" or feet), `alt_geom` | altitude | every second in the air | rounded to 1,000 ft; "ground" = on the ground |
-| `baro_rate`, `geom_rate` | climb or descent, ft/min | every second | the phase on its route (departing, en route, arriving), and spotting another leg of the same flight number |
-| `track` | direction over the ground | every second | at cruise, a track more than 100° off the destination means it's on another leg |
-| `gs` | ground speed, knots | every second | the ground test (under 200 ft and slower than 50 kt) |
-| `lat`, `lon`, `dst` | position, distance from our point in nm | every second | progress along the route (flown ÷ (flown + to go)), rounded to 5 % |
-| `now` | the server's time | every call | not stored |
+| `id`, `handle` | Shopify's product id, the URL slug | never | the row id (`bad-birdie:10643538084033`) and the link to `/products/{handle}` |
+| `title`, `product_type`, `tags[]` | "Active Bad Hat - Mauve Chalk", "Hat", ["ArchiveSale2026", …] | rarely | the card's name, and the category (title first, then type, then tags, then the brand's fallback) |
+| `variants[].price`, `.compare_at_price` | the price now and Shopify's "was" price, as strings ("23.00", "38.00"; `null` = not on sale) | when the brand runs or ends a sale | on sale = was above price by ≥ 5 %; price, was_price, whole-percent off |
+| `variants[].available` | in stock | when the last one sells | In stock / Sold out (any on-sale variant in stock = in stock) |
+| `variants[].featured_image.src`, `images[0].src` | the photo on `cdn.shopify.com`, with a `?v=` cache-buster | when the brand re-uploads | the card's photo, at a fixed `?width=480`, `?v=` dropped |
+| `updated_at`, `published_at`, `vendor`, `options`, `body_html` | housekeeping, the description | `updated_at` constantly | not stored: `updated_at` would make every row "change" every run |
+We skip variant sizes and colours, SKUs, weights, and descriptions. A store re-saving a product bumps `updated_at` and
+`?v=` all day; neither is stored, so it isn't a change and costs no Realtime message.
 
-**adsb.im routeset** (`POST http://adsb.im/api/0/routeset`, body `{"planes":[{"callsign":"UAL2486","lat":41.98,"lng":-87.9}, …]}`).
-Saved copies: `adsbim-routeset-small.json`, and `adsbim-routeset-mdw-request.json` → `adsbim-routeset-mdw.json` (138
-callsigns around Midway in one call, 0.5 s). It answers an array in request order; each entry has `_airport_codes_iata`
-("SAN-ORD", or "SAN-ORD-SAN" for one flight number with two legs, or "unknown"), `_airports` (each stop's `iata`,
-`lat`, `lon`, name), `airline_code`, `number`, and `plausible` (false when the route doesn't fit where the aircraft is:
-a stale or reused callsign). Some entries are `null`. We keep the stops and their positions; implausible, unknown and
-null cache as misses. Flight numbers print from the callsign ("UAL2486" → "UA 2486"). Routes change rarely, so each
-answer is cached 7 days (a miss 1 day) in `callsign_routes`, which only the worker can read. The data is Virtual Radar
-Server's standing data (CC0) plus adsb.im's own ACARS/adsb.lol additions, which adsb.im says are ODbL 1.0.
-We drop speed, heading, squawk, signal strength, and everything else, so a plane holding steady isn't a change.
+*(Retired with Flights: adsb.lol / adsb.fi aircraft positions and adsb.im routes. The README's "Pivot: Flights → Pro
+Shop" says why; their saved fixtures and tests were removed with the page.)*
 
 ## Step 2 · "List the MCP servers and CLIs you can use, what you'd use each for, and check each one works"
 | Tool | Used for | Checked on 2026-11-02 |
@@ -65,14 +56,14 @@ We drop speed, heading, squawk, signal strength, and everything else, so a plane
 Never: chrome-devtools MCP or the user's own Chrome.
 
 ## Step 3 · "Walk me through the chart: what each part sends to the next, and what would break"
-The chart: `docs/data-flow.md` (before code, then as built).
-- **Cron → worker:** an HTTP POST every 10 s (tour) or 30 s (flights), with `x-worker-secret` read from Vault.
+The chart: `docs/data-flow.md` (before code, as built, and after the pivot to the Pro Shop).
+- **Cron → worker:** an HTTP POST every 10 s (tour) or every 5 minutes (deals), with `x-worker-secret` read from Vault.
   *If the secret changed:* the function answers 401 and writes nothing, not even a run, so the page goes **stale**.
 - **Worker → source:** a GET with a real User-Agent and an 8 s timeout. *If ESPN renamed a field* (say `events`): the
   parser throws, the run is recorded `ok = false` with the error, the page says **down** and keeps the last good board.
-  *If adsb.lol says 429:* that airport tries adsb.fi; if both fail, its board is held and marked. *If adsb.im is down or
-  says 429:* lookups stop for that run; cached routes still match, so the board keeps working for known flights.
-- **Worker → database:** only changed rows, keyed by `(event_id, player_key)` or `(pair_key, hex)`. *If a key column
+  *If one brand's store fails or says 429:* that store keeps its saved cards and the run says so ("kept last for
+  malbon HTTP 503"); the run is still ok. Only if all six fail is it recorded `ok = false` (down).
+- **Worker → database:** only changed rows, keyed by `(event_id, player_key)` or the deal's `id` (`brand:product`). *If a key column
   changed:* the upsert fails or duplicates. The tests on saved responses catch the parse side first.
 - **Database → Realtime → page:** each change, if the table is in the publication, `authenticated` has `select`, and a
   select policy allows it. *If any one of the three is missing:* the page gets nothing, with no error.
@@ -80,42 +71,30 @@ The chart: `docs/data-flow.md` (before code, then as built).
   another's follows. `npm run test:rls` checks that.
 
 ## Step 4 · "Show me the worker's logs from its last three runs, and explain each line"
-Three recent rows of `public.worker_runs`, as stored:
+Recent rows of `public.worker_runs`, as stored (2026-11-03 UTC):
 ```
- id  | source  | ok   | rows_changed | detail                                                                 | started_at (UTC)      | finished_at (UTC)
- 180 | tour    | true | 0            | idle: no live round                                                    | 2026-11-02 20:56:06.113 | 20:56:06.288
- 178 | flights | true | 51           | CLD 29 lol (+2 −2 ~18), ORD 44 lol (+8 −5 ~16)                         | 2026-11-02 20:55:55.799 | 20:55:56.790
- 176 | tour    | true | 0            | VidantaWorld Mexico Open · Final · 120 players · 0 up, 0 gone (idle-refresh) | 2026-11-02 20:55:35.928 | 20:55:36.339
+ id   | source | ok   | rows_changed | detail                                                                                              | started_at   | took
+ 3737 | deals  | true | 0            | 138 on sale (bad-birdie 34, good-good 28, lag-shot 55, malbon 0, seed 13, superspeed 8) · 0 up, 0 gone   | 04:25:00     | 10.3 s
+ 3706 | deals  | true | 0            | 138 on sale (… the same) · 0 up, 0 gone                                                               | 04:20:00     | 9.5 s
+ 3668 | deals  | true | 138          | 138 on sale (bad-birdie 34, good-good 28, lag-shot 55, malbon 0, seed 13, superspeed 8) · 138 up, 0 gone | 04:14:07     | 9.9 s
+ 3750 | tour   | true | 0            | idle: no live round                                                                                 | 04:27:07.740 | 0.07 s
 ```
-The fields: `id` counts up, one per run. `source` is which job (tour, rankings, flights). `ok` is whether it worked;
+The fields: `id` counts up, one per run. `source` is which job (tour, rankings, deals). `ok` is whether it worked;
 the page says **down** when the latest one is false. `rows_changed` is how many rows it wrote or deleted, which is
 also how many Realtime messages each open page will get. `detail` says what happened in words. `started_at` and
 `finished_at` show how long it took; the page counts freshness from `finished_at`.
-- **180:** the 10-second tour tick. The Mexico Open is over (state `post`) and the last real ESPN call was under
-  5 minutes ago, so the worker didn't call ESPN at all. It still records an ok run (175 ms), which keeps the page fresh.
-- **178:** a flights tick from the first build (airport boards, since replaced by routes; a route tick today reads
-  `MDW-SAN 1 flight (1 lookups, 1 tracked), ORD-SAN 2 flights (2 lookups, 0 tracked)`). At Carlsbad (CLD), 29 planes within 15 nm, answered by adsb.lol (`lol`; it would say `fi` if
-  the fallback answered): 2 new, 2 gone, 18 changed. At O'Hare, 44 planes: 8 new, 5 gone, 16 changed. 2+2+18+8+5+16 = 51.
-  The 34 "changed" rows crossed a 1 nm or 1,000 ft line or changed phase; the other planes didn't change and weren't written.
-- **176:** the 5-minute refresh while idle: a real ESPN call, 120 players, and nothing changed, so 0 writes and
-  0 Realtime messages (411 ms).
+- **3668:** the Pro Shop's first run (a signed test call, right after deploying): six stores read one after another,
+  1.5 s apart, ~10 s in all. 138 products on sale, and all 138 were new, so 138 written. Malbon answered with nothing
+  on sale (0), which is data, not a failure.
+- **3706, 3737:** Cron's 5-minute runs. The same 138 on sale and nothing changed in a coarsened field, so 0 writes and
+  0 Realtime messages. Only the run row itself is pushed, which moves the freshness line.
+- **3750:** the 10-second tour tick. No round is live and the last real ESPN call was under 5 minutes ago, so the
+  worker didn't call ESPN at all. It still records an ok run (74 ms), which keeps the Tour page fresh.
 
-The function's own log lines (Supabase function logs) say the same thing:
-```
-20:55:55.756  booted (time: 33ms)
-20:55:56.839  poll-flights: ok rows_changed=51 1040ms · CLD 29 lol (+2 −2 ~18), ORD 44 lol (+8 −5 ~16)
-20:55:57.066  poll-tour tour: ok rows_changed=0 135ms · idle: no live round
-20:56:06.321  poll-tour tour: ok rows_changed=0 208ms · idle: no live round
-20:56:10.727  shutdown
-```
-`booted` is Supabase starting a worker; `shutdown` is it stopping when idle. Each line in between is one run: the
-function, ok or FAILED, rows changed, how long it took, and the same detail as the table.
-
-What we found in the logs earlier: two flight runs failed with **429** from adsb.lol for every airport
-(`id 12`: "ORD failed: 429, skipped this tick"; `id 47`: "CLD failed: 429, skipped this tick, ORD failed: 429…"),
-while the same URL worked from a laptop. adsb.lol limits Supabase's shared servers. That's why adsb.fi is now the fallback.
-Also: the first tour run (`id 1`) wrote 121 rows (the event and 120 players) and the first rankings run 200; the
-second rankings run wrote 0 ("200 ranked · unchanged"). That's "only what changed", seen live.
+Before the pivot, the logs are where we found the problem: two flight runs failed with **429** from adsb.lol for every
+airport (`id 12`, `id 47`), while the same URL worked from a laptop. adsb.lol limits Supabase's shared servers, one of
+the reasons Flights was retired. Also: the first tour run (`id 1`) wrote 121 rows (the event and 120 players) and the
+second rankings run wrote 0 ("200 ranked · unchanged"). That's "only what changed", seen live, on both workers.
 
 ## Step 5 · "Trace one update for me, from the source to my screen, and name every part"
 The sequence diagram is flow 7 in `flows.md` (also on `/flows`). Out loud:
@@ -140,25 +119,26 @@ Ask these in order, then the four below.
 3. *Where is the Supabase secret key?* Only in the Edge Functions' environment on Supabase. Not in the repo, not on Vercel.
 4. *What does the page say if Cron stops?* Stale, within 3 intervals (30 s for the leaderboard). Down needs a failed run.
 5. *Why `verify_jwt = false`?* Cron has no user. The Vault secret is the check instead, so no key sits in the cron SQL.
-6. *Why round altitude to 1,000 ft?* So a plane holding steady isn't rewritten (and pushed) every 30 seconds.
-7. *Two golfers both plan ORD → SAN (or one ORD → SAN, one SAN → ORD). How many calls?* Two adsb.lol point calls a
-   tick (one per airport) and at most one hex call, shared: calls are per route, not per golfer. adsb.im (one
-   batched POST) only for callsigns not already cached.
-8. *Where is my location stored?* Nowhere. The browser turns it into the nearest airport code; only the code is saved
-   (`trips.from_airport`). The airport lookup sends a box snapped to a 2-degree grid, not the point.
+6. *Why drop the image's `?v=` and not store `updated_at`?* Shopify bumps both whenever a store re-saves a product, so
+   every row would "change" every 5 minutes and push 138 messages to every open page for nothing.
+7. *Fifty golfers watch Balls. How many store requests?* Still six a run, one per store, shared by everyone: the worker
+   reads the stores, the pages read Supabase.
+8. *One store is down. What does the page show?* Its cards stay as they were; the run is still ok and its detail names
+   the store. Only if all six fail does the line say down.
+9. *Why not Slickdeals?* Its robots.txt disallows the RSS feed and its terms forbid showing its offers on another site
+   or reading it by automated means. We read 37 brands' terms and kept the six that don't forbid it.
 
 ## Step 7 · "Walk me through the free tier limits for each service, and how to set usage limits and alerts"
 | Service | Free limit that matters | Our use | Guard |
 |---|---|---|---|
-| Supabase Edge Functions | 500,000 calls a month | ~346,000 (10 s + 30 s + hourly) | fixed schedules; the fallback runs inside the same call |
-| Supabase Realtime | 2 million messages a month, 200 concurrent connections | ~360/hour per idle Tour page; ~150–350/hour per Flights page (one route; the first build's airport boards were ~5,000–9,000) | only changed rows, coarsened; `pair_key=eq.…` per page; hidden tabs pause; pause `poll-flights` if needed |
-| Supabase database | 500 MB | 13 MB | daily trims of `worker_runs` (2 days) and cron history (1 day) |
+| Supabase Edge Functions | 500,000 calls a month | ~269,000 (10 s + 5 min + hourly; ~346,000 with Flights) | fixed schedules |
+| Supabase Realtime | 2 million messages a month, 200 concurrent connections | ~360/hour per idle Tour page; ~15–50/hour per Pro Shop page (12 run rows + changed deals) | only changed rows, coarsened; hidden tabs pause; pause a job if needed |
+| Supabase database | 500 MB | 21 MB | daily trims of `worker_runs` (2 days) and cron history (1 day) |
 | Supabase project | pauses after 7 days without use | in use daily | open the app weekly until grades are back |
 | Vercel Hobby | as in A4 | unchanged | Hobby can't be billed |
 | Clerk development | as in A4 | unchanged | dev keys only |
 | ESPN, OWGR | unpublished | ≤ 8,640 ESPN calls a day (live), 288 idle; 24 OWGR | server-side only, one call for everyone |
-| adsb.lol / adsb.fi | dynamic / 1 request a second | ≤ 8 airports + 1 hex call every 30 s (4 routes); none with no trips | most-shared four routes; adsb.fi only on failure, spaced 1.1 s |
-| adsb.im routeset | none published (asks for http, a contactable User-Agent, batching) | 1 POST a run (≤ 200 callsigns in chunks of 100); none once the cache is warm | 7-day cache; cargo and bizjets never looked up; a failure stops the run's lookups |
+| Six brands' Shopify stores | none published; robots.txt allows `/products.json`; each store's terms checked | 6 requests every 5 min (288 a day per store, 1,728 in all) | one request per store per run, 1.5 s apart, no retries; a failing store keeps its rows |
 **Usage limits and alerts.** Supabase: the Usage page shows Edge Function calls, Realtime messages and database size
 for the billing period. With no payment method on the Free plan, nothing can be billed; over a quota, Supabase warns by
 email and can restrict the project, it doesn't charge. The spend cap is a Pro setting, so there's nothing to turn on
@@ -178,20 +158,27 @@ WebSocket. The page swaps that row into its state, the row glows once, and the f
 **2. The data flow, and what breaks.** "Source, worker, database, Realtime, page. The browser never calls a source.
 If ESPN renames a field, the parse fails, the run is saved as failed, and the page says down but keeps the last board.
 If the secret is wrong, the worker answers 401 and saves nothing, so the page goes stale. If a table loses its Realtime
-publication, grant or policy, the page silently stops updating, so I check those three first. If adsb.lol rate-limits
-us, adsb.fi answers for that airport."
+publication, grant or policy, the page silently stops updating, so I check those three first. If one brand's store is
+down, its cards stay and the other five keep updating."
 
 **3. Freshness.** "Every run, even an idle one, writes a row in `worker_runs`. The page reads the latest one and gets new
-ones pushed. Fresh means the last good run finished within three runs' time: 30 seconds for the leaderboard, 90 for
-flights, three hours for the ranking. Stale means no good run in that time. Down means the last run failed. Each state
+ones pushed. Fresh means the last good run finished within three runs' time: 30 seconds for the leaderboard, 15 minutes
+for the Pro Shop, three hours for the ranking. Stale means no good run in that time. Down means the last run failed. Each state
 has its own mark and words, and a screen reader hears only when the state changes."
 
-**4. Agentic workflow: the tests and the logs.** "`npm run test:worker` runs 44 tests on real responses we saved: the
-ESPN, OWGR and adsb.lol parses, the player key that joins ESPN to OWGR, the adaptive polling rules, and the diff: the
-same response twice writes nothing, and A then B writes exactly what changed. `npm run test:rls` proves one golfer can't
-see, delete or forge another's follows. In the logs, the first run wrote 121 rows and later ones wrote 0, which is
-'only what changed' working. Most tour runs say 'idle: no live round', with a real ESPN refresh every 5 minutes. And we
-found adsb.lol returning 429 to Supabase's servers, which is why we added adsb.fi as the fallback."
+**4. Agentic workflow: the tests and the logs.** "`npm run test:worker` runs 49 tests on real responses we saved: the
+ESPN and OWGR parses, the player key that joins them, the adaptive polling rules, the six stores' feeds (prices, stock,
+images, categories, the filters), and the diff: the same response twice writes nothing, and a price drop, a sell-out
+and an ended sale write exactly those rows. `npm run test:rls` proves one golfer can't see, delete or forge another's
+follows or watch list. In the logs, the Pro Shop's first run wrote 138 rows and every run since wrote 0, which is
+'only what changed' working. And the logs are where we found adsb.lol returning 429 to Supabase's servers, one of the
+reasons we retired Flights."
+
+**5. The pivot.** "Flights tried to show the flights between you and your course. Free flight data is only positions;
+routes came from licensed or guessed sources, adsb.lol rate-limited Supabase's shared servers, and the page got
+complicated and was often wrong. We replaced it with the Pro Shop: what golf brands have on sale, from their own public
+store feeds. The first idea was Slickdeals, but its robots.txt and terms forbid exactly this, so we read 37 brands'
+terms and kept the six that allow it. Same system underneath: Cron, a worker, only changed rows, Realtime."
 
 ---
 

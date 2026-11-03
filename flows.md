@@ -96,10 +96,10 @@ flowchart TD
 ## Assignment 5: the live system
 
 Two live pages under `/clubhouse`, fed by workers on Supabase: **Tour** (the PGA TOUR leaderboard from ESPN and the
-world ranking from OWGR) and **Flights** ("Getting there": the flights between where the golfer is and where they're playing,
-from adsb.lol with adsb.fi as the fallback, routes from adsb.im, built on Virtual Radar Server standing data). Each golfer picks what they follow or where they're
-going, and the page updates without a refresh. The
-backend chart, as planned and as built, is in `docs/data-flow.md`.
+world ranking from OWGR) and the **Pro Shop** (what six golf brands have on sale, from each brand's own public store
+feed). Each golfer picks what they follow or watch, and the page updates without a refresh. The Pro Shop replaced
+**Flights** on 2026-11-02 (README, "Pivot: Flights → Pro Shop"); `/clubhouse/flights` now redirects to it. The
+backend chart, as planned, as built, and after the pivot, is in `docs/data-flow.md`.
 
 ### 4 · Follow a tour player and watch them live
 ```mermaid
@@ -126,32 +126,32 @@ flowchart TD
   T9 -- "Unfollow" --> U1["Removed · Undo"]
 ```
 
-### 5 · Set my location, pick a course, watch flights on my route
+### 5 · Watch a category and see new deals live
 ```mermaid
 flowchart TD
-  A0([Open /clubhouse/flights]) --> G1{"Location already allowed<br/>for this site?"}
-  G1 -- "Yes" --> L1
-  G1 -- "Not yet" --> G2["Turn on your location to plan getting there<br/>Use my location · Your location stays in this browser.<br/>We save only the airport code."]
-  G2 -- "Use my location" --> G3{"The browser asks"}
-  G3 -- "Block" --> E1["Location is turned off for this site<br/>how to allow it again · Reload the page"]
-  G3 -- "No fix, or 15 s timeout" --> E2["We couldn't find where you are · Try again"]
-  G1 -- "Not https" --> E3["Location needs a secure connection"]
-  G3 -- "Allow" --> L1["You're near MDW · Chicago Midway International · 9 mi<br/>nearest large airport within 75 mi · Update location"]
-  L1 --> W1["Where are you playing?<br/>one choice list: your courses, home course first<br/>Rancho Santa Fe · Home course · Fly into SAN · 20 mi"]
-  W1 -- "Somewhere else" --> W2["Find an airport, in place<br/>picking one makes it the choice"]
-  W1 -- "A course" --> S1
-  W2 --> S1{"Saved?<br/>setTrip: two codes + a label<br/>Clerk token · RLS"}
-  S1 -- "Network or database error" --> E4["Toast: Couldn't save your trip."]
-  S1 -- "Yes" --> D1{"Same airport, or<br/>under 150 mi away?"}
-  D1 -- "Yes" --> D2["You can drive this one<br/>Rancho Santa Fe is 21 mi from you, straight line"]
-  D1 -- "No" --> B1["Flights between MDW and SAN right now"]
-  B1 --> B2{"Has the worker checked this pair?"}
-  B2 -- "Not yet" --> B3["Finding flights on your route…<br/>First check within 30 seconds."]
-  B2 -- "None in the air" --> B4["No flights between MDW and SAN in the air right now<br/>Southwest flies this route; check back soon."]
-  B2 -- "Flights" --> B5["To San Diego · Back to Chicago<br/>AA 1543 · American · ORD → SAN · Climbing out of ORD · 9,000 ft<br/>en route: a thin progress line · On approach to SAN"]
-  B3 --> B2
-  B5 --> B6["A flight moves 5 % or 1,000 ft<br/>its row updates and washes once<br/>landed or gone 10 min: it drops off"]
-  B6 --> B2
+  S0([Open /clubhouse/shop]) --> S1["Checking for the latest…<br/>band: on sale · brands · deepest cut<br/>Your watch list · On sale now"]
+  S1 --> S2{"Anything on sale?"}
+  S2 -- "No" --> S3["Nothing on sale right now<br/>We check every five minutes;<br/>the first one appears on its own"]
+  S2 -- "Read failed" --> E0["We couldn't read the shop<br/>Reload in a moment"]
+  S2 -- "Yes" --> S4{"Watching anything yet?"}
+  S4 -- "No" --> S5["Nothing watched yet<br/>Pick a category above<br/>On sale now: every card, deepest cut first"]
+  S5 --> S6["Press a chip: Balls 10<br/>it flips at once"]
+  S4 -- "Yes" --> S9
+  S6 --> V1{"Saved?<br/>Server Action · Clerk token · RLS · limit trigger"}
+  V1 -- "A 5th category" --> E1["Toast: You're watching 4 categories, the most we keep.<br/>Stop watching one to add another. The chip flips back."]
+  V1 -- "Network or database error" --> E2["Toast: Couldn't watch Balls. Check your connection."]
+  V1 -- "Yes" --> S9["Your watch list, first<br/>a card per deal: brand · name · −12% tile<br/>$69 and the struck $78 · In stock or Sold out"]
+  S9 --> S10{"Deals in that category?"}
+  S10 -- "None" --> S11["Nothing in Other on sale right now<br/>the first markdown appears here, at the top"]
+  S10 -- "Yes" --> S12["A brand marks one down, drops a price, or sells out<br/>(the worker's next 5-minute run)<br/>the card arrives or changes and washes Fairway Tint once<br/>a screen reader hears: Price drop, now $19"]
+  S9 --> S13["Everything else on sale<br/>category chips: All · Apparel · Hats …"]
+  S13 -- "A chip with nothing in it" --> S14["Nothing in Hats on sale right now<br/>Show every category"]
+  S9 -- "A card" --> S15["The brand's own product page<br/>in a new tab"]
+  S9 -- "Press a watched chip" --> U1["Stopped watching Balls · Undo"]
+  S12 --> F1{"The freshness line"}
+  F1 -- "fresh" --> F2["Updated 4 minutes ago"]
+  F1 -- "stale" --> F3["Last updated 20 minutes ago.<br/>Waiting for the next update."]
+  F1 -- "down" --> F4["The feed is down.<br/>Showing the last update, from 6 minutes ago."]
 ```
 
 ### 6 · Freshness: what each state looks like
@@ -165,14 +165,14 @@ stateDiagram-v2
   loading --> fresh: first read, latest run ok and finished within 3 intervals
   loading --> stale: first read, no ok run within 3 intervals, or the read failed
   loading --> down: first read, latest run has ok = false
-  fresh --> stale: no ok run for 3 intervals (tour 30 s, flights 90 s, rankings 3 h), checked every 5 s
+  fresh --> stale: no ok run for 3 intervals (tour 30 s, deals 15 min, rankings 3 h), checked every 5 s
   stale --> fresh: an ok run arrives by Realtime
   fresh --> down: a run with ok = false arrives
   stale --> down: a run with ok = false arrives
   down --> fresh: the next ok run arrives
 ```
 Thresholds, from `src/lib/live/useWorkerHealth.ts`: one interval is the cron schedule, so **fresh** means the last
-ok run finished within 30 s for the leaderboard (10 s × 3), 90 s for flights (30 s × 3) and 3 hours for the world
+ok run finished within 30 s for the leaderboard (10 s × 3), 15 minutes for the Pro Shop (5 min × 3) and 3 hours for the world
 ranking (1 hour × 3). **Down** wins over the clock: it holds until the next ok run. A request without the worker
 secret writes no run at all, so a broken secret shows as **stale**, not down. The line ticks every 5 s; only a change
 of state is announced (`aria-live="polite"`).

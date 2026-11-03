@@ -539,3 +539,41 @@ Evidence and contact sheets: `screenshots/a5/review/` (gitignored).
 - **Live after v8:** UA 1779 (adsb.im route SAN-ORD-BOS) on the ORD-SAN board as SAN → ORD arriving: the multi-leg pick
   working on a real flight. 300 cached routes, all `source = 'adsb.im'`, 0 adsbdb rows. MDW-SAN: no flight in the air yet;
   adsb.im called SWA3224 ONT-PHX (implausible over Chicago) where adsbdb said MDW-SAN, so Southwest coverage may differ.
+
+## 2026-11-03 · Pivot: Flights → Pro Shop
+- **The user's call:** "the flights just seems to be too complicated and isn't working very well at all … grab golf club
+  deals and put that in a shop or something cool like that instead of flights", and put the pivot in the README.
+  Why it wasn't working: free flight data is positions only; routes needed adsbdb (terms forbid our cache) or adsb.im
+  (guessed, multi-stop); adsb.lol 429s from Supabase's shared egress; and the page grew geolocation, suggestions,
+  alternatives, legs and phases to compensate.
+- **Slickdeals first, and rejected before any code.** Its keyless search RSS works, but robots.txt has
+  `Disallow: /newsearch.php?*rss=*` (and every other Slickdeals feed 301s there), and its Terms of Service (effective
+  2026-03-05) say "do not copy or display Offers via any other website or app" and forbid automated access. Stopped and
+  reported alternatives: the eBay Browse API (free, keyed), the brands' public Shopify feeds (keyless), or asking
+  Slickdeals for permission. **Chosen: the Shopify feeds.**
+- **Terms first, store by store.** Screened ~50 golf DTC stores; read robots.txt and the terms of the 37 that serve
+  `/products.json`. Strict rule: out if the terms forbid automated access ("spider, crawl, or scrape", "automated
+  means") or reproducing/displaying their material elsewhere. That ruled out most of the obvious names (Snell, Vice,
+  Sunday, Stitch, Seamus, LAB, Bettinardi, Evnroll, Blue Tees…: Shopify's template terms forbid scraping). Six pass:
+  Bad Birdie, Good Good, Lag Shot, Malbon, Seed (US), SuperSpeed. Notes per store in `docs/credits.md`. Honest gap: no
+  club makers passed, so there's no Drivers/Irons/Putters category; the set fits the data (Apparel, Hats, Balls, Bags &
+  gear, Training aids, Other).
+- **Worker (`poll-deals`):** one request per store per run (`?limit=250`), 1.5 s apart, every 5 minutes. On sale =
+  `compare_at_price` above `price` by ≥ 5 % (a 2 % "sale" is noise). One row per product, its best variant (in stock
+  first). Coarsened: cents, whole percent, one stock flag, a fixed-width CDN image without `?v=`; `updated_at` never
+  stored (stores re-save constantly). A failing store keeps its rows; the run is down only if all six fail.
+  Categories: title, then product_type, then tags, then the brand's fallback; the first real feed filed "Divot Polo"
+  and "Tees Of Destiny Polo" under Bags, so garments now beat gear words, and tested.
+- **Live:** first signed run 138 on sale, 138 written, 9.9 s; second 0 written; Cron runs since: 0 written each.
+  Malbon has nothing on sale (the page says so beside its credit).
+- **Page:** kept deliberately plain (the user disliked how complicated Flights got). The band (Winged Foot's
+  "Members and Guests Only" gate, already credited) with three numbers; "Your watch list" with six chips (≤ 4, trigger
+  in the database); then everything else with category chips. Each card is one link to the brand's product page. The
+  markdown is drawn as the hand-operated board draws a score under par, red numerals on a white tile ("−39%"), with the
+  old price struck and stock in words. Rejected: brand watching (simple, but a second list for little), sorting
+  controls, a "deal score". Product photos load from Shopify's CDN rather than `public/` (the brief's direction, an
+  exception to "all images in `public/`" for the user to confirm; only the URL is stored), plain `<img loading="lazy">` so Vercel's image optimiser quota isn't touched.
+- **Flights retired, not destroyed:** cron unscheduled and its tables out of the Realtime publication (migration
+  `20261102170000`); tables, rows and the deployed function kept (destructive DDL needs the user). The page,
+  components, airport/trip client code and their tests removed; `/clubhouse/flights` redirects to `/clubhouse/shop`.
+  The Shop tab (a drawn swing tag) replaces Flights; "Shop", not "Pro Shop", so seven tabs still fit at 320 px.
