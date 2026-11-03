@@ -2,19 +2,23 @@
 // OurAirports seed) through the golfer's browser client and RLS; nothing here calls an outside API.
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { boxAround, suggestAirport, type AirportKind, type Suggestion } from "./suggest";
+import { boxAround, nearbyAlternatives, suggestAirport, type AirportKind, type Suggestion } from "./suggest";
 
 export { haversineMi } from "./suggest";
 export type Airport = { code: string; name: string; city: string | null; country: string | null; lat: number; lon: number; kind: AirportKind };
 export const AIRPORT_COLS = "code, name, city, country, lat, lon, kind";
+/** The pick for a point, and the other airports near it (nearest-large-first, the pick excluded; up to 3 so the page
+ *  can still offer two after the golfer swaps one in). */
+export type NearAirports = Suggestion<Airport> & { alternatives: Suggestion<Airport>[] };
 
 /**
  * The airport to suggest for a point (the golfer's location, or a course), by the rule in suggest.ts: the nearest
  * large airport within 75 mi, else the nearest of any kind within 75 mi, else the nearest large within 250 mi.
  * Reads one lat/lon box holding every airport within 250 mi, then decides here. The point itself never leaves the
  * browser: the box is snapped outward to a 2-degree grid, so the request only says which ~140-mile cells to read.
+ * The same read gives the alternatives (nearbyAlternatives): other airports within 75 mi.
  */
-export async function suggestNear(db: SupabaseClient, lat: number, lng: number): Promise<Suggestion<Airport> | null> {
+export async function suggestNear(db: SupabaseClient, lat: number, lng: number): Promise<NearAirports | null> {
   const b = boxAround(lat, lng);
   const out = (v: number) => Math.floor(v / 2) * 2, up = (v: number) => Math.ceil(v / 2) * 2;
   const { data, error } = await db
@@ -25,7 +29,8 @@ export async function suggestNear(db: SupabaseClient, lat: number, lng: number):
     .limit(2000)
     .returns<Airport[]>();
   if (error) throw new Error(error.message);
-  return suggestAirport(lat, lng, data ?? []);
+  const pick = suggestAirport(lat, lng, data ?? []);
+  return pick ? { ...pick, alternatives: nearbyAlternatives(lat, lng, data ?? [], pick.airport.code, 3) } : null;
 }
 
 /** One airport by code, or null. */

@@ -4,6 +4,7 @@
 //   2. else the nearest airport of any kind within 75 mi (Monterey → MRY);
 //   3. else the nearest large airport within 250 mi;
 //   4. else none.
+// And the other airports a golfer might mean (nearbyAlternatives): the rule picks one, the page offers up to two more.
 
 export type AirportKind = "large" | "medium";
 export type Placed = { code: string; kind: AirportKind; lat: number; lon: number };
@@ -35,6 +36,22 @@ export function suggestAirport<T extends Placed>(lat: number, lon: number, airpo
   if (any && any.miles <= NEAR_MI) return any;
   if (large && large.miles <= FAR_MI) return large;
   return null;
+}
+
+/**
+ * The other airports a golfer might fly from or into, for a point: every airport within 75 mi except `exclude`
+ * (the pick), large first, then nearest first; at most `max`. Chicago Loop (pick MDW) → ORD first; Pebble Beach
+ * (pick SJC) → MRY. Far from everything (a step-3 pick, or none) there are none.
+ */
+export function nearbyAlternatives<T extends Placed>(lat: number, lon: number, airports: readonly T[], exclude: string | null, max = 2): Suggestion<T>[] {
+  const out: Suggestion<T>[] = [];
+  for (const a of airports) {
+    if (a.code === exclude) continue;
+    const miles = haversineMi(lat, lon, a.lat, a.lon);
+    if (miles <= NEAR_MI) out.push({ airport: a, miles });
+  }
+  const rank = (s: Suggestion<T>) => (s.airport.kind === "large" ? 0 : 1);
+  return out.sort((x, y) => rank(x) - rank(y) || x.miles - y.miles).slice(0, max);
 }
 
 /** The lat/lon box (degrees) that holds every airport within `miles` of a point, for the database read. */

@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
-import { boxAround, haversineMi, pairKey, suggestAirport, type Placed } from "../../../src/lib/live/suggest.ts";
+import { boxAround, haversineMi, nearbyAlternatives, NEAR_MI, pairKey, suggestAirport, type Placed } from "../../../src/lib/live/suggest.ts";
 import { COURSE_GEO } from "../../../src/data/course-geo.ts";
 
 const dir = new URL("../../migrations/", import.meta.url);
@@ -63,6 +63,38 @@ test("remote places: a large airport within 250 mi, else none", () => {
   assert.equal(suggestAirport(43.3, -100, only)?.airport.code, "BIG"); // SML 124 mi, BIG 228 mi → step 3
   assert.equal(suggestAirport(45, -100, only), null); // BIG 345 mi
   assert.equal(at(0, -140), null); // the middle of the Pacific
+});
+
+// The alternatives the page offers beside the pick ("You're near MDW · or ORD 15 mi", "Fly into SJC · or MRY 5 mi").
+const alts = (lat: number, lon: number) => nearbyAlternatives(lat, lon, airports, at(lat, lon)?.airport.code ?? null);
+test("alternatives: Chicago Loop picks MDW and offers ORD first; Pebble Beach picks SJC and offers MRY", () => {
+  const loop = alts(41.8781, -87.6298);
+  assert.equal(at(41.8781, -87.6298)?.airport.code, "MDW");
+  assert.equal(loop[0]?.airport.code, "ORD");
+  assert.ok(loop[0].miles > 13 && loop[0].miles < 17, `ORD ${loop[0].miles}`);
+  const p = COURSE_GEO["pebble-beach"];
+  const peb = alts(p.lat, p.lng);
+  assert.equal(at(p.lat, p.lng)?.airport.code, "SJC");
+  const mry = peb.find((a) => a.airport.code === "MRY");
+  assert.ok(mry, peb.map((a) => a.airport.code).join(","));
+  assert.ok(mry.miles < 8, `MRY ${mry.miles}`);
+});
+
+test("alternatives: never the pick, at most 2 by default, all within 75 mi, large before medium then nearest", () => {
+  for (const [lat, lon] of [[41.8781, -87.6298], [33.0, -117.2], [40.64, -73.78], [36.57, -121.95], [33.5, -82.02]]) {
+    const pick = at(lat, lon)?.airport.code ?? null;
+    const list = nearbyAlternatives(lat, lon, airports, pick);
+    assert.ok(list.length <= 2);
+    assert.ok(list.every((a) => a.airport.code !== pick && a.miles <= NEAR_MI));
+    for (let i = 1; i < list.length; i++) {
+      const [x, y] = [list[i - 1], list[i]];
+      assert.ok((x.airport.kind === "large" && y.airport.kind === "medium") || (x.airport.kind === y.airport.kind && x.miles <= y.miles), `${x.airport.code} ${y.airport.code}`);
+    }
+  }
+  const only = [{ code: "BIG", kind: "large" as const, lat: 40, lon: -100 }, { code: "SML", kind: "medium" as const, lat: 40.1, lon: -100 }, { code: "FAR", kind: "large" as const, lat: 42, lon: -100 }];
+  assert.deepEqual(nearbyAlternatives(40.05, -100, only, "SML").map((a) => a.airport.code), ["BIG"]); // FAR is 136 mi
+  assert.deepEqual(nearbyAlternatives(40.05, -100, only, null, 5).map((a) => a.airport.code), ["BIG", "SML"]); // large first, though SML is as near
+  assert.deepEqual(nearbyAlternatives(0, -140, airports, null), []);
 });
 
 test("boxAround holds the 250 mi radius; pairKey sorts", () => {
