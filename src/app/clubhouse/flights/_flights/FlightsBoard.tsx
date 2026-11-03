@@ -4,6 +4,8 @@
 // airports right now, or "you can drive this one". Nothing renders past the location panel until a position is known.
 // The choice is saved as a trip (two airport codes and a label, setTrip); the board is a snapshot of trip_flights,
 // then Realtime pushes of only the rows the poll-flights worker changed. The browser never calls a flight source.
+// Beside each automatic airport the page offers up to two others within 75 mi ("or ORD 15 mi"); a golfer's pick is
+// saved in the trip and wins while it's still one of the airports offered for where they are.
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { ApiState, Freshness, LivePauseNotice, PageHeader, PhotoBand } from "@/components/golf";
@@ -12,12 +14,12 @@ import { Button, cx, Field, Tag, TextInput, useToast } from "@/components/ui";
 import { courseGeo, defaultHome } from "@/lib/courses";
 import type { Course } from "@/lib/course-types";
 import { useClub } from "@/lib/hooks";
-import { airportByCode, haversineMi, searchAirports, suggestNear, type Airport } from "@/lib/live/airports";
+import { airportByCode, haversineMi, searchAirports, suggestNear, type Airport, type NearAirports } from "@/lib/live/airports";
 import { useSupabaseBrowser } from "@/lib/live/browser";
 import { DRIVE_MI, pairKey } from "@/lib/live/suggest";
 import { useGeolocation, type GeoState } from "@/lib/live/useGeolocation";
 import { useWorkerHealth, type WorkerHealth } from "@/lib/live/useWorkerHealth";
-import { getTrip, setTrip, type Trip } from "@/lib/server/trip-actions";
+import { setTrip, type Trip } from "@/lib/server/trip-actions";
 import { Page } from "../../_components/Placeholder";
 import { useTripFlights, type TripBoard, type TripFlight } from "./useTripFlights";
 
@@ -106,8 +108,19 @@ function LocationGate({ state, request }: { state: Exclude<GeoState, { kind: "re
 // ───────── The trip ─────────
 
 type Pos = { lat: number; lon: number };
-type Near = { state: "loading" } | { state: "ok"; airport: Airport; miles: number } | { state: "none" } | { state: "error" };
-type Dest = { kind: "course"; slug: string } | { kind: "airport"; airport: Airport } | { kind: "elsewhere" } | null;
+type Near = { state: "loading" } | ({ state: "ok" } & NearAirports) | { state: "none" } | { state: "error" };
+type Option = { airport: Airport; miles: number };
+// A course, flown into by its automatic airport, or by `via` (one of its alternatives) if the golfer chose one.
+type Dest = { kind: "course"; slug: string; via?: string } | { kind: "airport"; airport: Airport } | { kind: "elsewhere" } | null;
+
+/** The airport to use for a point: `want` if it's the pick or one of the alternatives offered, else the pick. Plus
+ *  the others to offer beside it (at most two, nearest-large-first, as nearbyAlternatives ranked them). */
+function resolve(near: Near | undefined, want: string | null | undefined): { use: Option; others: Option[] } | null {
+  if (near?.state !== "ok") return null;
+  const all: Option[] = [{ airport: near.airport, miles: near.miles }, ...near.alternatives];
+  const use = all.find((o) => o.airport.code === want) ?? all[0];
+  return { use, others: all.filter((o) => o !== use).slice(0, 2) };
+}
 
 function TripPlanner({ geo, relocate }: { geo: Pos & { at: number }; relocate: () => void }) {
   const db = useSupabaseBrowser();
@@ -155,13 +168,24 @@ function TripPlanner({ geo, relocate }: { geo: Pos & { at: number }; relocate: (
     }
   }, [db, courses]);
 
-  // The saved trip, restored once the courses' airports are known.
+  // The saved trip, restored once the courses' airports are known. Read with the browser client (RLS: only this
+  // golfer's row), not the getTrip Server Action, which would queue behind the journal's loadClub.
   const [saved, setSaved] = useState<Trip | null | undefined>(undefined);
   useEffect(() => {
+    if (!db) return;
     let live = true;
-    getTrip().then((r) => { if (live) setSaved(r.ok ? r.trip : null); }).catch(() => { if (live) setSaved(null); });
+    void db.from("trips").select("from_airport, to_airport, dest_label, updated_at").maybeSingle<{ from_airport: string; to_airport: string; dest_label: string | null; updated_at: string }>()
+      .then(({ data, error }) => {
+        if (!live) return;
+        setSaved(error || !data ? null : { from: data.from_airport, to: data.to_airport, label: data.dest_label, updatedAt: data.updated_at });
+      }, () => { if (live) setSaved(null); });
     return () => { live = false; };
-  }, []);
+  }, [db]);
+
+  // Where the golfer flies from: their own pick this visit, else the saved trip's origin, as long as it's one of the
+  // airports offered for where they are now (else the automatic one). Waits for the saved trip, so it doesn't flicker.
+  const [originPick, setOriginPick] = useState<string | null>(null);
+  const from = saved === undefined ? null : resolve(origin, originPick ?? saved?.from);
   // The golfer's explicit choice wins; until they make one, the saved trip is shown as chosen: as its course when the
   // label and airport still match one, else as "somewhere else" with that airport.
   const [chosen, setDest] = useState<Dest>(null);
@@ -171,8 +195,10 @@ function TripPlanner({ geo, relocate }: { geo: Pos & { at: number }; relocate: (
     const match = courses.find((c) => (c.shortName || c.name) === saved.label);
     const near = match ? courseAir.get(match.slug) : undefined;
     if (match && (!near || near.state === "loading")) return "pending";
-    return match && near?.state === "ok" && near.airport.code === saved.to ? { slug: match.slug } : null;
+    // The course still matches if the saved airport is its pick or one of its alternatives (the golfer chose it).
+    return match && resolve(near, saved.to)?.use.airport.code === saved.to ? { slug: match.slug } : null;
   }, [saved, ready, courses, courseAir]);
+  const savedVia = saved?.to;
   const [savedAirport, setSavedAirport] = useState<Airport | null>(null);
   useEffect(() => {
     if (!db || !saved || savedCourse !== null) return;
@@ -181,14 +207,15 @@ function TripPlanner({ geo, relocate }: { geo: Pos & { at: number }; relocate: (
     return () => { live = false; };
   }, [db, saved, savedCourse]);
   const dest: Dest = chosen
-    ?? (savedCourse && savedCourse !== "pending" ? { kind: "course", slug: savedCourse.slug } : savedCourse === null && savedAirport ? { kind: "airport", airport: savedAirport } : null);
+    ?? (savedCourse && savedCourse !== "pending" ? { kind: "course", slug: savedCourse.slug, via: savedVia } : savedCourse === null && savedAirport ? { kind: "airport", airport: savedAirport } : null);
 
   // Where we're flying into, and what to call it.
   const destCourse = dest?.kind === "course" ? courses.find((c) => c.slug === dest.slug) ?? null : null;
   const destNear = destCourse ? courseAir.get(destCourse.slug) : undefined;
-  const destAirport = dest?.kind === "airport" ? dest.airport : destNear?.state === "ok" ? destNear.airport : null;
+  const into = destCourse && dest?.kind === "course" ? resolve(destNear, dest.via) : null;
+  const destAirport = dest?.kind === "airport" ? dest.airport : into?.use.airport ?? null;
   const destLabel = destCourse ? destCourse.shortName || destCourse.name : destAirport ? shortName(destAirport) : null;
-  const fromAirport = origin.state === "ok" ? origin.airport : null;
+  const fromAirport = from?.use.airport ?? null;
 
   // Save the trip when the choice (or the origin) changes. Debounced, so arrowing through the list saves once.
   const lastSaved = useRef<string | null>(null);
@@ -214,7 +241,7 @@ function TripPlanner({ geo, relocate }: { geo: Pos & { at: number }; relocate: (
 
   return (
     <>
-      <YouAreNear origin={origin} relocate={relocate} />
+      <YouAreNear origin={origin} from={from} pick={setOriginPick} relocate={relocate} />
       {origin.state === "ok" && (
         <WherePlaying
           ready={ready}
@@ -223,6 +250,7 @@ function TripPlanner({ geo, relocate }: { geo: Pos & { at: number }; relocate: (
           courseAir={courseAir}
           dest={dest}
           setDest={setDest}
+          into={into && destLabel ? { ...into, label: destLabel } : null}
         />
       )}
       {origin.state === "ok" && destAirport && destLabel && fromAirport && (
@@ -243,20 +271,62 @@ function TripPlanner({ geo, relocate }: { geo: Pos & { at: number }; relocate: (
   );
 }
 
-function YouAreNear({ origin, relocate }: { origin: Near; relocate: () => void }) {
+/** "or [ORD 15 mi] [GYY 22 mi]": the other airports near a point, each a small real button. */
+function OrAirports({ options, onPick, lead = "or", className }: { options: Option[]; onPick: (a: Airport) => void; lead?: string; className?: string }) {
+  if (!options.length) return null;
+  return (
+    <span className={cx("inline-flex flex-wrap items-center gap-x-1 gap-y-1", className)}>
+      <span className="pr-1 text-[0.95rem] text-ink-2">{lead}</span>
+      {options.map((o) => (
+        <Button
+          key={o.airport.code}
+          variant="quiet"
+          size="sm"
+          className="px-2.5 tracking-wide"
+          onClick={() => onPick(o.airport)}
+          aria-label={`Use ${o.airport.code}, ${shortName(o.airport)}, ${Math.max(1, Math.round(o.miles))} miles instead`}
+        >
+          <span className="flex items-baseline gap-1.5">
+            <span>{o.airport.code}</span>
+            <span className="font-normal normal-case tabular-nums tracking-normal text-ink-2">{miles(o.miles)}</span>
+          </span>
+        </Button>
+      ))}
+    </span>
+  );
+}
+
+/** After a swap the pressed button is gone (its airport is now the one used): put focus on the line that changed. */
+function useFocusAfterSwap<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const swapped = useRef(false);
+  useEffect(() => {
+    if (!swapped.current) return;
+    swapped.current = false;
+    ref.current?.focus();
+  });
+  const mark = useCallback(() => { swapped.current = true; }, []);
+  return [ref, mark] as const;
+}
+
+function YouAreNear({ origin, from, pick, relocate }: { origin: Near; from: ReturnType<typeof resolve>; pick: (code: string) => void; relocate: () => void }) {
+  const [lineRef, markSwap] = useFocusAfterSwap<HTMLParagraphElement>();
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-rule py-4">
+      <div className="grid min-w-0 gap-1">
       <div role="status" className="min-w-0">
-      {origin.state === "loading" && <p className="text-[1.05rem] text-ink-2">Finding the airport nearest you…</p>}
+      {(origin.state === "loading" || (origin.state === "ok" && !from)) && <p className="text-[1.05rem] text-ink-2">Finding the airport nearest you…</p>}
       {origin.state === "error" && <p className="text-[1.05rem] text-ink-2">Couldn&apos;t look up the airports near you. Check your connection, then update your location.</p>}
       {origin.state === "none" && <p className="text-[1.05rem] text-ink-2">There&apos;s no airport with airline service within 250 miles of you.</p>}
-      {origin.state === "ok" && (
-        <p className="min-w-0 text-[1.05rem] leading-snug text-ink-2">
-          You&apos;re near <span className="font-numeral text-[1.3rem] font-semibold tracking-wide text-ink">{origin.airport.code}</span>
-          <span aria-hidden="true"> · </span><span className="text-ink">{shortName(origin.airport)}</span>
-          <span aria-hidden="true"> · </span><span className="whitespace-nowrap font-numeral tabular-nums">{miles(origin.miles)}</span>
+      {from && (
+        <p ref={lineRef} tabIndex={-1} className="min-w-0 rounded-xs text-[1.05rem] leading-snug text-ink-2 outline-none focus-visible:ring-2 focus-visible:ring-focus">
+          You&apos;re near <span className="font-numeral text-[1.3rem] font-semibold tracking-wide text-ink">{from.use.airport.code}</span>
+          <span aria-hidden="true"> · </span><span className="text-ink">{shortName(from.use.airport)}</span>
+          <span aria-hidden="true"> · </span><span className="whitespace-nowrap font-numeral tabular-nums">{miles(from.use.miles)}</span>
         </p>
       )}
+      </div>
+      {from && <OrAirports options={from.others} onPick={(a) => { markSwap(); pick(a.code); }} />}
       </div>
       <Button variant="quiet" size="sm" onClick={relocate}>Update location</Button>
     </div>
@@ -265,8 +335,10 @@ function YouAreNear({ origin, relocate }: { origin: Near; relocate: () => void }
 
 // ───────── Where are you playing? (one choice list) ─────────
 
-function WherePlaying({ ready, courses, homeSlug, courseAir, dest, setDest }: {
+function WherePlaying({ ready, courses, homeSlug, courseAir, dest, setDest, into }: {
   ready: boolean; courses: Course[]; homeSlug: string | null; courseAir: Map<string, Near>; dest: Dest; setDest: (d: Dest) => void;
+  /** The chosen course's airport and the others near it, or null (no course chosen, or its airport isn't known yet). */
+  into: (NonNullable<ReturnType<typeof resolve>> & { label: string }) | null;
 }) {
   const [all, setAll] = useState(false);
   const selectedSlug = dest?.kind === "course" ? dest.slug : null;
@@ -279,7 +351,7 @@ function WherePlaying({ ready, courses, homeSlug, courseAir, dest, setDest }: {
 
   const choose = useCallback((v: string) => {
     if (v === ELSEWHERE) { if (dest?.kind !== "airport") setDest({ kind: "elsewhere" }); }
-    else setDest({ kind: "course", slug: v });
+    else if (dest?.kind !== "course" || dest.slug !== v) setDest({ kind: "course", slug: v });
   }, [dest, setDest]);
 
   const onKey = (e: KeyboardEvent<HTMLDivElement>, v: string) => {
@@ -311,6 +383,7 @@ function WherePlaying({ ready, courses, homeSlug, courseAir, dest, setDest }: {
                 course={c}
                 home={c.slug === homeSlug}
                 near={courseAir.get(c.slug) ?? { state: "loading" }}
+                via={selectedSlug === c.slug ? into?.use ?? null : null}
                 checked={selectedSlug === c.slug}
                 tabIndex={tabStop === c.slug ? 0 : -1}
                 onChoose={() => choose(c.slug)}
@@ -327,6 +400,15 @@ function WherePlaying({ ready, courses, homeSlug, courseAir, dest, setDest }: {
               refFn={(el) => { if (el) refs.current.set(ELSEWHERE, el); else refs.current.delete(ELSEWHERE); }}
             />
           </div>
+          {into && dest?.kind === "course" && (
+            // The chosen card says which airport is used; this line offers the others. After a swap, focus goes back
+            // to the card (its description now names the new airport).
+            <OrAirports
+              lead="Or fly into"
+              options={into.others}
+              onPick={(a) => { setDest({ kind: "course", slug: dest.slug, via: a.code }); requestAnimationFrame(() => refs.current.get(dest.slug)?.focus()); }}
+            />
+          )}
           {courses.length > PREVIEW && (
             <div><Button variant="quiet" size="sm" aria-expanded={all} onClick={() => setAll((v) => !v)}>{all ? "Show fewer courses" : `Show all ${courses.length} courses`}</Button></div>
           )}
@@ -358,8 +440,10 @@ function Pip({ checked }: { checked: boolean }) {
 
 type OptionProps = { checked: boolean; tabIndex: number; onChoose: () => void; onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void; refFn: (el: HTMLDivElement | null) => void };
 
-function CourseOption({ course, home, near, checked, tabIndex, onChoose, onKeyDown, refFn }: OptionProps & { course: Course; home: boolean; near: Near }) {
+function CourseOption({ course, home, near: auto, via, checked, tabIndex, onChoose, onKeyDown, refFn }: OptionProps & { course: Course; home: boolean; near: Near; via: Option | null }) {
   const name = course.shortName || course.name;
+  // The chosen course shows the airport actually used (an alternative, if the golfer picked one).
+  const near: Near = via && auto.state === "ok" ? { ...auto, ...via } : auto;
   const id = `opt-${course.slug}`;
   return (
     <div ref={refFn} role="radio" aria-checked={checked} aria-labelledby={`${id}-n`} aria-describedby={`${id}-d`} tabIndex={tabIndex} onClick={onChoose} onKeyDown={onKeyDown} className={optionClass(checked)}>
