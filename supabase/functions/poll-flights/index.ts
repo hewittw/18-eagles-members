@@ -1,9 +1,11 @@
 // poll-flights: the route-board worker. Supabase Cron POSTs here every 30 s. Each run: check the Vault secret, read
 // every golfer's trip (service_role), pick the pairs to watch (A↔B is one pair, most-shared first, max 4, none closer
 // than a drive), and for each airport in them ask adsb.lol (adsb.fi on a 429 or any error) for the aircraft within
-// 100 nm. Airline callsigns with no fresh cached route are looked up on adsbdb (at most 30 a run, 150 ms apart, moving
-// aircraft first) and cached in callsign_routes. Flights whose route is a→b or b→a go on the pair's board in
-// trip_flights; ones that have left both circles are found by hex (one adsb.lol call for all of them) and moved along.
+// 100 nm. Airline callsigns with no fresh cached route are looked up on adsb.im's routeset (Virtual Radar Server's
+// standing data, plus adsb.im's own ACARS/adsb.lol analysis: ODbL), all of them in one POST with their positions
+// (chunks of 100, at most 200 a run, moving aircraft first), and cached in callsign_routes (source 'adsb.im').
+// Flights flying a leg a→b or b→a go on the pair's board in trip_flights; ones that have left both circles are found
+// by hex (one adsb.lol call for all of them; skipped on adsb.lol when it 429'd this run) and moved along.
 // Only changed rows are written (diffRows on coarsened fields), and one worker_runs row records the run, ok or not.
 // No trips → an ok "idle: no trips" run that calls nothing outside. Browsers never call any of these sources.
 import { checkWorkerSecret } from "../_shared/auth.ts";
@@ -13,8 +15,9 @@ import { FetchError, fetchJson } from "../_shared/http.ts";
 import { recordRun } from "../_shared/runs.ts";
 import { aircraftList } from "./parse.ts";
 import {
-  chooseLookups, LOOKUP_GAP_MS, mergeSeen, pairAirlines, parseAdsbdb, planBoard, seenAircraft, trackHexes, TRIP_FIELDS,
-  TRIP_KEY, watchPairs, type Pt, type Route, type SavedTripFlight, type Seen, type TripFlightRow,
+  chooseLookups, lookupRoutes, mergeSeen, pairAirlines, planBoard, ROUTE_SOURCE, ROUTESET_URL,
+  seenAircraft, trackHexes, TRIP_FIELDS, TRIP_KEY, watchPairs, type Pt, type Route, type SavedTripFlight, type Seen,
+  type TripFlightRow,
 } from "./route.ts";
 import { fetchFirst, hexUrl, spacersFor, type SourceId, type Spacer } from "./sources.ts";
 
@@ -94,10 +97,13 @@ async function poll(db: SupabaseClient, t0: number): Promise<{ ok: boolean; rows
   const spacers = spacersFor(clock);
   const failed: string[] = [];
   const sightings: Seen[][] = [];
+  const used: Record<SourceId, number> = { lol: 0, fi: 0 };
+  let lol429 = false;
   for (let i = 0; i < airports.length; i += PARALLEL) {
     const got = await Promise.all(airports.slice(i, i + PARALLEL).map((code) => circle(code, coords.get(code), spacers)));
     for (const g of got) {
-      if (g.ok) sightings.push(g.seen);
+      if (g.tried.some((t) => t === "lol 429")) lol429 = true;
+      if (g.ok) { sightings.push(g.seen); used[g.source]++; }
       else failed.push(`${g.code} failed: ${g.detail}`);
     }
   }
@@ -109,24 +115,16 @@ async function poll(db: SupabaseClient, t0: number): Promise<{ ok: boolean; rows
   const callsigns = [...new Set([...seen.values()].map((s) => s.callsign))];
   const routes = new Map<string, Route>();
   for (let i = 0; i < callsigns.length; i += 200) {
-    const r = await db.from("callsign_routes").select("callsign, origin, destination, airline, flight, found, fetched_at").in("callsign", callsigns.slice(i, i + 200));
+    const r = await db.from("callsign_routes").select("callsign, origin, destination, route, stops, airline, flight, found, source, fetched_at")
+      .eq("source", ROUTE_SOURCE).in("callsign", callsigns.slice(i, i + 200));
     if (r.error) throw new Error(`read callsign_routes: ${r.error.message}`);
     for (const row of (r.data ?? []) as Route[]) routes.set(row.callsign, row);
   }
   const want = chooseLookups(seen.values(), routes, now);
-  const looked: Route[] = [];
-  let lookupNote = "";
-  for (const cs of want) {
-    if (Date.now() - t0 > LOOKUP_DEADLINE_MS) { lookupNote = "lookups stopped at the time limit"; break; }
-    if (looked.length) await clock.sleep(LOOKUP_GAP_MS);
-    try {
-      looked.push(parseAdsbdb(cs, await fetchJson(`https://api.adsbdb.com/v0/callsign/${encodeURIComponent(cs)}`), Date.now()));
-    } catch (e) {
-      if (e instanceof FetchError && e.status === 404) { looked.push(parseAdsbdb(cs, null, Date.now())); continue; }
-      lookupNote = `adsbdb ${reason(e)}`;
-      if (e instanceof FetchError && e.status === 429) break;
-    }
-  }
+  const post = (body: unknown) => fetchJson(ROUTESET_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const got = await lookupRoutes(want, post, Date.now, () => Date.now() - t0 > LOOKUP_DEADLINE_MS);
+  const looked = got.looked;
+  const lookupNote = got.error ? `adsb.im ${reason(got.error)}` : got.stopped ? "lookups stopped at the time limit" : "";
   if (looked.length) {
     const { error } = await db.from("callsign_routes").upsert(looked, { onConflict: "callsign" });
     if (error) console.error("poll-flights: caching routes failed:", error.message);
@@ -134,7 +132,7 @@ async function poll(db: SupabaseClient, t0: number): Promise<{ ok: boolean; rows
   }
 
   // 3. Flights already on a board that have left every circle: one adsb.lol call by hex (adsb.fi for a few if not).
-  const tracked = await trackByHex(trackHexes(saved, new Set(seen.keys()), pairs), spacers);
+  const tracked = await trackByHex(trackHexes(saved, new Set(seen.keys()), pairs), spacers, lol429);
 
   // 4. The board: plan, diff, write only what changed.
   const plan = planBoard({ pairs, coords, seen, tracked, routes, saved, now: Date.now() });
@@ -156,7 +154,8 @@ async function poll(db: SupabaseClient, t0: number): Promise<{ ok: boolean; rows
   // 5. The pair rows: first check, and the airlines known to fly each pair (for the empty board's copy).
   changed += await syncPairs(db, pairs.map((p) => p.key));
 
-  // Lookups and tracking are counted against the first pair whose airport saw the aircraft.
+  // Lookups are counted against the first pair whose airport saw the aircraft. Then where the data came from:
+  // the route source with how many it found, and which position source answered each airport.
   const lookupsBy = new Map<string, number>();
   for (const r of looked) {
     const s = [...seen.values()].find((x) => x.callsign === r.callsign);
@@ -167,34 +166,44 @@ async function poll(db: SupabaseClient, t0: number): Promise<{ ok: boolean; rows
     const c = plan.counts.get(p.key) ?? { flights: 0, tracked: 0 };
     return `${p.key} ${c.flights} flight${c.flights === 1 ? "" : "s"} (${lookupsBy.get(p.key) ?? 0} lookups, ${c.tracked} tracked)`;
   });
-  return { ok: true, rowsChanged: changed, detail: [...parts, ...failed, lookupNote].filter(Boolean).join(", ") };
+  const calls = got.calls;
+  const routesNote = looked.length || lookupNote
+    ? `routes ${ROUTE_SOURCE} ${looked.filter((r) => r.found).length}/${looked.length} found in ${calls} call${calls === 1 ? "" : "s"}`
+    : `routes ${ROUTE_SOURCE} all cached`;
+  const traffic = `traffic ${(["lol", "fi"] as const).filter((k) => used[k]).map((k) => `${k}×${used[k]}`).join(" ") || "none"}`;
+  return { ok: true, rowsChanged: changed, detail: [...parts, routesNote, traffic, ...failed, lookupNote].filter(Boolean).join(", ") };
 }
 
-type CircleResult = { code: string; ok: true; source: SourceId; seen: Seen[] } | { code: string; ok: false; detail: string };
+type CircleResult = { code: string; tried: string[] } & ({ ok: true; source: SourceId; seen: Seen[] } | { ok: false; detail: string });
 
 async function circle(code: string, at: Pt | undefined, spacers: ReadonlyMap<SourceId, Spacer>): Promise<CircleResult> {
-  if (!at) return { code, ok: false, detail: "not in airports" };
+  if (!at) return { code, tried: [], ok: false, detail: "not in airports" };
   const got = await fetchFirst(at, fetchAircraft, spacers, reason);
-  if (!got.ok) return { code, ok: false, detail: got.tried.join("; ") };
+  if (!got.ok) return { code, tried: got.tried, ok: false, detail: got.tried.join("; ") };
   try {
-    return { code, ok: true, source: got.source, seen: seenAircraft(aircraftList(got.json), code, at) };
+    return { code, tried: got.tried, ok: true, source: got.source, seen: seenAircraft(aircraftList(got.json), code, at) };
   } catch (e) {
-    return { code, ok: false, detail: `${got.source} ${reason(e)}` };
+    return { code, tried: got.tried, ok: false, detail: `${got.source} ${reason(e)}` };
   }
 }
 
-/** Live positions for the given hexes: adsb.lol in one call; if that fails, adsb.fi for up to 4 of them. */
-async function trackByHex(hexes: string[], spacers: ReadonlyMap<SourceId, Spacer>): Promise<Map<string, Seen>> {
+/**
+ * Live positions for the given hexes: adsb.lol in one call; if that fails (or adsb.lol already said 429 this run, so
+ * we don't ask it again), adsb.fi for up to 4 of them, spaced like every adsb.fi call.
+ */
+async function trackByHex(hexes: string[], spacers: ReadonlyMap<SourceId, Spacer>, skipLol = false): Promise<Map<string, Seen>> {
   const out = new Map<string, Seen>();
   if (!hexes.length) return out;
   const add = (j: unknown) => {
     for (const s of seenAircraft(aircraftList(j), "")) out.set(s.hex, s);
   };
-  try {
-    add(await fetchJson(hexUrl.lol(hexes)));
-    return out;
-  } catch (e) {
-    console.log("poll-flights: hex lookup on adsb.lol failed:", reason(e));
+  if (!skipLol) {
+    try {
+      add(await fetchJson(hexUrl.lol(hexes)));
+      return out;
+    } catch (e) {
+      console.log("poll-flights: hex lookup on adsb.lol failed:", reason(e));
+    }
   }
   for (const h of hexes.slice(0, 4)) {
     await spacers.get("fi")?.wait();
@@ -211,8 +220,8 @@ async function syncPairs(db: SupabaseClient, keys: string[]): Promise<number> {
   const old = new Map((have.data ?? []).map((r) => [r.pair_key as string, (r.airlines as string[]) ?? []]));
   for (const key of keys) {
     const [a, b] = key.split("-");
-    const r = await db.from("callsign_routes").select("callsign, airline, found")
-      .eq("found", true).or(`and(origin.eq.${a},destination.eq.${b}),and(origin.eq.${b},destination.eq.${a})`).limit(200);
+    const r = await db.from("callsign_routes").select("callsign, airline, found").eq("found", true).eq("source", ROUTE_SOURCE)
+      .or(`route.like.*${a}-${b}*,route.like.*${b}-${a}*`).limit(200);
     const airlines = r.error ? old.get(key) ?? [] : pairAirlines((r.data ?? []) as Route[]);
     if (old.has(key) && JSON.stringify(old.get(key)) === JSON.stringify(airlines)) continue;
     const { error } = await db.from("trip_pairs").upsert({ pair_key: key, airlines, checked_at: new Date().toISOString() }, { onConflict: "pair_key" });

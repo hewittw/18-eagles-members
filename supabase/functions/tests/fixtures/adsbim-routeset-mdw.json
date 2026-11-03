@@ -1,0 +1,4418 @@
+[
+  {
+    "_airport_codes_iata": "IAD-SAN",
+    "_airports": [
+      {
+        "alt_feet": 312.0,
+        "alt_meters": 95.1,
+        "countryiso2": "US",
+        "iata": "IAD",
+        "icao": "KIAD",
+        "lat": 38.9445,
+        "location": "Washington",
+        "lon": -77.455803,
+        "name": "Washington Dulles International Airport"
+      },
+      {
+        "alt_feet": 17.0,
+        "alt_meters": 5.18,
+        "countryiso2": "US",
+        "iata": "SAN",
+        "icao": "KSAN",
+        "lat": 32.733601,
+        "location": "San Diego",
+        "lon": -117.190002,
+        "name": "San Diego International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KIAD-KSAN",
+    "callsign": "UAL2054",
+    "number": "2054",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "PHL-BOS",
+    "_airports": [
+      {
+        "alt_feet": 36.0,
+        "alt_meters": 10.97,
+        "countryiso2": "US",
+        "iata": "PHL",
+        "icao": "KPHL",
+        "lat": 39.871899,
+        "location": "Philadelphia",
+        "lon": -75.241096,
+        "name": "Philadelphia International Airport"
+      },
+      {
+        "alt_feet": 20.0,
+        "alt_meters": 6.1,
+        "countryiso2": "US",
+        "iata": "BOS",
+        "icao": "KBOS",
+        "lat": 42.3643,
+        "location": "Boston",
+        "lon": -71.005203,
+        "name": "General Edward Lawrence Logan International Airport"
+      }
+    ],
+    "airline_code": "EJA",
+    "airport_codes": "KPHL-KBOS",
+    "callsign": "EJA848",
+    "number": "848",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "CLT-SGF",
+    "_airports": [
+      {
+        "alt_feet": 748.0,
+        "alt_meters": 227.99,
+        "countryiso2": "US",
+        "iata": "CLT",
+        "icao": "KCLT",
+        "lat": 35.214001,
+        "location": "Charlotte",
+        "lon": -80.9431,
+        "name": "Charlotte Douglas International Airport"
+      },
+      {
+        "alt_feet": 1268.0,
+        "alt_meters": 386.49,
+        "countryiso2": "US",
+        "iata": "SGF",
+        "icao": "KSGF",
+        "lat": 37.245701,
+        "location": "Springfield",
+        "lon": -93.388603,
+        "name": "Springfield Branson National Airport"
+      }
+    ],
+    "airline_code": "ENY",
+    "airport_codes": "KCLT-KSGF",
+    "callsign": "ENY4017",
+    "number": "4017",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "PHX-JFK",
+    "_airports": [
+      {
+        "alt_feet": 1135.0,
+        "alt_meters": 345.95,
+        "countryiso2": "US",
+        "iata": "PHX",
+        "icao": "KPHX",
+        "lat": 33.434299,
+        "location": "Phoenix",
+        "lon": -112.012001,
+        "name": "Phoenix Sky Harbor International Airport"
+      },
+      {
+        "alt_feet": 13.0,
+        "alt_meters": 3.96,
+        "countryiso2": "US",
+        "iata": "JFK",
+        "icao": "KJFK",
+        "lat": 40.639801,
+        "location": "New York",
+        "lon": -73.7789,
+        "name": "John F Kennedy International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KPHX-KJFK",
+    "callsign": "AAL450",
+    "number": "450",
+    "plausible": true
+  },
+  null,
+  {
+    "_airport_codes_iata": "OKC-ORD",
+    "_airports": [
+      {
+        "alt_feet": 1295.0,
+        "alt_meters": 394.72,
+        "countryiso2": "US",
+        "iata": "OKC",
+        "icao": "KOKC",
+        "lat": 35.393101,
+        "location": "Oklahoma City",
+        "lon": -97.6007,
+        "name": "Will Rogers World Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KOKC-KORD",
+    "callsign": "SKW5908",
+    "number": "5908",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "AUS-ORD",
+    "_airports": [
+      {
+        "alt_feet": 542.0,
+        "alt_meters": 165.2,
+        "countryiso2": "US",
+        "iata": "AUS",
+        "icao": "KAUS",
+        "lat": 30.1945,
+        "location": "Austin",
+        "lon": -97.669899,
+        "name": "Austin Bergstrom International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KAUS-KORD",
+    "callsign": "UAL1990",
+    "number": "1990",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "unknown",
+    "_airports": [],
+    "airline_code": "unknown",
+    "airport_codes": "unknown",
+    "callsign": "LXJ570",
+    "number": "unknown"
+  },
+  {
+    "_airport_codes_iata": "ABE-RFD",
+    "_airports": [
+      {
+        "alt_feet": 393.0,
+        "alt_meters": 119.79,
+        "countryiso2": "US",
+        "iata": "ABE",
+        "icao": "KABE",
+        "lat": 40.6521,
+        "location": "Allentown",
+        "lon": -75.440804,
+        "name": "Lehigh Valley International Airport"
+      },
+      {
+        "alt_feet": 742.0,
+        "alt_meters": 226.16,
+        "countryiso2": "US",
+        "iata": "RFD",
+        "icao": "KRFD",
+        "lat": 42.1954,
+        "location": "Chicago/Rockford",
+        "lon": -89.097198,
+        "name": "Chicago Rockford International Airport"
+      }
+    ],
+    "airline_code": "ATN",
+    "airport_codes": "KABE-KRFD",
+    "callsign": "ATN3324",
+    "number": "3324",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "SAN-ORD-SAN",
+    "_airports": [
+      {
+        "alt_feet": 17.0,
+        "alt_meters": 5.18,
+        "countryiso2": "US",
+        "iata": "SAN",
+        "icao": "KSAN",
+        "lat": 32.733601,
+        "location": "San Diego",
+        "lon": -117.190002,
+        "name": "San Diego International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 17.0,
+        "alt_meters": 5.18,
+        "countryiso2": "US",
+        "iata": "SAN",
+        "icao": "KSAN",
+        "lat": 32.733601,
+        "location": "San Diego",
+        "lon": -117.190002,
+        "name": "San Diego International Airport"
+      }
+    ],
+    "airline_code": "ASA",
+    "airport_codes": "KSAN-KORD-KSAN",
+    "callsign": "ASA1478",
+    "number": "1478",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "SDF-ORD",
+    "_airports": [
+      {
+        "alt_feet": 501.0,
+        "alt_meters": 152.7,
+        "countryiso2": "US",
+        "iata": "SDF",
+        "icao": "KSDF",
+        "lat": 38.1744,
+        "location": "Louisville",
+        "lon": -85.736,
+        "name": "Louisville International Standiford Field"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "RPA",
+    "airport_codes": "KSDF-KORD",
+    "callsign": "RPA4413",
+    "number": "4413",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "PDX-ORD",
+    "_airports": [
+      {
+        "alt_feet": 31.0,
+        "alt_meters": 9.45,
+        "countryiso2": "US",
+        "iata": "PDX",
+        "icao": "KPDX",
+        "lat": 45.588699,
+        "location": "Portland",
+        "lon": -122.598,
+        "name": "Portland International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KPDX-KORD",
+    "callsign": "AAL562",
+    "number": "562",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-LAX",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 125.0,
+        "alt_meters": 38.1,
+        "countryiso2": "US",
+        "iata": "LAX",
+        "icao": "KLAX",
+        "lat": 33.942501,
+        "location": "Los Angeles",
+        "lon": -118.407997,
+        "name": "Los Angeles International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KORD-KLAX",
+    "callsign": "UAL1967",
+    "number": "1967",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-IAH",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 97.0,
+        "alt_meters": 29.57,
+        "countryiso2": "US",
+        "iata": "IAH",
+        "icao": "KIAH",
+        "lat": 29.9844,
+        "location": "Houston",
+        "lon": -95.3414,
+        "name": "George Bush Intercontinental Houston Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KORD-KIAH",
+    "callsign": "AAL555",
+    "number": "555",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "TPE-ORD",
+    "_airports": [
+      {
+        "alt_feet": 106.0,
+        "alt_meters": 32.31,
+        "countryiso2": "TW",
+        "iata": "TPE",
+        "icao": "RCTP",
+        "lat": 25.0777,
+        "location": "Taipei",
+        "lon": 121.233002,
+        "name": "Taiwan Taoyuan International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "EVA",
+    "airport_codes": "RCTP-KORD",
+    "callsign": "EVA056",
+    "number": "56",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "YYZ-SFO",
+    "_airports": [
+      {
+        "alt_feet": 569.0,
+        "alt_meters": 173.43,
+        "countryiso2": "CA",
+        "iata": "YYZ",
+        "icao": "CYYZ",
+        "lat": 43.6772,
+        "location": "Toronto",
+        "lon": -79.6306,
+        "name": "Lester B. Pearson International Airport"
+      },
+      {
+        "alt_feet": 13.0,
+        "alt_meters": 3.96,
+        "countryiso2": "US",
+        "iata": "SFO",
+        "icao": "KSFO",
+        "lat": 37.618999,
+        "location": "San Francisco",
+        "lon": -122.375,
+        "name": "San Francisco International Airport"
+      }
+    ],
+    "airline_code": "ACA",
+    "airport_codes": "CYYZ-KSFO",
+    "callsign": "ACA745",
+    "number": "745",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MDW-PHX",
+    "_airports": [
+      {
+        "alt_feet": 620.0,
+        "alt_meters": 188.98,
+        "countryiso2": "US",
+        "iata": "MDW",
+        "icao": "KMDW",
+        "lat": 41.785999,
+        "location": "Chicago",
+        "lon": -87.752403,
+        "name": "Chicago Midway International Airport"
+      },
+      {
+        "alt_feet": 1135.0,
+        "alt_meters": 345.95,
+        "countryiso2": "US",
+        "iata": "PHX",
+        "icao": "KPHX",
+        "lat": 33.434299,
+        "location": "Phoenix",
+        "lon": -112.012001,
+        "name": "Phoenix Sky Harbor International Airport"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KMDW-KPHX",
+    "callsign": "SWA2998",
+    "number": "2998",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "AEX-DFW",
+    "_airports": [
+      {
+        "alt_feet": 89.0,
+        "alt_meters": 27.13,
+        "countryiso2": "US",
+        "iata": "AEX",
+        "icao": "KAEX",
+        "lat": 31.3274,
+        "location": "Alexandria",
+        "lon": -92.549797,
+        "name": "Alexandria International Airport"
+      },
+      {
+        "alt_feet": 607.0,
+        "alt_meters": 185.01,
+        "countryiso2": "US",
+        "iata": "DFW",
+        "icao": "KDFW",
+        "lat": 32.896801,
+        "location": "Dallas-Fort Worth",
+        "lon": -97.038002,
+        "name": "Dallas Fort Worth International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KAEX-KDFW",
+    "callsign": "SKW4918",
+    "number": "4918",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "LAX-LUX",
+    "_airports": [
+      {
+        "alt_feet": 125.0,
+        "alt_meters": 38.1,
+        "countryiso2": "US",
+        "iata": "LAX",
+        "icao": "KLAX",
+        "lat": 33.942501,
+        "location": "Los Angeles",
+        "lon": -118.407997,
+        "name": "Los Angeles International Airport"
+      },
+      {
+        "alt_feet": 1234.0,
+        "alt_meters": 376.12,
+        "countryiso2": "LU",
+        "iata": "LUX",
+        "icao": "ELLX",
+        "lat": 49.626598,
+        "location": "Luxembourg",
+        "lon": 6.21152,
+        "name": "Luxembourg-Findel International Airport"
+      }
+    ],
+    "airline_code": "CLX",
+    "airport_codes": "KLAX-ELLX",
+    "callsign": "CLX19W",
+    "number": "19W",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MKE-DEN",
+    "_airports": [
+      {
+        "alt_feet": 723.0,
+        "alt_meters": 220.37,
+        "countryiso2": "US",
+        "iata": "MKE",
+        "icao": "KMKE",
+        "lat": 42.947201,
+        "location": "Milwaukee",
+        "lon": -87.896599,
+        "name": "General Mitchell International Airport"
+      },
+      {
+        "alt_feet": 5431.0,
+        "alt_meters": 1655.37,
+        "countryiso2": "US",
+        "iata": "DEN",
+        "icao": "KDEN",
+        "lat": 39.861698,
+        "location": "Denver",
+        "lon": -104.672997,
+        "name": "Denver International Airport"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KMKE-KDEN",
+    "callsign": "SWA3076",
+    "number": "3076",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-HPN-ORD",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 439.0,
+        "alt_meters": 133.81,
+        "countryiso2": "US",
+        "iata": "HPN",
+        "icao": "KHPN",
+        "lat": 41.067001,
+        "location": "White Plains",
+        "lon": -73.707603,
+        "name": "Westchester County Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "ENY",
+    "airport_codes": "KORD-KHPN-KORD",
+    "callsign": "ENY4294",
+    "number": "4294",
+    "plausible": true
+  },
+  null,
+  {
+    "_airport_codes_iata": "CHA-ORD",
+    "_airports": [
+      {
+        "alt_feet": 683.0,
+        "alt_meters": 208.18,
+        "countryiso2": "US",
+        "iata": "CHA",
+        "icao": "KCHA",
+        "lat": 35.035301,
+        "location": "Chattanooga",
+        "lon": -85.203796,
+        "name": "Lovell Field"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KCHA-KORD",
+    "callsign": "SKW5269",
+    "number": "5269",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "SAN-DTW",
+    "_airports": [
+      {
+        "alt_feet": 17.0,
+        "alt_meters": 5.18,
+        "countryiso2": "US",
+        "iata": "SAN",
+        "icao": "KSAN",
+        "lat": 32.733601,
+        "location": "San Diego",
+        "lon": -117.190002,
+        "name": "San Diego International Airport"
+      },
+      {
+        "alt_feet": 645.0,
+        "alt_meters": 196.6,
+        "countryiso2": "US",
+        "iata": "DTW",
+        "icao": "KDTW",
+        "lat": 42.212399,
+        "location": "Detroit",
+        "lon": -83.353401,
+        "name": "Detroit Metropolitan Wayne County Airport"
+      }
+    ],
+    "airline_code": "DAL",
+    "airport_codes": "KSAN-KDTW",
+    "callsign": "DAL1900",
+    "number": "1900",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-MBJ-ORD",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 4.0,
+        "alt_meters": 1.22,
+        "countryiso2": "JM",
+        "iata": "MBJ",
+        "icao": "MKJS",
+        "lat": 18.5037,
+        "location": "Montego Bay",
+        "lon": -77.913399,
+        "name": "Sangster International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KORD-MKJS-KORD",
+    "callsign": "AAL975",
+    "number": "975",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "CHO-ORD",
+    "_airports": [
+      {
+        "alt_feet": 639.0,
+        "alt_meters": 194.77,
+        "countryiso2": "US",
+        "iata": "CHO",
+        "icao": "KCHO",
+        "lat": 38.138599,
+        "location": "Charlottesville",
+        "lon": -78.452904,
+        "name": "Charlottesville Albemarle Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KCHO-KORD",
+    "callsign": "SKW5606",
+    "number": "5606",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "BOS-AVL",
+    "_airports": [
+      {
+        "alt_feet": 20.0,
+        "alt_meters": 6.1,
+        "countryiso2": "US",
+        "iata": "BOS",
+        "icao": "KBOS",
+        "lat": 42.3643,
+        "location": "Boston",
+        "lon": -71.005203,
+        "name": "General Edward Lawrence Logan International Airport"
+      },
+      {
+        "alt_feet": 2165.0,
+        "alt_meters": 659.89,
+        "countryiso2": "US",
+        "iata": "AVL",
+        "icao": "KAVL",
+        "lat": 35.436199,
+        "location": "Asheville",
+        "lon": -82.541801,
+        "name": "Asheville Regional Airport"
+      }
+    ],
+    "airline_code": "EJA",
+    "airport_codes": "KBOS-KAVL",
+    "callsign": "EJA258",
+    "number": "258",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "SEA-CLE",
+    "_airports": [
+      {
+        "alt_feet": 433.0,
+        "alt_meters": 131.98,
+        "countryiso2": "US",
+        "iata": "SEA",
+        "icao": "KSEA",
+        "lat": 47.449001,
+        "location": "Seattle",
+        "lon": -122.308998,
+        "name": "Seattle Tacoma International Airport"
+      },
+      {
+        "alt_feet": 791.0,
+        "alt_meters": 241.1,
+        "countryiso2": "US",
+        "iata": "CLE",
+        "icao": "KCLE",
+        "lat": 41.411701,
+        "location": "Cleveland",
+        "lon": -81.8498,
+        "name": "Cleveland Hopkins International Airport"
+      }
+    ],
+    "airline_code": "ASA",
+    "airport_codes": "KSEA-KCLE",
+    "callsign": "ASA253",
+    "number": "253",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-YYZ",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 569.0,
+        "alt_meters": 173.43,
+        "countryiso2": "CA",
+        "iata": "YYZ",
+        "icao": "CYYZ",
+        "lat": 43.6772,
+        "location": "Toronto",
+        "lon": -79.6306,
+        "name": "Lester B. Pearson International Airport"
+      }
+    ],
+    "airline_code": "ENY",
+    "airport_codes": "KORD-CYYZ",
+    "callsign": "ENY3610",
+    "number": "3610",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "LGA-ORD",
+    "_airports": [
+      {
+        "alt_feet": 21.0,
+        "alt_meters": 6.4,
+        "countryiso2": "US",
+        "iata": "LGA",
+        "icao": "KLGA",
+        "lat": 40.777199,
+        "location": "New York",
+        "lon": -73.872597,
+        "name": "La Guardia Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KLGA-KORD",
+    "callsign": "UAL2299",
+    "number": "2299",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "PHL-BOS",
+    "_airports": [
+      {
+        "alt_feet": 36.0,
+        "alt_meters": 10.97,
+        "countryiso2": "US",
+        "iata": "PHL",
+        "icao": "KPHL",
+        "lat": 39.871899,
+        "location": "Philadelphia",
+        "lon": -75.241096,
+        "name": "Philadelphia International Airport"
+      },
+      {
+        "alt_feet": 20.0,
+        "alt_meters": 6.1,
+        "countryiso2": "US",
+        "iata": "BOS",
+        "icao": "KBOS",
+        "lat": 42.3643,
+        "location": "Boston",
+        "lon": -71.005203,
+        "name": "General Edward Lawrence Logan International Airport"
+      }
+    ],
+    "airline_code": "EJA",
+    "airport_codes": "KPHL-KBOS",
+    "callsign": "EJA930",
+    "number": "930",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "DCA-ORD",
+    "_airports": [
+      {
+        "alt_feet": 15.0,
+        "alt_meters": 4.57,
+        "countryiso2": "US",
+        "iata": "DCA",
+        "icao": "KDCA",
+        "lat": 38.8521,
+        "location": "Washington",
+        "lon": -77.037697,
+        "name": "Ronald Reagan Washington National Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KDCA-KORD",
+    "callsign": "AAL2327",
+    "number": "2327",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-BRL",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 698.0,
+        "alt_meters": 212.75,
+        "countryiso2": "US",
+        "iata": "BRL",
+        "icao": "KBRL",
+        "lat": 40.783199,
+        "location": "Burlington",
+        "lon": -91.125504,
+        "name": "Southeast Iowa Regional Airport"
+      }
+    ],
+    "airline_code": "VTE",
+    "airport_codes": "KORD-KBRL",
+    "callsign": "VTE3015",
+    "number": "3015",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "GSP-ORD",
+    "_airports": [
+      {
+        "alt_feet": 964.0,
+        "alt_meters": 293.83,
+        "countryiso2": "US",
+        "iata": "GSP",
+        "icao": "KGSP",
+        "lat": 34.895699,
+        "location": "Greenville",
+        "lon": -82.218903,
+        "name": "Greenville Spartanburg International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KGSP-KORD",
+    "callsign": "SKW5250",
+    "number": "5250",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MKE-ORD",
+    "_airports": [
+      {
+        "alt_feet": 723.0,
+        "alt_meters": 220.37,
+        "countryiso2": "US",
+        "iata": "MKE",
+        "icao": "KMKE",
+        "lat": 42.947201,
+        "location": "Milwaukee",
+        "lon": -87.896599,
+        "name": "General Mitchell International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KMKE-KORD",
+    "callsign": "SKW5420",
+    "number": "5420",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "PHX-PSP-PHX",
+    "_airports": [
+      {
+        "alt_feet": 1135.0,
+        "alt_meters": 345.95,
+        "countryiso2": "US",
+        "iata": "PHX",
+        "icao": "KPHX",
+        "lat": 33.434299,
+        "location": "Phoenix",
+        "lon": -112.012001,
+        "name": "Phoenix Sky Harbor International Airport"
+      },
+      {
+        "alt_feet": 477.0,
+        "alt_meters": 145.39,
+        "countryiso2": "US",
+        "iata": "PSP",
+        "icao": "KPSP",
+        "lat": 33.8297,
+        "location": "Palm Springs",
+        "lon": -116.507004,
+        "name": "Palm Springs International Airport"
+      },
+      {
+        "alt_feet": 1135.0,
+        "alt_meters": 345.95,
+        "countryiso2": "US",
+        "iata": "PHX",
+        "icao": "KPHX",
+        "lat": 33.434299,
+        "location": "Phoenix",
+        "lon": -112.012001,
+        "name": "Phoenix Sky Harbor International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KPHX-KPSP-KPHX",
+    "callsign": "SKW6246",
+    "number": "6246",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "YUL-SFO",
+    "_airports": [
+      {
+        "alt_feet": 118.0,
+        "alt_meters": 35.97,
+        "countryiso2": "CA",
+        "iata": "YUL",
+        "icao": "CYUL",
+        "lat": 45.4706,
+        "location": "Montréal",
+        "lon": -73.740799,
+        "name": "Montreal / Pierre Elliott Trudeau International Airport"
+      },
+      {
+        "alt_feet": 13.0,
+        "alt_meters": 3.96,
+        "countryiso2": "US",
+        "iata": "SFO",
+        "icao": "KSFO",
+        "lat": 37.618999,
+        "location": "San Francisco",
+        "lon": -122.375,
+        "name": "San Francisco International Airport"
+      }
+    ],
+    "airline_code": "ACA",
+    "airport_codes": "CYUL-KSFO",
+    "callsign": "ACA761",
+    "number": "761",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "CLT-ORD",
+    "_airports": [
+      {
+        "alt_feet": 748.0,
+        "alt_meters": 227.99,
+        "countryiso2": "US",
+        "iata": "CLT",
+        "icao": "KCLT",
+        "lat": 35.214001,
+        "location": "Charlotte",
+        "lon": -80.9431,
+        "name": "Charlotte Douglas International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KCLT-KORD",
+    "callsign": "AAL2576",
+    "number": "2576",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "PIT-DEN",
+    "_airports": [
+      {
+        "alt_feet": 1203.0,
+        "alt_meters": 366.67,
+        "countryiso2": "US",
+        "iata": "PIT",
+        "icao": "KPIT",
+        "lat": 40.491501,
+        "location": "Pittsburgh",
+        "lon": -80.232903,
+        "name": "Pittsburgh International Airport"
+      },
+      {
+        "alt_feet": 5431.0,
+        "alt_meters": 1655.37,
+        "countryiso2": "US",
+        "iata": "DEN",
+        "icao": "KDEN",
+        "lat": 39.861698,
+        "location": "Denver",
+        "lon": -104.672997,
+        "name": "Denver International Airport"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KPIT-KDEN",
+    "callsign": "SWA1529",
+    "number": "1529",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-GRB",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 695.0,
+        "alt_meters": 211.84,
+        "countryiso2": "US",
+        "iata": "GRB",
+        "icao": "KGRB",
+        "lat": 44.4851,
+        "location": "Green Bay",
+        "lon": -88.129601,
+        "name": "Austin Straubel International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KORD-KGRB",
+    "callsign": "SKW5586",
+    "number": "5586",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "TPA-MKE",
+    "_airports": [
+      {
+        "alt_feet": 26.0,
+        "alt_meters": 7.92,
+        "countryiso2": "US",
+        "iata": "TPA",
+        "icao": "KTPA",
+        "lat": 27.9755,
+        "location": "Tampa",
+        "lon": -82.533203,
+        "name": "Tampa International Airport"
+      },
+      {
+        "alt_feet": 723.0,
+        "alt_meters": 220.37,
+        "countryiso2": "US",
+        "iata": "MKE",
+        "icao": "KMKE",
+        "lat": 42.947201,
+        "location": "Milwaukee",
+        "lon": -87.896599,
+        "name": "General Mitchell International Airport"
+      }
+    ],
+    "airline_code": "COL",
+    "airport_codes": "KTPA-KMKE",
+    "callsign": "COL776",
+    "number": "776",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-EWR-ORD",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 18.0,
+        "alt_meters": 5.49,
+        "countryiso2": "US",
+        "iata": "EWR",
+        "icao": "KEWR",
+        "lat": 40.692501,
+        "location": "Newark",
+        "lon": -74.168701,
+        "name": "Newark Liberty International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KORD-KEWR-KORD",
+    "callsign": "AAL1936",
+    "number": "1936",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ANC-ICN",
+    "_airports": [
+      {
+        "alt_feet": 152.0,
+        "alt_meters": 46.33,
+        "countryiso2": "US",
+        "iata": "ANC",
+        "icao": "PANC",
+        "lat": 61.1744,
+        "location": "Anchorage",
+        "lon": -149.996002,
+        "name": "Ted Stevens Anchorage International Airport"
+      },
+      {
+        "alt_feet": 23.0,
+        "alt_meters": 7.01,
+        "countryiso2": "KR",
+        "iata": "ICN",
+        "icao": "RKSI",
+        "lat": 37.469101,
+        "location": "Seoul",
+        "lon": 126.450996,
+        "name": "Incheon International Airport"
+      }
+    ],
+    "airline_code": "CKS",
+    "airport_codes": "PANC-RKSI",
+    "callsign": "CKS578",
+    "number": "578",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "MDW-DAL",
+    "_airports": [
+      {
+        "alt_feet": 620.0,
+        "alt_meters": 188.98,
+        "countryiso2": "US",
+        "iata": "MDW",
+        "icao": "KMDW",
+        "lat": 41.785999,
+        "location": "Chicago",
+        "lon": -87.752403,
+        "name": "Chicago Midway International Airport"
+      },
+      {
+        "alt_feet": 487.0,
+        "alt_meters": 148.44,
+        "countryiso2": "US",
+        "iata": "DAL",
+        "icao": "KDAL",
+        "lat": 32.847099,
+        "location": "Dallas",
+        "lon": -96.851799,
+        "name": "Dallas Love Field"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KMDW-KDAL",
+    "callsign": "SWA3937",
+    "number": "3937",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ABE-ORD",
+    "_airports": [
+      {
+        "alt_feet": 393.0,
+        "alt_meters": 119.79,
+        "countryiso2": "US",
+        "iata": "ABE",
+        "icao": "KABE",
+        "lat": 40.6521,
+        "location": "Allentown",
+        "lon": -75.440804,
+        "name": "Lehigh Valley International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "GJS",
+    "airport_codes": "KABE-KORD",
+    "callsign": "GJS4549",
+    "number": "4549",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MIA-ATL",
+    "_airports": [
+      {
+        "alt_feet": 8.0,
+        "alt_meters": 2.44,
+        "countryiso2": "US",
+        "iata": "MIA",
+        "icao": "KMIA",
+        "lat": 25.7932,
+        "location": "Miami",
+        "lon": -80.290604,
+        "name": "Miami International Airport"
+      },
+      {
+        "alt_feet": 1026.0,
+        "alt_meters": 312.72,
+        "countryiso2": "US",
+        "iata": "ATL",
+        "icao": "KATL",
+        "lat": 33.6367,
+        "location": "Atlanta",
+        "lon": -84.428101,
+        "name": "Hartsfield Jackson Atlanta International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KMIA-KATL",
+    "callsign": "AAL3261",
+    "number": "3261",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "ORD-FWA",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 814.0,
+        "alt_meters": 248.11,
+        "countryiso2": "US",
+        "iata": "FWA",
+        "icao": "KFWA",
+        "lat": 40.9785,
+        "location": "Fort Wayne",
+        "lon": -85.195099,
+        "name": "Fort Wayne International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KORD-KFWA",
+    "callsign": "SKW6268",
+    "number": "6268",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-DAY",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 1009.0,
+        "alt_meters": 307.54,
+        "countryiso2": "US",
+        "iata": "DAY",
+        "icao": "KDAY",
+        "lat": 39.902401,
+        "location": "Dayton",
+        "lon": -84.219398,
+        "name": "James M Cox Dayton International Airport"
+      }
+    ],
+    "airline_code": "RPA",
+    "airport_codes": "KORD-KDAY",
+    "callsign": "RPA4485",
+    "number": "4485",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ROA-ORD",
+    "_airports": [
+      {
+        "alt_feet": 1175.0,
+        "alt_meters": 358.14,
+        "countryiso2": "US",
+        "iata": "ROA",
+        "icao": "KROA",
+        "lat": 37.3255,
+        "location": "Roanoke",
+        "lon": -79.975403,
+        "name": "Roanoke Regional Woodrum Field"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "GJS",
+    "airport_codes": "KROA-KORD",
+    "callsign": "GJS4458",
+    "number": "4458",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "BUF-EWR",
+    "_airports": [
+      {
+        "alt_feet": 728.0,
+        "alt_meters": 221.89,
+        "countryiso2": "US",
+        "iata": "BUF",
+        "icao": "KBUF",
+        "lat": 42.940498,
+        "location": "Buffalo",
+        "lon": -78.732201,
+        "name": "Buffalo Niagara International Airport"
+      },
+      {
+        "alt_feet": 18.0,
+        "alt_meters": 5.49,
+        "countryiso2": "US",
+        "iata": "EWR",
+        "icao": "KEWR",
+        "lat": 40.692501,
+        "location": "Newark",
+        "lon": -74.168701,
+        "name": "Newark Liberty International Airport"
+      }
+    ],
+    "airline_code": "GJS",
+    "airport_codes": "KBUF-KEWR",
+    "callsign": "GJS4403",
+    "number": "4403",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "MEM-ORD",
+    "_airports": [
+      {
+        "alt_feet": 341.0,
+        "alt_meters": 103.94,
+        "countryiso2": "US",
+        "iata": "MEM",
+        "icao": "KMEM",
+        "lat": 35.0424,
+        "location": "Memphis",
+        "lon": -89.9767,
+        "name": "Memphis International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "FDX",
+    "airport_codes": "KMEM-KORD",
+    "callsign": "FDX1443",
+    "number": "1443",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "LEX-ORD",
+    "_airports": [
+      {
+        "alt_feet": 979.0,
+        "alt_meters": 298.4,
+        "countryiso2": "US",
+        "iata": "LEX",
+        "icao": "KLEX",
+        "lat": 38.036499,
+        "location": "Lexington",
+        "lon": -84.605904,
+        "name": "Blue Grass Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KLEX-KORD",
+    "callsign": "SKW5871",
+    "number": "5871",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ATL-ORD",
+    "_airports": [
+      {
+        "alt_feet": 1026.0,
+        "alt_meters": 312.72,
+        "countryiso2": "US",
+        "iata": "ATL",
+        "icao": "KATL",
+        "lat": 33.6367,
+        "location": "Atlanta",
+        "lon": -84.428101,
+        "name": "Hartsfield Jackson Atlanta International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "DAL",
+    "airport_codes": "KATL-KORD",
+    "callsign": "DAL2879",
+    "number": "2879",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "SJD-ORD",
+    "_airports": [
+      {
+        "alt_feet": 374.0,
+        "alt_meters": 114.0,
+        "countryiso2": "MX",
+        "iata": "SJD",
+        "icao": "MMSD",
+        "lat": 23.1518,
+        "location": "San José del Cabo",
+        "lon": -109.721001,
+        "name": "Los Cabos International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "MMSD-KORD",
+    "callsign": "AAL2636",
+    "number": "2636",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "LGA-ORD-LGA",
+    "_airports": [
+      {
+        "alt_feet": 21.0,
+        "alt_meters": 6.4,
+        "countryiso2": "US",
+        "iata": "LGA",
+        "icao": "KLGA",
+        "lat": 40.777199,
+        "location": "New York",
+        "lon": -73.872597,
+        "name": "La Guardia Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 21.0,
+        "alt_meters": 6.4,
+        "countryiso2": "US",
+        "iata": "LGA",
+        "icao": "KLGA",
+        "lat": 40.777199,
+        "location": "New York",
+        "lon": -73.872597,
+        "name": "La Guardia Airport"
+      }
+    ],
+    "airline_code": "DAL",
+    "airport_codes": "KLGA-KORD-KLGA",
+    "callsign": "DAL2503",
+    "number": "2503",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-ROC",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 559.0,
+        "alt_meters": 170.38,
+        "countryiso2": "US",
+        "iata": "ROC",
+        "icao": "KROC",
+        "lat": 43.1189,
+        "location": "Rochester",
+        "lon": -77.672401,
+        "name": "Greater Rochester International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KORD-KROC",
+    "callsign": "UAL1568",
+    "number": "1568",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-MSN",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 887.0,
+        "alt_meters": 270.36,
+        "countryiso2": "US",
+        "iata": "MSN",
+        "icao": "KMSN",
+        "lat": 43.1399,
+        "location": "Madison",
+        "lon": -89.337502,
+        "name": "Dane County Regional Truax Field"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KORD-KMSN",
+    "callsign": "SKW5418",
+    "number": "5418",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "DEN-ORD",
+    "_airports": [
+      {
+        "alt_feet": 5431.0,
+        "alt_meters": 1655.37,
+        "countryiso2": "US",
+        "iata": "DEN",
+        "icao": "KDEN",
+        "lat": 39.861698,
+        "location": "Denver",
+        "lon": -104.672997,
+        "name": "Denver International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KDEN-KORD",
+    "callsign": "UAL2865",
+    "number": "2865",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "DJT-ORD",
+    "_airports": [
+      {
+        "alt_feet": 19.0,
+        "alt_meters": 5.79,
+        "countryiso2": "US",
+        "iata": "DJT",
+        "icao": "KDJT",
+        "lat": 26.683201,
+        "location": "West Palm Beach",
+        "lon": -80.095596,
+        "name": "Palm Beach International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KDJT-KORD",
+    "callsign": "UAL1616",
+    "number": "1616",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-MCO-ORD",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 96.0,
+        "alt_meters": 29.26,
+        "countryiso2": "US",
+        "iata": "MCO",
+        "icao": "KMCO",
+        "lat": 28.429399,
+        "location": "Orlando",
+        "lon": -81.308998,
+        "name": "Orlando International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KORD-KMCO-KORD",
+    "callsign": "AAL1645",
+    "number": "1645",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-LGA",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 21.0,
+        "alt_meters": 6.4,
+        "countryiso2": "US",
+        "iata": "LGA",
+        "icao": "KLGA",
+        "lat": 40.777199,
+        "location": "New York",
+        "lon": -73.872597,
+        "name": "La Guardia Airport"
+      }
+    ],
+    "airline_code": "DAL",
+    "airport_codes": "KORD-KLGA",
+    "callsign": "DAL1827",
+    "number": "1827",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "PHL-FCO",
+    "_airports": [
+      {
+        "alt_feet": 36.0,
+        "alt_meters": 10.97,
+        "countryiso2": "US",
+        "iata": "PHL",
+        "icao": "KPHL",
+        "lat": 39.871899,
+        "location": "Philadelphia",
+        "lon": -75.241096,
+        "name": "Philadelphia International Airport"
+      },
+      {
+        "alt_feet": 15.0,
+        "alt_meters": 4.57,
+        "countryiso2": "IT",
+        "iata": "FCO",
+        "icao": "LIRF",
+        "lat": 41.804501,
+        "location": "Rome",
+        "lon": 12.2508,
+        "name": "Leonardo Da Vinci (Fiumicino) International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KPHL-LIRF",
+    "callsign": "AAL772",
+    "number": "772",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-FRA",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 364.0,
+        "alt_meters": 110.95,
+        "countryiso2": "DE",
+        "iata": "FRA",
+        "icao": "EDDF",
+        "lat": 50.026402,
+        "location": "Frankfurt-am-Main",
+        "lon": 8.54313,
+        "name": "Frankfurt-am-Main International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KORD-EDDF",
+    "callsign": "UAL907",
+    "number": "907",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MCO-ORD",
+    "_airports": [
+      {
+        "alt_feet": 96.0,
+        "alt_meters": 29.26,
+        "countryiso2": "US",
+        "iata": "MCO",
+        "icao": "KMCO",
+        "lat": 28.429399,
+        "location": "Orlando",
+        "lon": -81.308998,
+        "name": "Orlando International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KMCO-KORD",
+    "callsign": "UAL2475",
+    "number": "2475",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "EWR-ORD",
+    "_airports": [
+      {
+        "alt_feet": 18.0,
+        "alt_meters": 5.49,
+        "countryiso2": "US",
+        "iata": "EWR",
+        "icao": "KEWR",
+        "lat": 40.692501,
+        "location": "Newark",
+        "lon": -74.168701,
+        "name": "Newark Liberty International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KEWR-KORD",
+    "callsign": "UAL2259",
+    "number": "2259",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "LHR-ORD",
+    "_airports": [
+      {
+        "alt_feet": 83.0,
+        "alt_meters": 25.3,
+        "countryiso2": "GB",
+        "iata": "LHR",
+        "icao": "EGLL",
+        "lat": 51.4706,
+        "location": "London",
+        "lon": -0.461941,
+        "name": "London Heathrow Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "EGLL-KORD",
+    "callsign": "AAL91",
+    "number": "91",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "SFO-EWR",
+    "_airports": [
+      {
+        "alt_feet": 13.0,
+        "alt_meters": 3.96,
+        "countryiso2": "US",
+        "iata": "SFO",
+        "icao": "KSFO",
+        "lat": 37.618999,
+        "location": "San Francisco",
+        "lon": -122.375,
+        "name": "San Francisco International Airport"
+      },
+      {
+        "alt_feet": 18.0,
+        "alt_meters": 5.49,
+        "countryiso2": "US",
+        "iata": "EWR",
+        "icao": "KEWR",
+        "lat": 40.692501,
+        "location": "Newark",
+        "lon": -74.168701,
+        "name": "Newark Liberty International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KSFO-KEWR",
+    "callsign": "UAL649",
+    "number": "649",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-CID-ORD",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 869.0,
+        "alt_meters": 264.87,
+        "countryiso2": "US",
+        "iata": "CID",
+        "icao": "KCID",
+        "lat": 41.884701,
+        "location": "Cedar Rapids",
+        "lon": -91.7108,
+        "name": "The Eastern Iowa Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "ENY",
+    "airport_codes": "KORD-KCID-KORD",
+    "callsign": "ENY3458",
+    "number": "3458",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "FNT-ORD",
+    "_airports": [
+      {
+        "alt_feet": 782.0,
+        "alt_meters": 238.35,
+        "countryiso2": "US",
+        "iata": "FNT",
+        "icao": "KFNT",
+        "lat": 42.965401,
+        "location": "Flint",
+        "lon": -83.743599,
+        "name": "Bishop International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KFNT-KORD",
+    "callsign": "SKW5734",
+    "number": "5734",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-KEF",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 171.0,
+        "alt_meters": 52.12,
+        "countryiso2": "IS",
+        "iata": "KEF",
+        "icao": "BIKF",
+        "lat": 63.985001,
+        "location": "Reykjavík",
+        "lon": -22.6056,
+        "name": "Keflavik International Airport"
+      }
+    ],
+    "airline_code": "ICE",
+    "airport_codes": "KORD-BIKF",
+    "callsign": "ICE10V",
+    "number": "10V",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-CMI-ORD",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 755.0,
+        "alt_meters": 230.12,
+        "countryiso2": "US",
+        "iata": "CMI",
+        "icao": "KCMI",
+        "lat": 40.0392,
+        "location": "Champaign/Urbana",
+        "lon": -88.278099,
+        "name": "University of Illinois Willard Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "ENY",
+    "airport_codes": "KORD-KCMI-KORD",
+    "callsign": "ENY3484",
+    "number": "3484",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "TPA-ORD",
+    "_airports": [
+      {
+        "alt_feet": 26.0,
+        "alt_meters": 7.92,
+        "countryiso2": "US",
+        "iata": "TPA",
+        "icao": "KTPA",
+        "lat": 27.9755,
+        "location": "Tampa",
+        "lon": -82.533203,
+        "name": "Tampa International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KTPA-KORD",
+    "callsign": "AAL1218",
+    "number": "1218",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-OKC",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 1295.0,
+        "alt_meters": 394.72,
+        "countryiso2": "US",
+        "iata": "OKC",
+        "icao": "KOKC",
+        "lat": 35.393101,
+        "location": "Oklahoma City",
+        "lon": -97.6007,
+        "name": "Will Rogers World Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KORD-KOKC",
+    "callsign": "SKW5477",
+    "number": "5477",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "CAK-CLT",
+    "_airports": [
+      {
+        "alt_feet": 1228.0,
+        "alt_meters": 374.29,
+        "countryiso2": "US",
+        "iata": "CAK",
+        "icao": "KCAK",
+        "lat": 40.9161,
+        "location": "Akron",
+        "lon": -81.4422,
+        "name": "Akron Canton Regional Airport"
+      },
+      {
+        "alt_feet": 748.0,
+        "alt_meters": 227.99,
+        "countryiso2": "US",
+        "iata": "CLT",
+        "icao": "KCLT",
+        "lat": 35.214001,
+        "location": "Charlotte",
+        "lon": -80.9431,
+        "name": "Charlotte Douglas International Airport"
+      }
+    ],
+    "airline_code": "JIA",
+    "airport_codes": "KCAK-KCLT",
+    "callsign": "JIA5405",
+    "number": "5405",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "PWM-ORD",
+    "_airports": [
+      {
+        "alt_feet": 76.0,
+        "alt_meters": 23.16,
+        "countryiso2": "US",
+        "iata": "PWM",
+        "icao": "KPWM",
+        "lat": 43.646198,
+        "location": "Portland",
+        "lon": -70.309303,
+        "name": "Portland International Jetport Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KPWM-KORD",
+    "callsign": "UAL1828",
+    "number": "1828",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "SAN-ORD",
+    "_airports": [
+      {
+        "alt_feet": 17.0,
+        "alt_meters": 5.18,
+        "countryiso2": "US",
+        "iata": "SAN",
+        "icao": "KSAN",
+        "lat": 32.733601,
+        "location": "San Diego",
+        "lon": -117.190002,
+        "name": "San Diego International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KSAN-KORD",
+    "callsign": "AAL1543",
+    "number": "1543",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "BTV-PHL",
+    "_airports": [
+      {
+        "alt_feet": 335.0,
+        "alt_meters": 102.11,
+        "countryiso2": "US",
+        "iata": "BTV",
+        "icao": "KBTV",
+        "lat": 44.471901,
+        "location": "Burlington",
+        "lon": -73.153297,
+        "name": "Burlington International Airport"
+      },
+      {
+        "alt_feet": 36.0,
+        "alt_meters": 10.97,
+        "countryiso2": "US",
+        "iata": "PHL",
+        "icao": "KPHL",
+        "lat": 39.871899,
+        "location": "Philadelphia",
+        "lon": -75.241096,
+        "name": "Philadelphia International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KBTV-KPHL",
+    "callsign": "AAL3233",
+    "number": "3233",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "DFW-ORD",
+    "_airports": [
+      {
+        "alt_feet": 607.0,
+        "alt_meters": 185.01,
+        "countryiso2": "US",
+        "iata": "DFW",
+        "icao": "KDFW",
+        "lat": 32.896801,
+        "location": "Dallas-Fort Worth",
+        "lon": -97.038002,
+        "name": "Dallas Fort Worth International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "FFT",
+    "airport_codes": "KDFW-KORD",
+    "callsign": "FFT3242",
+    "number": "3242",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-ATL",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 1026.0,
+        "alt_meters": 312.72,
+        "countryiso2": "US",
+        "iata": "ATL",
+        "icao": "KATL",
+        "lat": 33.6367,
+        "location": "Atlanta",
+        "lon": -84.428101,
+        "name": "Hartsfield Jackson Atlanta International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KORD-KATL",
+    "callsign": "UAL1398",
+    "number": "1398",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-SJU",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 9.0,
+        "alt_meters": 2.74,
+        "countryiso2": "PR",
+        "iata": "SJU",
+        "icao": "TJSJ",
+        "lat": 18.4394,
+        "location": "San Juan",
+        "lon": -66.001801,
+        "name": "Luis Munoz Marin International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KORD-TJSJ",
+    "callsign": "AAL2279",
+    "number": "2279",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ATL-ORD",
+    "_airports": [
+      {
+        "alt_feet": 1026.0,
+        "alt_meters": 312.72,
+        "countryiso2": "US",
+        "iata": "ATL",
+        "icao": "KATL",
+        "lat": 33.6367,
+        "location": "Atlanta",
+        "lon": -84.428101,
+        "name": "Hartsfield Jackson Atlanta International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "FFT",
+    "airport_codes": "KATL-KORD",
+    "callsign": "FFT1595",
+    "number": "1595",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-SEA",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 433.0,
+        "alt_meters": 131.98,
+        "countryiso2": "US",
+        "iata": "SEA",
+        "icao": "KSEA",
+        "lat": 47.449001,
+        "location": "Seattle",
+        "lon": -122.308998,
+        "name": "Seattle Tacoma International Airport"
+      }
+    ],
+    "airline_code": "DAL",
+    "airport_codes": "KORD-KSEA",
+    "callsign": "DAL1818",
+    "number": "1818",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "BNA-ORD",
+    "_airports": [
+      {
+        "alt_feet": 599.0,
+        "alt_meters": 182.58,
+        "countryiso2": "US",
+        "iata": "BNA",
+        "icao": "KBNA",
+        "lat": 36.1245,
+        "location": "Nashville",
+        "lon": -86.6782,
+        "name": "Nashville International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KBNA-KORD",
+    "callsign": "UAL2761",
+    "number": "2761",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-RDU",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 435.0,
+        "alt_meters": 132.59,
+        "countryiso2": "US",
+        "iata": "RDU",
+        "icao": "KRDU",
+        "lat": 35.877602,
+        "location": "Raleigh/Durham",
+        "lon": -78.787498,
+        "name": "Raleigh Durham International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KORD-KRDU",
+    "callsign": "UAL1989",
+    "number": "1989",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-CHA",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 683.0,
+        "alt_meters": 208.18,
+        "countryiso2": "US",
+        "iata": "CHA",
+        "icao": "KCHA",
+        "lat": 35.035301,
+        "location": "Chattanooga",
+        "lon": -85.203796,
+        "name": "Lovell Field"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KORD-KCHA",
+    "callsign": "SKW5659",
+    "number": "5659",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MDW-SDF",
+    "_airports": [
+      {
+        "alt_feet": 620.0,
+        "alt_meters": 188.98,
+        "countryiso2": "US",
+        "iata": "MDW",
+        "icao": "KMDW",
+        "lat": 41.785999,
+        "location": "Chicago",
+        "lon": -87.752403,
+        "name": "Chicago Midway International Airport"
+      },
+      {
+        "alt_feet": 501.0,
+        "alt_meters": 152.7,
+        "countryiso2": "US",
+        "iata": "SDF",
+        "icao": "KSDF",
+        "lat": 38.1744,
+        "location": "Louisville",
+        "lon": -85.736,
+        "name": "Louisville International Standiford Field"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KMDW-KSDF",
+    "callsign": "SWA3028",
+    "number": "3028",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-CHS",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 46.0,
+        "alt_meters": 14.02,
+        "countryiso2": "US",
+        "iata": "CHS",
+        "icao": "KCHS",
+        "lat": 32.898602,
+        "location": "Charleston",
+        "lon": -80.040497,
+        "name": "Charleston Air Force Base-International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KORD-KCHS",
+    "callsign": "SKW5357",
+    "number": "5357",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-BNA",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 599.0,
+        "alt_meters": 182.58,
+        "countryiso2": "US",
+        "iata": "BNA",
+        "icao": "KBNA",
+        "lat": 36.1245,
+        "location": "Nashville",
+        "lon": -86.6782,
+        "name": "Nashville International Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KORD-KBNA",
+    "callsign": "SKW6233",
+    "number": "6233",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-LEX",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 979.0,
+        "alt_meters": 298.4,
+        "countryiso2": "US",
+        "iata": "LEX",
+        "icao": "KLEX",
+        "lat": 38.036499,
+        "location": "Lexington",
+        "lon": -84.605904,
+        "name": "Blue Grass Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KORD-KLEX",
+    "callsign": "SKW4915",
+    "number": "4915",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "LAS-ORD",
+    "_airports": [
+      {
+        "alt_feet": 2181.0,
+        "alt_meters": 664.77,
+        "countryiso2": "US",
+        "iata": "LAS",
+        "icao": "KLAS",
+        "lat": 36.080101,
+        "location": "Las Vegas",
+        "lon": -115.152,
+        "name": "Harry Reid International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KLAS-KORD",
+    "callsign": "UAL1492",
+    "number": "1492",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MDW-BNA",
+    "_airports": [
+      {
+        "alt_feet": 620.0,
+        "alt_meters": 188.98,
+        "countryiso2": "US",
+        "iata": "MDW",
+        "icao": "KMDW",
+        "lat": 41.785999,
+        "location": "Chicago",
+        "lon": -87.752403,
+        "name": "Chicago Midway International Airport"
+      },
+      {
+        "alt_feet": 599.0,
+        "alt_meters": 182.58,
+        "countryiso2": "US",
+        "iata": "BNA",
+        "icao": "KBNA",
+        "lat": 36.1245,
+        "location": "Nashville",
+        "lon": -86.6782,
+        "name": "Nashville International Airport"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KMDW-KBNA",
+    "callsign": "SWA2897",
+    "number": "2897",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MDW-ATL",
+    "_airports": [
+      {
+        "alt_feet": 620.0,
+        "alt_meters": 188.98,
+        "countryiso2": "US",
+        "iata": "MDW",
+        "icao": "KMDW",
+        "lat": 41.785999,
+        "location": "Chicago",
+        "lon": -87.752403,
+        "name": "Chicago Midway International Airport"
+      },
+      {
+        "alt_feet": 1026.0,
+        "alt_meters": 312.72,
+        "countryiso2": "US",
+        "iata": "ATL",
+        "icao": "KATL",
+        "lat": 33.6367,
+        "location": "Atlanta",
+        "lon": -84.428101,
+        "name": "Hartsfield Jackson Atlanta International Airport"
+      }
+    ],
+    "airline_code": "FFT",
+    "airport_codes": "KMDW-KATL",
+    "callsign": "FFT2144",
+    "number": "2144",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "JFK-SFO",
+    "_airports": [
+      {
+        "alt_feet": 13.0,
+        "alt_meters": 3.96,
+        "countryiso2": "US",
+        "iata": "JFK",
+        "icao": "KJFK",
+        "lat": 40.639801,
+        "location": "New York",
+        "lon": -73.7789,
+        "name": "John F Kennedy International Airport"
+      },
+      {
+        "alt_feet": 13.0,
+        "alt_meters": 3.96,
+        "countryiso2": "US",
+        "iata": "SFO",
+        "icao": "KSFO",
+        "lat": 37.618999,
+        "location": "San Francisco",
+        "lon": -122.375,
+        "name": "San Francisco International Airport"
+      }
+    ],
+    "airline_code": "JBU",
+    "airport_codes": "KJFK-KSFO",
+    "callsign": "JBU615",
+    "number": "615",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "IAD-PIT",
+    "_airports": [
+      {
+        "alt_feet": 312.0,
+        "alt_meters": 95.1,
+        "countryiso2": "US",
+        "iata": "IAD",
+        "icao": "KIAD",
+        "lat": 38.9445,
+        "location": "Washington",
+        "lon": -77.455803,
+        "name": "Washington Dulles International Airport"
+      },
+      {
+        "alt_feet": 1203.0,
+        "alt_meters": 366.67,
+        "countryiso2": "US",
+        "iata": "PIT",
+        "icao": "KPIT",
+        "lat": 40.491501,
+        "location": "Pittsburgh",
+        "lon": -80.232903,
+        "name": "Pittsburgh International Airport"
+      }
+    ],
+    "airline_code": "EJA",
+    "airport_codes": "KIAD-KPIT",
+    "callsign": "EJA529",
+    "number": "529",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "MDW-BHM",
+    "_airports": [
+      {
+        "alt_feet": 620.0,
+        "alt_meters": 188.98,
+        "countryiso2": "US",
+        "iata": "MDW",
+        "icao": "KMDW",
+        "lat": 41.785999,
+        "location": "Chicago",
+        "lon": -87.752403,
+        "name": "Chicago Midway International Airport"
+      },
+      {
+        "alt_feet": 650.0,
+        "alt_meters": 198.12,
+        "countryiso2": "US",
+        "iata": "BHM",
+        "icao": "KBHM",
+        "lat": 33.562901,
+        "location": "Birmingham",
+        "lon": -86.753502,
+        "name": "Birmingham-Shuttlesworth International Airport"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KMDW-KBHM",
+    "callsign": "SWA4246",
+    "number": "4246",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-AMS",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": -11.0,
+        "alt_meters": -3.35,
+        "countryiso2": "NL",
+        "iata": "AMS",
+        "icao": "EHAM",
+        "lat": 52.308601,
+        "location": "Amsterdam",
+        "lon": 4.76389,
+        "name": "Amsterdam Airport Schiphol"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KORD-EHAM",
+    "callsign": "UAL909",
+    "number": "909",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "YEG-YVR",
+    "_airports": [
+      {
+        "alt_feet": 2373.0,
+        "alt_meters": 723.29,
+        "countryiso2": "CA",
+        "iata": "YEG",
+        "icao": "CYEG",
+        "lat": 53.3097,
+        "location": "Edmonton",
+        "lon": -113.580002,
+        "name": "Edmonton International Airport"
+      },
+      {
+        "alt_feet": 14.0,
+        "alt_meters": 4.27,
+        "countryiso2": "CA",
+        "iata": "YVR",
+        "icao": "CYVR",
+        "lat": 49.193901,
+        "location": "Vancouver",
+        "lon": -123.183998,
+        "name": "Vancouver International Airport"
+      }
+    ],
+    "airline_code": "ACA",
+    "airport_codes": "CYEG-CYVR",
+    "callsign": "ACA7084",
+    "number": "7084",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "SFO-EWR",
+    "_airports": [
+      {
+        "alt_feet": 13.0,
+        "alt_meters": 3.96,
+        "countryiso2": "US",
+        "iata": "SFO",
+        "icao": "KSFO",
+        "lat": 37.618999,
+        "location": "San Francisco",
+        "lon": -122.375,
+        "name": "San Francisco International Airport"
+      },
+      {
+        "alt_feet": 18.0,
+        "alt_meters": 5.49,
+        "countryiso2": "US",
+        "iata": "EWR",
+        "icao": "KEWR",
+        "lat": 40.692501,
+        "location": "Newark",
+        "lon": -74.168701,
+        "name": "Newark Liberty International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KSFO-KEWR",
+    "callsign": "UAL2480",
+    "number": "2480",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ATL-MKE-ATL",
+    "_airports": [
+      {
+        "alt_feet": 1026.0,
+        "alt_meters": 312.72,
+        "countryiso2": "US",
+        "iata": "ATL",
+        "icao": "KATL",
+        "lat": 33.6367,
+        "location": "Atlanta",
+        "lon": -84.428101,
+        "name": "Hartsfield Jackson Atlanta International Airport"
+      },
+      {
+        "alt_feet": 723.0,
+        "alt_meters": 220.37,
+        "countryiso2": "US",
+        "iata": "MKE",
+        "icao": "KMKE",
+        "lat": 42.947201,
+        "location": "Milwaukee",
+        "lon": -87.896599,
+        "name": "General Mitchell International Airport"
+      },
+      {
+        "alt_feet": 1026.0,
+        "alt_meters": 312.72,
+        "countryiso2": "US",
+        "iata": "ATL",
+        "icao": "KATL",
+        "lat": 33.6367,
+        "location": "Atlanta",
+        "lon": -84.428101,
+        "name": "Hartsfield Jackson Atlanta International Airport"
+      }
+    ],
+    "airline_code": "DAL",
+    "airport_codes": "KATL-KMKE-KATL",
+    "callsign": "DAL1206",
+    "number": "1206",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "RSW-ORD",
+    "_airports": [
+      {
+        "alt_feet": 30.0,
+        "alt_meters": 9.14,
+        "countryiso2": "US",
+        "iata": "RSW",
+        "icao": "KRSW",
+        "lat": 26.5362,
+        "location": "Fort Myers",
+        "lon": -81.755203,
+        "name": "Southwest Florida International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KRSW-KORD",
+    "callsign": "AAL1238",
+    "number": "1238",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MQT-ORD",
+    "_airports": [
+      {
+        "alt_feet": 1221.0,
+        "alt_meters": 372.16,
+        "countryiso2": "US",
+        "iata": "MQT",
+        "icao": "KSAW",
+        "lat": 46.3536,
+        "location": "Marquette",
+        "lon": -87.395401,
+        "name": "Sawyer International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "ENY",
+    "airport_codes": "KSAW-KORD",
+    "callsign": "ENY3335",
+    "number": "3335",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "LAX-ORD",
+    "_airports": [
+      {
+        "alt_feet": 125.0,
+        "alt_meters": 38.1,
+        "countryiso2": "US",
+        "iata": "LAX",
+        "icao": "KLAX",
+        "lat": 33.942501,
+        "location": "Los Angeles",
+        "lon": -118.407997,
+        "name": "Los Angeles International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KLAX-KORD",
+    "callsign": "UAL1946",
+    "number": "1946",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "IAD-SLC",
+    "_airports": [
+      {
+        "alt_feet": 312.0,
+        "alt_meters": 95.1,
+        "countryiso2": "US",
+        "iata": "IAD",
+        "icao": "KIAD",
+        "lat": 38.9445,
+        "location": "Washington",
+        "lon": -77.455803,
+        "name": "Washington Dulles International Airport"
+      },
+      {
+        "alt_feet": 4227.0,
+        "alt_meters": 1288.39,
+        "countryiso2": "US",
+        "iata": "SLC",
+        "icao": "KSLC",
+        "lat": 40.788399,
+        "location": "Salt Lake City",
+        "lon": -111.977997,
+        "name": "Salt Lake City International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KIAD-KSLC",
+    "callsign": "UAL2410",
+    "number": "2410",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "unknown",
+    "_airports": [],
+    "airline_code": "unknown",
+    "airport_codes": "unknown",
+    "callsign": "ABX6642",
+    "number": "unknown"
+  },
+  {
+    "_airport_codes_iata": "ORD-TYS",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 981.0,
+        "alt_meters": 299.01,
+        "countryiso2": "US",
+        "iata": "TYS",
+        "icao": "KTYS",
+        "lat": 35.811001,
+        "location": "Knoxville",
+        "lon": -83.994003,
+        "name": "McGhee Tyson Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KORD-KTYS",
+    "callsign": "SKW5719",
+    "number": "5719",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORF-ORD",
+    "_airports": [
+      {
+        "alt_feet": 26.0,
+        "alt_meters": 7.92,
+        "countryiso2": "US",
+        "iata": "ORF",
+        "icao": "KORF",
+        "lat": 36.8946,
+        "location": "Norfolk",
+        "lon": -76.201202,
+        "name": "Norfolk International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "RPA",
+    "airport_codes": "KORF-KORD",
+    "callsign": "RPA4740",
+    "number": "4740",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-AMM",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 2395.0,
+        "alt_meters": 730.0,
+        "countryiso2": "JO",
+        "iata": "AMM",
+        "icao": "OJAI",
+        "lat": 31.722601,
+        "location": "Amman",
+        "lon": 35.993198,
+        "name": "Queen Alia International Airport"
+      }
+    ],
+    "airline_code": "RJA",
+    "airport_codes": "KORD-OJAI",
+    "callsign": "RJA264",
+    "number": "264",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MDW-BUF",
+    "_airports": [
+      {
+        "alt_feet": 620.0,
+        "alt_meters": 188.98,
+        "countryiso2": "US",
+        "iata": "MDW",
+        "icao": "KMDW",
+        "lat": 41.785999,
+        "location": "Chicago",
+        "lon": -87.752403,
+        "name": "Chicago Midway International Airport"
+      },
+      {
+        "alt_feet": 728.0,
+        "alt_meters": 221.89,
+        "countryiso2": "US",
+        "iata": "BUF",
+        "icao": "KBUF",
+        "lat": 42.940498,
+        "location": "Buffalo",
+        "lon": -78.732201,
+        "name": "Buffalo Niagara International Airport"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KMDW-KBUF",
+    "callsign": "SWA2042",
+    "number": "2042",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "PHX-TUL",
+    "_airports": [
+      {
+        "alt_feet": 1135.0,
+        "alt_meters": 345.95,
+        "countryiso2": "US",
+        "iata": "PHX",
+        "icao": "KPHX",
+        "lat": 33.434299,
+        "location": "Phoenix",
+        "lon": -112.012001,
+        "name": "Phoenix Sky Harbor International Airport"
+      },
+      {
+        "alt_feet": 677.0,
+        "alt_meters": 206.35,
+        "countryiso2": "US",
+        "iata": "TUL",
+        "icao": "KTUL",
+        "lat": 36.198399,
+        "location": "Tulsa",
+        "lon": -95.8881,
+        "name": "Tulsa International Airport"
+      }
+    ],
+    "airline_code": "ENY",
+    "airport_codes": "KPHX-KTUL",
+    "callsign": "ENY3585",
+    "number": "3585",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "ORD-PHL",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 36.0,
+        "alt_meters": 10.97,
+        "countryiso2": "US",
+        "iata": "PHL",
+        "icao": "KPHL",
+        "lat": 39.871899,
+        "location": "Philadelphia",
+        "lon": -75.241096,
+        "name": "Philadelphia International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KORD-KPHL",
+    "callsign": "UAL1776",
+    "number": "1776",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MCO-MKE",
+    "_airports": [
+      {
+        "alt_feet": 96.0,
+        "alt_meters": 29.26,
+        "countryiso2": "US",
+        "iata": "MCO",
+        "icao": "KMCO",
+        "lat": 28.429399,
+        "location": "Orlando",
+        "lon": -81.308998,
+        "name": "Orlando International Airport"
+      },
+      {
+        "alt_feet": 723.0,
+        "alt_meters": 220.37,
+        "countryiso2": "US",
+        "iata": "MKE",
+        "icao": "KMKE",
+        "lat": 42.947201,
+        "location": "Milwaukee",
+        "lon": -87.896599,
+        "name": "General Mitchell International Airport"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KMCO-KMKE",
+    "callsign": "SWA4834",
+    "number": "4834",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MCO-MDW",
+    "_airports": [
+      {
+        "alt_feet": 96.0,
+        "alt_meters": 29.26,
+        "countryiso2": "US",
+        "iata": "MCO",
+        "icao": "KMCO",
+        "lat": 28.429399,
+        "location": "Orlando",
+        "lon": -81.308998,
+        "name": "Orlando International Airport"
+      },
+      {
+        "alt_feet": 620.0,
+        "alt_meters": 188.98,
+        "countryiso2": "US",
+        "iata": "MDW",
+        "icao": "KMDW",
+        "lat": 41.785999,
+        "location": "Chicago",
+        "lon": -87.752403,
+        "name": "Chicago Midway International Airport"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KMCO-KMDW",
+    "callsign": "SWA2805",
+    "number": "2805",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MDT-BOS",
+    "_airports": [
+      {
+        "alt_feet": 310.0,
+        "alt_meters": 94.49,
+        "countryiso2": "US",
+        "iata": "MDT",
+        "icao": "KMDT",
+        "lat": 40.193501,
+        "location": "Harrisburg",
+        "lon": -76.763397,
+        "name": "Harrisburg International Airport"
+      },
+      {
+        "alt_feet": 20.0,
+        "alt_meters": 6.1,
+        "countryiso2": "US",
+        "iata": "BOS",
+        "icao": "KBOS",
+        "lat": 42.3643,
+        "location": "Boston",
+        "lon": -71.005203,
+        "name": "General Edward Lawrence Logan International Airport"
+      }
+    ],
+    "airline_code": "RPA",
+    "airport_codes": "KMDT-KBOS",
+    "callsign": "RPA4714",
+    "number": "4714",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "SAN-BOS",
+    "_airports": [
+      {
+        "alt_feet": 17.0,
+        "alt_meters": 5.18,
+        "countryiso2": "US",
+        "iata": "SAN",
+        "icao": "KSAN",
+        "lat": 32.733601,
+        "location": "San Diego",
+        "lon": -117.190002,
+        "name": "San Diego International Airport"
+      },
+      {
+        "alt_feet": 20.0,
+        "alt_meters": 6.1,
+        "countryiso2": "US",
+        "iata": "BOS",
+        "icao": "KBOS",
+        "lat": 42.3643,
+        "location": "Boston",
+        "lon": -71.005203,
+        "name": "General Edward Lawrence Logan International Airport"
+      }
+    ],
+    "airline_code": "JBU",
+    "airport_codes": "KSAN-KBOS",
+    "callsign": "JBU620",
+    "number": "620",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "CVG-MIA",
+    "_airports": [
+      {
+        "alt_feet": 896.0,
+        "alt_meters": 273.1,
+        "countryiso2": "US",
+        "iata": "CVG",
+        "icao": "KCVG",
+        "lat": 39.048801,
+        "location": "Cincinnati",
+        "lon": -84.667801,
+        "name": "Cincinnati Northern Kentucky International Airport"
+      },
+      {
+        "alt_feet": 8.0,
+        "alt_meters": 2.44,
+        "countryiso2": "US",
+        "iata": "MIA",
+        "icao": "KMIA",
+        "lat": 25.7932,
+        "location": "Miami",
+        "lon": -80.290604,
+        "name": "Miami International Airport"
+      }
+    ],
+    "airline_code": "ENY",
+    "airport_codes": "KCVG-KMIA",
+    "callsign": "ENY3554",
+    "number": "3554",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "DCA-DEN",
+    "_airports": [
+      {
+        "alt_feet": 15.0,
+        "alt_meters": 4.57,
+        "countryiso2": "US",
+        "iata": "DCA",
+        "icao": "KDCA",
+        "lat": 38.8521,
+        "location": "Washington",
+        "lon": -77.037697,
+        "name": "Ronald Reagan Washington National Airport"
+      },
+      {
+        "alt_feet": 5431.0,
+        "alt_meters": 1655.37,
+        "countryiso2": "US",
+        "iata": "DEN",
+        "icao": "KDEN",
+        "lat": 39.861698,
+        "location": "Denver",
+        "lon": -104.672997,
+        "name": "Denver International Airport"
+      }
+    ],
+    "airline_code": "FFT",
+    "airport_codes": "KDCA-KDEN",
+    "callsign": "FFT689",
+    "number": "689",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-SBN",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 799.0,
+        "alt_meters": 243.54,
+        "countryiso2": "US",
+        "iata": "SBN",
+        "icao": "KSBN",
+        "lat": 41.708698,
+        "location": "South Bend",
+        "lon": -86.317299,
+        "name": "South Bend Regional Airport"
+      }
+    ],
+    "airline_code": "SKW",
+    "airport_codes": "KORD-KSBN",
+    "callsign": "SKW4636",
+    "number": "4636",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ABE-ATL",
+    "_airports": [
+      {
+        "alt_feet": 393.0,
+        "alt_meters": 119.79,
+        "countryiso2": "US",
+        "iata": "ABE",
+        "icao": "KABE",
+        "lat": 40.6521,
+        "location": "Allentown",
+        "lon": -75.440804,
+        "name": "Lehigh Valley International Airport"
+      },
+      {
+        "alt_feet": 1026.0,
+        "alt_meters": 312.72,
+        "countryiso2": "US",
+        "iata": "ATL",
+        "icao": "KATL",
+        "lat": 33.6367,
+        "location": "Atlanta",
+        "lon": -84.428101,
+        "name": "Hartsfield Jackson Atlanta International Airport"
+      }
+    ],
+    "airline_code": "EDV",
+    "airport_codes": "KABE-KATL",
+    "callsign": "EDV4957",
+    "number": "4957",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "JFK-LAX",
+    "_airports": [
+      {
+        "alt_feet": 13.0,
+        "alt_meters": 3.96,
+        "countryiso2": "US",
+        "iata": "JFK",
+        "icao": "KJFK",
+        "lat": 40.639801,
+        "location": "New York",
+        "lon": -73.7789,
+        "name": "John F Kennedy International Airport"
+      },
+      {
+        "alt_feet": 125.0,
+        "alt_meters": 38.1,
+        "countryiso2": "US",
+        "iata": "LAX",
+        "icao": "KLAX",
+        "lat": 33.942501,
+        "location": "Los Angeles",
+        "lon": -118.407997,
+        "name": "Los Angeles International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KJFK-KLAX",
+    "callsign": "AAL302",
+    "number": "302",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "SAN-YYZ",
+    "_airports": [
+      {
+        "alt_feet": 17.0,
+        "alt_meters": 5.18,
+        "countryiso2": "US",
+        "iata": "SAN",
+        "icao": "KSAN",
+        "lat": 32.733601,
+        "location": "San Diego",
+        "lon": -117.190002,
+        "name": "San Diego International Airport"
+      },
+      {
+        "alt_feet": 569.0,
+        "alt_meters": 173.43,
+        "countryiso2": "CA",
+        "iata": "YYZ",
+        "icao": "CYYZ",
+        "lat": 43.6772,
+        "location": "Toronto",
+        "lon": -79.6306,
+        "name": "Lester B. Pearson International Airport"
+      }
+    ],
+    "airline_code": "ROU",
+    "airport_codes": "KSAN-CYYZ",
+    "callsign": "ROU1684",
+    "number": "1684",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "SFO-IAH-DEN-LGA",
+    "_airports": [
+      {
+        "alt_feet": 13.0,
+        "alt_meters": 3.96,
+        "countryiso2": "US",
+        "iata": "SFO",
+        "icao": "KSFO",
+        "lat": 37.618999,
+        "location": "San Francisco",
+        "lon": -122.375,
+        "name": "San Francisco International Airport"
+      },
+      {
+        "alt_feet": 97.0,
+        "alt_meters": 29.57,
+        "countryiso2": "US",
+        "iata": "IAH",
+        "icao": "KIAH",
+        "lat": 29.9844,
+        "location": "Houston",
+        "lon": -95.3414,
+        "name": "George Bush Intercontinental Houston Airport"
+      },
+      {
+        "alt_feet": 5431.0,
+        "alt_meters": 1655.37,
+        "countryiso2": "US",
+        "iata": "DEN",
+        "icao": "KDEN",
+        "lat": 39.861698,
+        "location": "Denver",
+        "lon": -104.672997,
+        "name": "Denver International Airport"
+      },
+      {
+        "alt_feet": 21.0,
+        "alt_meters": 6.4,
+        "countryiso2": "US",
+        "iata": "LGA",
+        "icao": "KLGA",
+        "lat": 40.777199,
+        "location": "New York",
+        "lon": -73.872597,
+        "name": "La Guardia Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KSFO-KIAH-KDEN-KLGA",
+    "callsign": "UAL2168",
+    "number": "2168",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "MDW-PVD",
+    "_airports": [
+      {
+        "alt_feet": 620.0,
+        "alt_meters": 188.98,
+        "countryiso2": "US",
+        "iata": "MDW",
+        "icao": "KMDW",
+        "lat": 41.785999,
+        "location": "Chicago",
+        "lon": -87.752403,
+        "name": "Chicago Midway International Airport"
+      },
+      {
+        "alt_feet": 55.0,
+        "alt_meters": 16.76,
+        "countryiso2": "US",
+        "iata": "PVD",
+        "icao": "KPVD",
+        "lat": 41.732601,
+        "location": "Providence",
+        "lon": -71.420403,
+        "name": "Theodore Francis Green State Airport"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KMDW-KPVD",
+    "callsign": "SWA2133",
+    "number": "2133",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "DFW-CRP-DFW",
+    "_airports": [
+      {
+        "alt_feet": 607.0,
+        "alt_meters": 185.01,
+        "countryiso2": "US",
+        "iata": "DFW",
+        "icao": "KDFW",
+        "lat": 32.896801,
+        "location": "Dallas-Fort Worth",
+        "lon": -97.038002,
+        "name": "Dallas Fort Worth International Airport"
+      },
+      {
+        "alt_feet": 44.0,
+        "alt_meters": 13.41,
+        "countryiso2": "US",
+        "iata": "CRP",
+        "icao": "KCRP",
+        "lat": 27.770399,
+        "location": "Corpus Christi",
+        "lon": -97.501198,
+        "name": "Corpus Christi International Airport"
+      },
+      {
+        "alt_feet": 607.0,
+        "alt_meters": 185.01,
+        "countryiso2": "US",
+        "iata": "DFW",
+        "icao": "KDFW",
+        "lat": 32.896801,
+        "location": "Dallas-Fort Worth",
+        "lon": -97.038002,
+        "name": "Dallas Fort Worth International Airport"
+      }
+    ],
+    "airline_code": "ENY",
+    "airport_codes": "KDFW-KCRP-KDFW",
+    "callsign": "ENY3403",
+    "number": "3403",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "PHX-ORD",
+    "_airports": [
+      {
+        "alt_feet": 1135.0,
+        "alt_meters": 345.95,
+        "countryiso2": "US",
+        "iata": "PHX",
+        "icao": "KPHX",
+        "lat": 33.434299,
+        "location": "Phoenix",
+        "lon": -112.012001,
+        "name": "Phoenix Sky Harbor International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KPHX-KORD",
+    "callsign": "UAL1369",
+    "number": "1369",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "DFW-LFT",
+    "_airports": [
+      {
+        "alt_feet": 607.0,
+        "alt_meters": 185.01,
+        "countryiso2": "US",
+        "iata": "DFW",
+        "icao": "KDFW",
+        "lat": 32.896801,
+        "location": "Dallas-Fort Worth",
+        "lon": -97.038002,
+        "name": "Dallas Fort Worth International Airport"
+      },
+      {
+        "alt_feet": 42.0,
+        "alt_meters": 12.8,
+        "countryiso2": "US",
+        "iata": "LFT",
+        "icao": "KLFT",
+        "lat": 30.205299,
+        "location": "Lafayette",
+        "lon": -91.987602,
+        "name": "Lafayette Regional Airport"
+      }
+    ],
+    "airline_code": "ENY",
+    "airport_codes": "KDFW-KLFT",
+    "callsign": "ENY3353",
+    "number": "3353",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "ORD-EWR-ORD",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 18.0,
+        "alt_meters": 5.49,
+        "countryiso2": "US",
+        "iata": "EWR",
+        "icao": "KEWR",
+        "lat": 40.692501,
+        "location": "Newark",
+        "lon": -74.168701,
+        "name": "Newark Liberty International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KORD-KEWR-KORD",
+    "callsign": "AAL3170",
+    "number": "3170",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "unknown",
+    "_airports": [],
+    "airline_code": "unknown",
+    "airport_codes": "unknown",
+    "callsign": "LTA9460",
+    "number": "unknown"
+  },
+  {
+    "_airport_codes_iata": "BOS-LAX",
+    "_airports": [
+      {
+        "alt_feet": 20.0,
+        "alt_meters": 6.1,
+        "countryiso2": "US",
+        "iata": "BOS",
+        "icao": "KBOS",
+        "lat": 42.3643,
+        "location": "Boston",
+        "lon": -71.005203,
+        "name": "General Edward Lawrence Logan International Airport"
+      },
+      {
+        "alt_feet": 125.0,
+        "alt_meters": 38.1,
+        "countryiso2": "US",
+        "iata": "LAX",
+        "icao": "KLAX",
+        "lat": 33.942501,
+        "location": "Los Angeles",
+        "lon": -118.407997,
+        "name": "Los Angeles International Airport"
+      }
+    ],
+    "airline_code": "JBU",
+    "airport_codes": "KBOS-KLAX",
+    "callsign": "JBU387",
+    "number": "387",
+    "plausible": true
+  },
+  null,
+  {
+    "_airport_codes_iata": "ORD-LGA",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 21.0,
+        "alt_meters": 6.4,
+        "countryiso2": "US",
+        "iata": "LGA",
+        "icao": "KLGA",
+        "lat": 40.777199,
+        "location": "New York",
+        "lon": -73.872597,
+        "name": "La Guardia Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KORD-KLGA",
+    "callsign": "UAL673",
+    "number": "673",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "LGA-DEN",
+    "_airports": [
+      {
+        "alt_feet": 21.0,
+        "alt_meters": 6.4,
+        "countryiso2": "US",
+        "iata": "LGA",
+        "icao": "KLGA",
+        "lat": 40.777199,
+        "location": "New York",
+        "lon": -73.872597,
+        "name": "La Guardia Airport"
+      },
+      {
+        "alt_feet": 5431.0,
+        "alt_meters": 1655.37,
+        "countryiso2": "US",
+        "iata": "DEN",
+        "icao": "KDEN",
+        "lat": 39.861698,
+        "location": "Denver",
+        "lon": -104.672997,
+        "name": "Denver International Airport"
+      }
+    ],
+    "airline_code": "DAL",
+    "airport_codes": "KLGA-KDEN",
+    "callsign": "DAL710",
+    "number": "710",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "DEN-STL",
+    "_airports": [
+      {
+        "alt_feet": 5431.0,
+        "alt_meters": 1655.37,
+        "countryiso2": "US",
+        "iata": "DEN",
+        "icao": "KDEN",
+        "lat": 39.861698,
+        "location": "Denver",
+        "lon": -104.672997,
+        "name": "Denver International Airport"
+      },
+      {
+        "alt_feet": 618.0,
+        "alt_meters": 188.37,
+        "countryiso2": "US",
+        "iata": "STL",
+        "icao": "KSTL",
+        "lat": 38.748699,
+        "location": "St Louis",
+        "lon": -90.370003,
+        "name": "Lambert St Louis International Airport"
+      }
+    ],
+    "airline_code": "SWA",
+    "airport_codes": "KDEN-KSTL",
+    "callsign": "SWA1806",
+    "number": "1806",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "ORD-MAD",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 1998.0,
+        "alt_meters": 608.99,
+        "countryiso2": "ES",
+        "iata": "MAD",
+        "icao": "LEMD",
+        "lat": 40.4936,
+        "location": "Madrid",
+        "lon": -3.56676,
+        "name": "Madrid Barajas International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KORD-LEMD",
+    "callsign": "AAL126",
+    "number": "126",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "CLE-LAS",
+    "_airports": [
+      {
+        "alt_feet": 791.0,
+        "alt_meters": 241.1,
+        "countryiso2": "US",
+        "iata": "CLE",
+        "icao": "KCLE",
+        "lat": 41.411701,
+        "location": "Cleveland",
+        "lon": -81.8498,
+        "name": "Cleveland Hopkins International Airport"
+      },
+      {
+        "alt_feet": 2181.0,
+        "alt_meters": 664.77,
+        "countryiso2": "US",
+        "iata": "LAS",
+        "icao": "KLAS",
+        "lat": 36.080101,
+        "location": "Las Vegas",
+        "lon": -115.152,
+        "name": "Harry Reid International Airport"
+      }
+    ],
+    "airline_code": "FFT",
+    "airport_codes": "KCLE-KLAS",
+    "callsign": "FFT1821",
+    "number": "1821",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "DFW-RDU",
+    "_airports": [
+      {
+        "alt_feet": 607.0,
+        "alt_meters": 185.01,
+        "countryiso2": "US",
+        "iata": "DFW",
+        "icao": "KDFW",
+        "lat": 32.896801,
+        "location": "Dallas-Fort Worth",
+        "lon": -97.038002,
+        "name": "Dallas Fort Worth International Airport"
+      },
+      {
+        "alt_feet": 435.0,
+        "alt_meters": 132.59,
+        "countryiso2": "US",
+        "iata": "RDU",
+        "icao": "KRDU",
+        "lat": 35.877602,
+        "location": "Raleigh/Durham",
+        "lon": -78.787498,
+        "name": "Raleigh Durham International Airport"
+      }
+    ],
+    "airline_code": "AAL",
+    "airport_codes": "KDFW-KRDU",
+    "callsign": "AAL542",
+    "number": "542",
+    "plausible": false
+  },
+  {
+    "_airport_codes_iata": "SMF-ORD",
+    "_airports": [
+      {
+        "alt_feet": 27.0,
+        "alt_meters": 8.23,
+        "countryiso2": "US",
+        "iata": "SMF",
+        "icao": "KSMF",
+        "lat": 38.6954,
+        "location": "Sacramento",
+        "lon": -121.591003,
+        "name": "Sacramento International Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KSMF-KORD",
+    "callsign": "UAL2652",
+    "number": "2652",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ABQ-ORD-BWI",
+    "_airports": [
+      {
+        "alt_feet": 5355.0,
+        "alt_meters": 1632.2,
+        "countryiso2": "US",
+        "iata": "ABQ",
+        "icao": "KABQ",
+        "lat": 35.040199,
+        "location": "Albuquerque",
+        "lon": -106.609001,
+        "name": "Albuquerque International Sunport Airport"
+      },
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 146.0,
+        "alt_meters": 44.5,
+        "countryiso2": "US",
+        "iata": "BWI",
+        "icao": "KBWI",
+        "lat": 39.1754,
+        "location": "Baltimore",
+        "lon": -76.668297,
+        "name": "Baltimore/Washington International Thurgood Marshal Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KABQ-KORD-KBWI",
+    "callsign": "UAL1557",
+    "number": "1557",
+    "plausible": true
+  },
+  {
+    "_airport_codes_iata": "ORD-IAD",
+    "_airports": [
+      {
+        "alt_feet": 672.0,
+        "alt_meters": 204.83,
+        "countryiso2": "US",
+        "iata": "ORD",
+        "icao": "KORD",
+        "lat": 41.9786,
+        "location": "Chicago",
+        "lon": -87.9048,
+        "name": "Chicago O'Hare International Airport"
+      },
+      {
+        "alt_feet": 312.0,
+        "alt_meters": 95.1,
+        "countryiso2": "US",
+        "iata": "IAD",
+        "icao": "KIAD",
+        "lat": 38.9445,
+        "location": "Washington",
+        "lon": -77.455803,
+        "name": "Washington Dulles International Airport"
+      }
+    ],
+    "airline_code": "UAL",
+    "airport_codes": "KORD-KIAD",
+    "callsign": "UAL2202",
+    "number": "2202",
+    "plausible": true
+  }
+]

@@ -1,8 +1,9 @@
 // The route board's rules, pure (no Deno or npm imports) so the Node tests drive them on saved real responses.
 // A trip is (from, to); a pair is the two airports sorted ("ORD-SAN"), so both directions share one board.
-// Each run: which pairs to watch, which airline flights near their airports to look up (adsbdb, a budget per run),
-// which of those fly the pair, where each one is on the route (phase + progress), and which old rows to drop.
-import { airlineFor, isAirlineCallsign } from "./airlines.ts";
+// Each run: which pairs to watch, which airline flights near their airports to look up (adsb.im's routeset, one
+// batched call, a budget per run), which leg of a multi-stop route each one is flying, whether that leg is the pair,
+// where it is on it (phase + progress), and which old rows to drop.
+import { airlineFor, flightNumberFor, isAirlineCallsign } from "./airlines.ts";
 import { altitudeOf, bearingDeg, haversineNm, HEX, num, onGround, verticalRate, type AdsbAircraft } from "./parse.ts";
 
 export type Pt = { lat: number; lon: number };
@@ -11,8 +12,13 @@ export type Pair = { key: string; a: string; b: string; trips: number };
 export const MAX_PAIRS = 4;
 /** Closer than this (statute miles) the page says "you can drive this one", so the worker doesn't watch it. */
 export const DRIVE_MI = 150;
-export const LOOKUP_BUDGET = 30;
-export const LOOKUP_GAP_MS = 150;
+/** Callsigns looked up per run at most, sent to adsb.im in chunks of ROUTESET_CHUNK (so normally one request). */
+export const LOOKUP_BUDGET = 200;
+export const ROUTESET_CHUNK = 100;
+/** adsb.im asks for plain http ("to reduce server load") and a User-Agent that lets them contact us. */
+export const ROUTESET_URL = "http://adsb.im/api/0/routeset";
+/** callsign_routes.source for rows from adsb.im's routeset. Rows from anywhere else are not read. */
+export const ROUTE_SOURCE = "adsb.im";
 export const MAX_TRACKED_PER_PAIR = 12;
 export const FOUND_TTL_MS = 7 * 24 * 3600_000;
 export const MISSING_TTL_MS = 24 * 3600_000;
@@ -102,17 +108,23 @@ export function mergeSeen(lists: readonly Seen[][]): Map<string, Seen> {
   return m;
 }
 
-/** A cached adsbdb answer (public.callsign_routes). */
+/** One stop on a route, with its position (from adsb.im's `_airports`). */
+export type Stop = { code: string; lat: number; lon: number };
+
+/** A cached route (public.callsign_routes). origin/destination: the leg it was flying when looked up. */
 export type Route = {
   callsign: string;
   origin: string | null;
   destination: string | null;
+  /** Every stop, in order: "SAN-ORD-SAN" is two legs flown under one flight number. */
+  route?: string | null;
+  stops?: Stop[] | null;
   airline: string | null;
   flight: string | null;
   found: boolean;
+  source?: string;
   fetched_at: string;
 };
-
 /** A route is reused for 7 days; "unknown callsign" for 1 day. */
 export function isFresh(r: Pick<Route, "found" | "fetched_at">, now: number): boolean {
   const age = now - Date.parse(r.fetched_at);
@@ -125,37 +137,143 @@ export function flightNumber(iata: string | null | undefined): string | null {
   return m ? `${m[1]} ${m[2]}` : null;
 }
 
-/**
- * parseAdsbdb(callsign, json, now) → the row to cache. adsbdb answers
- * `{ response: { flightroute: { origin: { iata_code }, destination: { iata_code }, airline: { name }, callsign_iata } } }`,
- * or HTTP 404 with `{ response: "unknown callsign" }` (pass that body: it caches as found = false). A route without
- * both IATA codes is "not found" too: we can't match it to a pair.
- */
-export function parseAdsbdb(callsign: string, json: unknown, now: number): Route {
-  type Place = { iata_code?: unknown };
-  type FlightRoute = { origin?: Place; destination?: Place; airline?: { name?: unknown }; callsign_iata?: unknown };
-  const fr = (json as { response?: { flightroute?: FlightRoute } | string } | null)?.response;
-  const route = typeof fr === "object" && fr ? fr.flightroute : undefined;
-  const code = (v: unknown) => { const c = String(v ?? "").trim().toUpperCase(); return CODE.test(c) ? c : null; };
-  const origin = code(route?.origin?.iata_code), destination = code(route?.destination?.iata_code);
-  const found = !!(origin && destination && origin !== destination);
-  return {
-    callsign,
-    origin: found ? origin : null,
-    destination: found ? destination : null,
-    airline: found ? String(route?.airline?.name ?? "").trim().slice(0, 60) || null : null,
-    flight: found ? flightNumber(String(route?.callsign_iata ?? "")) : null,
-    found,
-    fetched_at: new Date(now).toISOString(),
-  };
+/** One adsb.im routeset entry, the fields we read (checked with curl 2026-11-02, fixtures/adsbim-routeset-*.json). */
+type RoutesetEntry = {
+  callsign?: unknown;
+  _airport_codes_iata?: unknown; // "SAN-ORD", "SAN-ORD-SAN", or "unknown"
+  _airports?: { iata?: unknown; lat?: unknown; lon?: unknown }[];
+  plausible?: unknown; // false: the route doesn't fit where the aircraft is now (a stale or reused callsign)
+};
+
+/** The position adsb.im checks plausibility against: where we saw the aircraft. */
+export type RoutesetPlane = { callsign: string; lat: number; lng: number };
+
+/** The request body for one chunk: `{"planes":[{"callsign","lat","lng"}]}`, positions to 4 decimals. */
+export function routesetBody(seen: readonly Pick<Seen, "callsign" | "lat" | "lon">[]): { planes: RoutesetPlane[] } {
+  const r4 = (v: number) => Math.round(v * 1e4) / 1e4;
+  return { planes: seen.map((s) => ({ callsign: s.callsign, lat: r4(s.lat), lng: r4(s.lon) })) };
+}
+
+/** Split a list into chunks of at most n. */
+export function chunk<T>(list: readonly T[], n = ROUTESET_CHUNK): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < list.length; i += Math.max(1, n)) out.push(list.slice(i, i + Math.max(1, n)));
+  return out;
 }
 
 /**
- * chooseLookups(seen, routes, now, budget?) → the callsigns to spend this run's adsbdb budget on: only ones with no
- * fresh cached answer, each once, climbing or descending aircraft first (they're the ones leaving or reaching a trip
- * airport), then the nearest to their airport. At most 30.
+ * parseRouteset(asked, json, now) → one row to cache per aircraft asked about. adsb.im answers an array in the same
+ * order as the request (an entry may be null); each entry is matched by its callsign first, by position second.
+ * found = false (cached a day) when the entry is missing or null, the route is "unknown", a code isn't an IATA code,
+ * a stop has no position, or adsb.im says it isn't `plausible` for where the aircraft is. A found route keeps every
+ * stop, and origin/destination are the leg the aircraft is on now (pickLeg).
  */
-export function chooseLookups(seen: Iterable<Seen>, routes: ReadonlyMap<string, Pick<Route, "found" | "fetched_at">>, now: number, budget = LOOKUP_BUDGET): string[] {
+export function parseRouteset(asked: readonly Seen[], json: unknown, now: number): Route[] {
+  if (!Array.isArray(json)) throw new Error("routeset answer isn't a list");
+  const list = json as (RoutesetEntry | null)[];
+  const byCallsign = new Map<string, RoutesetEntry>();
+  for (const e of list) if (e && typeof e === "object") byCallsign.set(String(e.callsign ?? "").trim().toUpperCase(), e);
+  const fetched_at = new Date(now).toISOString();
+  return asked.map((s, i) => {
+    const at = list[i];
+    const e = byCallsign.get(s.callsign) ?? (at && String(at.callsign ?? "").trim().toUpperCase() === "" ? at : undefined);
+    const miss: Route = { callsign: s.callsign, origin: null, destination: null, route: null, stops: null, airline: null, flight: null, found: false, source: ROUTE_SOURCE, fetched_at };
+    const stops = e && e.plausible !== false ? stopsOf(e) : null;
+    if (!stops) return miss;
+    const leg = pickLeg(stops, s);
+    const first = leg ?? { from: stops[0], to: stops[1] };
+    return {
+      callsign: s.callsign, origin: first.from.code, destination: first.to.code, route: stops.map((x) => x.code).join("-"), stops,
+      airline: airlineFor(s.callsign), flight: flightNumberFor(s.callsign), found: true, source: ROUTE_SOURCE, fetched_at,
+    };
+  });
+}
+
+export type Lookup = { looked: Route[]; calls: number; error: unknown };
+
+/**
+ * lookupRoutes(want, post, now, stop?) → the routes for `want`, asked in chunks of 100 (one POST per chunk, in turn,
+ * never in parallel), parsed and ready to cache. The first failed chunk ends it (the rest are asked next run) and
+ * its error is returned; `stop()` true before a chunk (the run's time limit) ends it too, with no error.
+ */
+export async function lookupRoutes(
+  want: readonly Seen[],
+  post: (body: { planes: RoutesetPlane[] }) => Promise<unknown>,
+  now: () => number,
+  stop: () => boolean = () => false,
+): Promise<Lookup & { stopped: boolean }> {
+  const looked: Route[] = [];
+  let calls = 0;
+  for (const part of chunk(want)) {
+    if (stop()) return { looked, calls, error: null, stopped: true };
+    calls++;
+    try {
+      looked.push(...parseRouteset(part, await post(routesetBody(part)), now()));
+    } catch (e) {
+      return { looked, calls, error: e, stopped: false };
+    }
+  }
+  return { looked, calls, error: null, stopped: false };
+}
+
+/** The stops of one entry, or null if it isn't a usable route (unknown, a bad code, a stop without a position). */
+function stopsOf(e: RoutesetEntry): Stop[] | null {
+  const codes = String(e._airport_codes_iata ?? "").trim().toUpperCase().split("-");
+  if (codes.length < 2 || !codes.every((c) => CODE.test(c))) return null;
+  const airports = Array.isArray(e._airports) ? e._airports : [];
+  const stops: Stop[] = [];
+  for (const [i, code] of codes.entries()) {
+    const a = String(airports[i]?.iata ?? "").toUpperCase() === code ? airports[i] : airports.find((x) => String(x?.iata ?? "").toUpperCase() === code);
+    const lat = num(a?.lat), lon = num(a?.lon);
+    if (lat === null || lon === null) return null;
+    stops.push({ code, lat, lon });
+  }
+  for (let i = 1; i < stops.length; i++) if (stops[i].code === stops[i - 1].code) return null;
+  return stops;
+}
+
+export type Leg = { from: Stop; to: Stop; state: FlightState };
+
+/**
+ * pickLeg(stops, aircraft, hint?) → the leg of a route (one flight number, several stops: WN 3224 MDW→SAN→SMF) the
+ * aircraft is flying now, with its state on that leg; null if it fits none. Each leg is tried with flightState (which
+ * already turns down the next or previous leg: landing at the origin, climbing out of the destination, heading off);
+ * a leg the aircraft is far off (more than max(100 nm, 30 % of the leg) out of its way) is out; of the rest, the one
+ * whose phase agrees with the climb or descent wins, then the one it's nearest the line of. On the ground at a
+ * through-stop (landed on one leg, departing on the next) the hint (its leg on the board) decides, else the next leg.
+ */
+export function pickLeg(stops: readonly Stop[], s: Pick<Seen, "lat" | "lon" | "alt" | "ground" | "rate" | "track">, hint?: { origin: string; destination: string }): Leg | null {
+  let best: { leg: Leg; score: number } | null = null;
+  for (let i = 0; i + 1 < stops.length; i++) {
+    const from = stops[i], to = stops[i + 1];
+    const state = flightState(s, from, to);
+    if (!state) continue;
+    const len = haversineNm(from.lat, from.lon, to.lat, to.lon);
+    const excess = haversineNm(s.lat, s.lon, from.lat, from.lon) + haversineNm(s.lat, s.lon, to.lat, to.lon) - len;
+    if (excess > Math.max(100, 0.3 * len)) continue;
+    const rate = s.rate ?? 0;
+    let score = excess;
+    if ((state.phase === "arriving" && rate > 300) || (state.phase === "departing" && !s.ground && rate < -300)) score += 10_000;
+    if (s.ground) score += hint && hint.origin === from.code && hint.destination === to.code ? -1 : state.phase === "landed" ? 1 : 0;
+    if (!best || score < best.score) best = { leg: { from, to, state }, score };
+  }
+  return best?.leg ?? null;
+}
+
+/** The legs of a cached route: its stops, else (a row with no stops) origin → destination from coords. */
+export function legStops(r: Pick<Route, "origin" | "destination" | "stops">, coords: ReadonlyMap<string, Pt>): Stop[] | null {
+  if (Array.isArray(r.stops) && r.stops.length >= 2) return r.stops;
+  const a = r.origin ? coords.get(r.origin) : undefined, b = r.destination ? coords.get(r.destination) : undefined;
+  return a && b ? [{ code: r.origin!, ...a }, { code: r.destination!, ...b }] : null;
+}
+
+/**
+ * chooseLookups(seen, routes, now, budget?) → the aircraft to ask adsb.im about this run (one per callsign, the
+ * sighting nearest its airport, whose position goes in the request): only callsigns with no fresh cached answer,
+ * climbing or descending aircraft first (they're the ones leaving or reaching a trip airport), then the nearest.
+ * At most 200 (two chunks of 100).
+ */
+export function chooseLookups(seen: Iterable<Seen>, routes: ReadonlyMap<string, Pick<Route, "found" | "fetched_at">>, now: number, budget = LOOKUP_BUDGET): Seen[] {
   const best = new Map<string, Seen>();
   for (const s of seen) {
     const r = routes.get(s.callsign);
@@ -166,8 +284,7 @@ export function chooseLookups(seen: Iterable<Seen>, routes: ReadonlyMap<string, 
   const moving = (s: Seen) => (!s.ground && s.rate !== null && Math.abs(s.rate) > 300 ? 0 : 1);
   return [...best.values()]
     .sort((x, y) => moving(x) - moving(y) || x.dist - y.dist || x.callsign.localeCompare(y.callsign))
-    .slice(0, Math.max(0, budget))
-    .map((s) => s.callsign);
+    .slice(0, Math.max(0, budget));
 }
 
 /** Does this route fly the pair? "ab" (a → b), "ba", or null. */
@@ -195,8 +312,8 @@ const ON_FIELD_NM = 10;
  *   en_route:  everything else in the air.
  *   alt_ft:    to the nearest 1,000 ft; 0 on the ground; at least 1,000 in the air.
  * On the ground anywhere else (a diversion, a stale position) → null: not on this route right now. Also null, because
- * it's the same flight number's next or previous leg (airlines reuse a number all day, WN 3224 MDW→SAN→…, and adsbdb
- * knows one route per callsign): descending near the origin (landing there); climbing away near the destination; or
+ * it's the same flight number's next or previous leg (airlines reuse a number all day, WN 3224 MDW→SAN→…; pickLeg
+ * tries each leg of a multi-stop route with this): descending near the origin (landing there); climbing away near the destination; or
  * at cruise, outside both terminal areas, with its track more than 100° off the bearing to the destination.
  */
 export function flightState(s: Pick<Seen, "lat" | "lon" | "alt" | "ground" | "rate" | "track">, origin: Pt, destination: Pt): FlightState | null {
@@ -276,7 +393,8 @@ export type Plan = { rows: TripFlightRow[]; deletes: Pick<TripFlightRow, "pair_k
 
 /**
  * planBoard(input) → every row the watched pairs' boards should hold now, and the saved rows to delete:
- *   - a seen aircraft whose cached route is a→b or b→a joins its pair (unless it's already landed and wasn't on the board);
+ *   - a seen aircraft whose cached route has a leg it is flying now (pickLeg) that is a→b or b→a joins its pair (unless
+ *     it's already landed and wasn't on the board);
  *   - a saved flight not in any circle but found by hex is moved along its route (still matched by its saved origin/destination);
  *   - a saved flight seen nowhere stays as it was for up to 10 minutes after its last change, then goes;
  *   - a saved flight that is seen but no longer on the route (flightState null: its next leg) goes at once;
@@ -298,13 +416,13 @@ export function planBoard({ pairs, coords, seen, tracked, routes, saved, now }: 
 
     for (const s of seen.values()) {
       const route = routes.get(s.callsign);
-      const dir = matchRoute(route, p);
-      if (!dir || !route) continue;
-      const from = coords.get(route.origin!), to = coords.get(route.destination!);
-      if (!from || !to) continue;
-      const st = flightState(s, from, to);
-      if (!st) continue;
+      if (!route?.found) continue;
+      const stops = legStops(route, coords);
+      if (!stops || !stops.some((x) => x.code === p.a) || !stops.some((x) => x.code === p.b)) continue;
       const old = savedBy.get(`${p.key}:${s.hex}`);
+      const leg = pickLeg(stops, s, old);
+      if (!leg || !matchRoute({ found: true, origin: leg.from.code, destination: leg.to.code }, p)) continue;
+      const st = leg.state;
       if (st.phase === "landed" && !old) continue;
       if (st.phase === "landed" && old?.phase === "landed" && now - Date.parse(old.updated_at) > LANDED_MS) {
         deletes.push({ pair_key: p.key, hex: s.hex });
@@ -314,7 +432,7 @@ export function planBoard({ pairs, coords, seen, tracked, routes, saved, now }: 
       rows.push({
         pair_key: p.key, hex: s.hex, callsign: s.callsign, flight: route.flight,
         airline: airlineFor(s.callsign) ?? route.airline, aircraft_type: s.type,
-        origin: route.origin!, destination: route.destination!, ...st,
+        origin: leg.from.code, destination: leg.to.code, ...st,
       });
       placed.add(s.hex);
       c.flights++;
@@ -323,7 +441,8 @@ export function planBoard({ pairs, coords, seen, tracked, routes, saved, now }: 
     for (const old of saved) {
       if (old.pair_key !== p.key || placed.has(old.hex)) continue;
       const t = tracked.get(old.hex) ?? seen.get(old.hex);
-      const from = coords.get(old.origin), to = coords.get(old.destination);
+      const from = coords.get(old.origin) ?? stopOf(routes.get(old.callsign ?? ""), old.origin);
+      const to = coords.get(old.destination) ?? stopOf(routes.get(old.callsign ?? ""), old.destination);
       const st = t && from && to ? flightState(t, from, to) : null;
       const age = now - Date.parse(old.updated_at);
       if (st) {
@@ -342,6 +461,8 @@ export function planBoard({ pairs, coords, seen, tracked, routes, saved, now }: 
   }
   return { rows, deletes, counts };
 }
+
+const stopOf = (r: Route | undefined, code: string): Pt | undefined => r?.stops?.find((x) => x.code === code);
 
 const strip = (r: SavedTripFlight): TripFlightRow => {
   const row = { ...r } as Partial<SavedTripFlight>;

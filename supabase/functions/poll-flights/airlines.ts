@@ -61,3 +61,27 @@ export function isAirlineCallsign(callsign: string | null | undefined): boolean 
   const m = AIRLINE_CALLSIGN.exec(c);
   return !!m && /^[A-Z]{3}[0-9]{1,4}[A-Z]{0,2}$/.test(c) && !NOT_PASSENGER.has(m[1]);
 }
+
+/**
+ * ICAO → IATA airline designators, for printing a flight number the way a boarding pass does (UAL2486 → "UA 2486").
+ * adsb.im's routes carry the ICAO callsign only. Regionals print their own code (SKW → OO). Unknown → null.
+ */
+export const IATA: Readonly<Record<string, string>> = {
+  AAL: "AA", UAL: "UA", DAL: "DL", SWA: "WN", ASA: "AS", JBU: "B6", NKS: "NK", FFT: "F9", HAL: "HA", SCX: "SY",
+  AAY: "G4", MXY: "MX", VXP: "XP",
+  ENY: "MQ", SKW: "OO", RPA: "YX", JIA: "OH", GJS: "G7", EDV: "9E", ASH: "YV", PDT: "PT", QXE: "QX", AWI: "ZW",
+  CPZ: "CP", UCA: "C5", KAP: "9K",
+  ACA: "AC", JZA: "QK", ROU: "RV", WJA: "WS", TSC: "TS", POE: "PD", FLE: "F8", AMX: "AM", VIV: "VB", VOI: "Y4",
+  BAW: "BA", VIR: "VS", EIN: "EI", RYR: "FR", EZY: "U2", LOG: "LM", DLH: "LH", AFR: "AF", KLM: "KL", IBE: "IB",
+  TAP: "TP", SWR: "LX", AUA: "OS", SAS: "SK", FIN: "AY", ICE: "FI", THY: "TK", ITY: "AZ", LOT: "LO", BEL: "SN",
+  UAE: "EK", QTR: "QR", ETD: "EY", SVA: "SV", ELY: "LY", JAL: "JL", ANA: "NH", KAL: "KE", AAR: "OZ", CPA: "CX",
+  SIA: "SQ", EVA: "BR", CAL: "CI", CCA: "CA", CES: "MU", CSN: "CZ", QFA: "QF", ANZ: "NZ", VOZ: "VA", SAA: "SA",
+  ETH: "ET", AVA: "AV", CMP: "CM", LAN: "LA", TAM: "JJ", AZU: "AD",
+};
+
+/** "UAL2486" → "UA 2486", "SKW5512" → "OO 5512"; an unknown designator or a non-airline callsign → null. */
+export function flightNumberFor(callsign: string | null | undefined): string | null {
+  const m = /^([A-Z]{3})(\d{1,4}[A-Z]?)$/.exec(String(callsign ?? "").trim().toUpperCase());
+  const iata = m ? IATA[m[1]] : undefined;
+  return m && iata ? `${iata} ${m[2]}` : null;
+}

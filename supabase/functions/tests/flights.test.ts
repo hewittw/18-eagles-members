@@ -1,17 +1,20 @@
 // The route-board worker (poll-flights) on saved real responses: adsb.lol's aircraft within 100 nm of O'Hare and of
-// San Diego (fixtures/adsblol-ord-100nm.json, adsblol-san-100nm.json), and two adsbdb answers (adsbdb-ual1234.json, a
-// route; adsbdb-unknown.json, the 404 body), all saved 2026-11-02 with curl and a real User-Agent. Each rule here
+// San Diego (fixtures/adsblol-ord-100nm.json, adsblol-san-100nm.json), and two adsb.im routeset answers: a small one
+// (adsbim-routeset-small.json: a route, an implausible one, an unknown) and every airline callsign within 100 nm of
+// Midway in one batch (adsbim-routeset-mdw-request.json → adsbim-routeset-mdw.json: 138 asked, multi-stop routes,
+// nulls), all saved 2026-11-02 with curl and a real User-Agent. Each rule here
 // decides what a golfer sees on the board, or what a run spends of the free sources' goodwill.
 // (The old 15 nm airport-board tests went with airport_flights, which nothing writes any more.)
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { diffRows } from "../_shared/diff.ts";
-import { airlineFor, isAirlineCallsign } from "../poll-flights/airlines.ts";
+import { airlineFor, flightNumberFor, isAirlineCallsign } from "../poll-flights/airlines.ts";
 import { aircraftList, type AdsbAircraft } from "../poll-flights/parse.ts";
 import {
-  chooseLookups, flightNumber, flightState, isFresh, LOOKUP_BUDGET, matchRoute, mergeSeen, pairAirlines, pairKey, parseAdsbdb,
-  planBoard, seenAircraft, trackHexes, TRIP_FIELDS, TRIP_KEY, watchPairs, type Route, type SavedTripFlight, type TripFlightRow,
+  chooseLookups, chunk, flightNumber, flightState, isFresh, LOOKUP_BUDGET, lookupRoutes, matchRoute, mergeSeen, pairAirlines,
+  pairKey, parseRouteset, pickLeg, planBoard, ROUTE_SOURCE, ROUTESET_CHUNK, routesetBody, seenAircraft, trackHexes, TRIP_FIELDS,
+  TRIP_KEY, watchPairs, type Route, type RoutesetPlane, type SavedTripFlight, type Seen, type Stop, type TripFlightRow,
 } from "../poll-flights/route.ts";
 import { fetchFirst, hexUrl, SOURCES, Spacer, spacersFor, type Clock } from "../poll-flights/sources.ts";
 
@@ -50,15 +53,75 @@ test("mergeSeen: one sighting per hex, the nearest", () => {
   assert.equal(m.get(s.hex)?.near, "MKE");
 });
 
-// adsbdb's real answer: EWR → ORD, United, printed "UA 1234"; the 404 body caches as not found.
-test("parseAdsbdb: a real route, and a real unknown callsign", () => {
-  const r = parseAdsbdb("UAL1234", fixture("adsbdb-ual1234.json"), NOW);
-  assert.deepEqual({ ...r, fetched_at: undefined }, { callsign: "UAL1234", origin: "EWR", destination: "ORD", airline: "United Airlines", flight: "UA 1234", found: true, fetched_at: undefined });
-  const u = parseAdsbdb("ZZZ9999", fixture("adsbdb-unknown.json"), NOW);
-  assert.equal(u.found, false);
-  assert.equal(u.origin, null);
+/** A sighting at the position we sent adsb.im (the request fixture's planes). */
+const asSeen = (p: RoutesetPlane, extra: Partial<Seen> = {}): Seen =>
+  ({ hex: "a00000", callsign: p.callsign, type: null, lat: p.lat, lon: p.lng, alt: null, ground: false, rate: null, near: "MDW", dist: 0, ...extra });
+const mdwAsked: Seen[] = (fixture("adsbim-routeset-mdw-request.json").planes as RoutesetPlane[]).map((p) => asSeen(p));
+const mdwAnswer: unknown[] = fixture("adsbim-routeset-mdw.json");
+
+// adsb.im's real answer: UAL2486 SAN → ORD (asked at O'Hare), printed "UA 2486"; SWA3224's route (ONT-PHX) isn't
+// plausible over Chicago, and ZZZ9999 is "unknown": both cache as not found.
+test("parseRouteset: a real route, an implausible one, an unknown callsign", () => {
+  const asked = [
+    asSeen({ callsign: "UAL2486", lat: 41.98, lng: -87.9 }), asSeen({ callsign: "SWA3224", lat: 41.78, lng: -87.75 }),
+    asSeen({ callsign: "ZZZ9999", lat: 41.98, lng: -87.9 }), asSeen({ callsign: "AAL1", lat: 40.6, lng: -73.8 }),
+  ];
+  const [ual, swa, zzz, aal] = parseRouteset(asked, fixture("adsbim-routeset-small.json"), NOW);
+  assert.deepEqual({ ...ual, stops: undefined }, {
+    callsign: "UAL2486", origin: "SAN", destination: "ORD", route: "SAN-ORD", stops: undefined, airline: "United",
+    flight: "UA 2486", found: true, source: ROUTE_SOURCE, fetched_at: new Date(NOW).toISOString(),
+  });
+  assert.deepEqual(ual.stops, [{ code: "SAN", lat: 32.733601, lon: -117.190002 }, { code: "ORD", lat: 41.9786, lon: -87.9048 }]);
+  assert.equal(swa.found, false);
+  assert.equal(swa.origin, null);
+  assert.equal(zzz.found, false);
+  assert.equal(zzz.source, ROUTE_SOURCE);
+  assert.equal(aal.route, "JFK-LAX");
+  assert.equal(aal.flight, "AA 1");
   assert.equal(flightNumber("AS500"), "AS 500");
   assert.equal(flightNumber("nope"), null);
+  assert.equal(flightNumberFor("SKW5512"), "OO 5512");
+  assert.equal(flightNumberFor("QQQ12"), null);
+  assert.throws(() => parseRouteset(asked, { error: "nope" }, NOW));
+});
+
+// The whole Midway batch: one row per callsign asked, found exactly where adsb.im has a plausible route (counted from
+// the raw JSON), nulls cached as not found, multi-stop routes kept whole, and the answer's order doesn't matter.
+test("parseRouteset: 138 real callsigns in one answer, nulls and multi-stop routes", () => {
+  const rows = parseRouteset(mdwAsked, mdwAnswer, NOW);
+  assert.equal(rows.length, mdwAsked.length);
+  assert.deepEqual(rows.map((r) => r.callsign), mdwAsked.map((s) => s.callsign));
+  type E = { _airport_codes_iata: string; plausible?: boolean } | null;
+  const plausible = (mdwAnswer as E[]).filter((e) => e && e.plausible === true && e._airport_codes_iata !== "unknown").length;
+  assert.equal(rows.filter((r) => r.found).length, plausible);
+  for (const cs of ["SWA3131", "UAL779", "EJA175"]) assert.equal(rows.find((r) => r.callsign === cs)?.found, false, cs); // null entries
+  const asa = rows.find((r) => r.callsign === "ASA1478")!;
+  assert.equal(asa.route, "SAN-ORD-SAN");
+  assert.deepEqual(asa.stops!.map((x) => x.code), ["SAN", "ORD", "SAN"]);
+  assert.equal(rows.find((r) => r.callsign === "UAL2168")?.route, "SFO-IAH-DEN-LGA");
+  assert.ok(rows.filter((r) => r.found).every((r) => r.stops!.length >= 2 && r.route!.split("-").length === r.stops!.length));
+  const shuffled = [...mdwAnswer].reverse();
+  assert.deepEqual(parseRouteset(mdwAsked, shuffled, NOW).map((r) => r.route), rows.map((r) => r.route));
+});
+
+// One flight number, several stops: which leg is it flying right now? ASA1478 is SAN → ORD → SAN.
+test("pickLeg: the leg that fits the position, climb and heading (SAN-ORD-SAN)", () => {
+  const stops = parseRouteset(mdwAsked, mdwAnswer, NOW).find((r) => r.callsign === "ASA1478")!.stops as Stop[];
+  const leg = (s: Partial<Seen>, hint?: { origin: string; destination: string }) => {
+    const l = pickLeg(stops, { lat: 0, lon: 0, alt: null, ground: false, rate: null, track: null, ...s }, hint);
+    return l ? `${l.from.code}-${l.to.code} ${l.state.phase}` : null;
+  };
+  assert.equal(leg({ lat: 41.9, lon: -88.3, alt: 6000, rate: -1200 }), "SAN-ORD arriving"); // on its way down into ORD
+  assert.equal(leg({ lat: 41.9, lon: -88.3, alt: 5000, rate: 2200 }), "ORD-SAN departing"); // climbing out: the next leg
+  assert.equal(leg({ lat: 37.5, lon: -103, alt: 36_000, rate: 0, track: 240 }), "ORD-SAN en_route");
+  assert.equal(leg({ lat: 37.5, lon: -103, alt: 36_000, rate: 0, track: 60 }), "SAN-ORD en_route");
+  assert.equal(leg({ lat: 41.98, lon: -87.9, ground: true }), "ORD-SAN departing"); // at the gate: next leg by default
+  assert.equal(leg({ lat: 41.98, lon: -87.9, ground: true }, { origin: "SAN", destination: "ORD" }), "SAN-ORD landed");
+  assert.equal(leg({ lat: 28.4, lon: -81.3, alt: 35_000, rate: 0, track: 200 }), null); // over Florida: on neither leg
+  // Four stops: over Denver, climbing out east → DEN-LGA; descending into Denver from the south → IAH-DEN.
+  const ual = parseRouteset(mdwAsked, mdwAnswer, NOW).find((r) => r.callsign === "UAL2168")!.stops as Stop[];
+  assert.equal(pickLeg(ual, { lat: 39.9, lon: -104.4, alt: 12_000, ground: false, rate: 2500, track: 80 })?.to.code, "LGA");
+  assert.equal(pickLeg(ual, { lat: 39.4, lon: -104.6, alt: 11_000, ground: false, rate: -1500, track: 350 })?.to.code, "DEN");
 });
 
 // The cache's two lifetimes: a found route for 7 days, a "not found" for 1 day.
@@ -124,21 +187,81 @@ test("flightState: departing, en route, arriving, landed; progress to 5 %", () =
   assert.equal(flightState({ lat: 32.9, lon: -116.9, alt: 9000, ground: false, rate: -900, track: 30 }, ORD, SAN)?.phase, "arriving");
 });
 
-// The lookup budget on a real ORD minute: at most 30, each callsign once, never one already cached and fresh,
-// climbing/descending aircraft before level ones.
-test("chooseLookups: 30 at most, unique, cached skipped, moving aircraft first", () => {
+// The lookup budget on a real ORD + SAN minute: each callsign once, never one already cached and fresh, climbing/
+// descending aircraft before level ones, at most 200; each carries the position adsb.im checks it against.
+test("chooseLookups: unique, cached skipped, moving aircraft first, capped", () => {
   const all = mergeSeen([ordSeen, sanSeen]);
+  const callsigns = new Set([...all.values()].map((s) => s.callsign));
   const first = chooseLookups(all.values(), new Map(), NOW);
-  assert.equal(first.length, LOOKUP_BUDGET);
-  assert.equal(new Set(first).size, first.length);
-  const moving = new Set([...all.values()].filter((s) => !s.ground && Math.abs(s.rate ?? 0) > 300).map((s) => s.callsign));
-  const firstLevel = first.findIndex((c) => !moving.has(c));
-  if (firstLevel >= 0) assert.ok(first.slice(firstLevel).every((c) => !moving.has(c)), "a moving aircraft after a level one");
-  const cached = new Map(first.map((c) => [c, { found: true, fetched_at: new Date(NOW - 3600_000).toISOString() }]));
+  assert.equal(first.length, Math.min(LOOKUP_BUDGET, callsigns.size));
+  assert.equal(new Set(first.map((s) => s.callsign)).size, first.length);
+  assert.ok(first.every((s) => Number.isFinite(s.lat) && Number.isFinite(s.lon)));
+  const moving = (s: Seen) => !s.ground && Math.abs(s.rate ?? 0) > 300;
+  const firstLevel = first.findIndex((s) => !moving(s));
+  if (firstLevel >= 0) assert.ok(first.slice(firstLevel).every((s) => !moving(s)), "a moving aircraft after a level one");
+  assert.equal(chooseLookups(all.values(), new Map(), NOW, 30).length, 30);
+  const cached = new Map(first.slice(0, 40).map((s) => [s.callsign, { found: true, fetched_at: new Date(NOW - 3600_000).toISOString() }]));
   const second = chooseLookups(all.values(), cached, NOW);
-  assert.ok(second.every((c) => !cached.has(c)));
-  const stale = new Map(first.map((c) => [c, { found: false, fetched_at: new Date(NOW - 30 * 3600_000).toISOString() }]));
+  assert.ok(second.every((s) => !cached.has(s.callsign)));
+  assert.equal(second.length, Math.min(LOOKUP_BUDGET, callsigns.size - 40));
+  const stale = new Map(first.map((s) => [s.callsign, { found: false, fetched_at: new Date(NOW - 30 * 3600_000).toISOString() }]));
   assert.deepEqual(chooseLookups(all.values(), stale, NOW), first);
+});
+
+// Batching: 138 real callsigns go out as two POSTs (100 + 38), in order, never one per callsign; the body is the
+// shape adsb.im takes; a failed chunk stops the run's lookups (and keeps what came back), and so does the time limit.
+test("lookupRoutes: one POST per 100 callsigns, real answers, stops on a failure", async () => {
+  assert.deepEqual(chunk([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);
+  assert.deepEqual(chunk([], 100), []);
+  assert.deepEqual(routesetBody([{ callsign: "UAL2486", lat: 41.978612, lon: -87.904833 }]), { planes: [{ callsign: "UAL2486", lat: 41.9786, lng: -87.9048 }] });
+  const bodies: { planes: RoutesetPlane[] }[] = [];
+  // The fake adsb.im answers each chunk with the real entries for those callsigns, in order.
+  const byCs = new Map((mdwAnswer as ({ callsign: string } | null)[]).map((e, i) => [mdwAsked[i].callsign, e]));
+  const post = async (b: { planes: RoutesetPlane[] }) => { bodies.push(b); return b.planes.map((p) => byCs.get(p.callsign) ?? null); };
+  const got = await lookupRoutes(mdwAsked, post, () => NOW);
+  assert.equal(got.calls, 2);
+  assert.deepEqual(bodies.map((b) => b.planes.length), [ROUTESET_CHUNK, mdwAsked.length - ROUTESET_CHUNK]);
+  assert.deepEqual(bodies.flatMap((b) => b.planes.map((p) => p.callsign)), mdwAsked.map((s) => s.callsign));
+  assert.deepEqual(got.looked.map((r) => r.route), parseRouteset(mdwAsked, mdwAnswer, NOW).map((r) => r.route));
+  assert.equal(got.error, null);
+
+  let n = 0;
+  const failing = async (b: { planes: RoutesetPlane[] }) => { if (n++ === 1) throw http(429); return post(b); };
+  const half = await lookupRoutes([...mdwAsked, ...mdwAsked.slice(0, 80)], failing, () => NOW);
+  assert.equal(half.calls, 2);
+  assert.equal(half.looked.length, ROUTESET_CHUNK);
+  assert.equal((half.error as { status: number }).status, 429);
+  const late = await lookupRoutes(mdwAsked, post, () => NOW, () => true);
+  assert.deepEqual([late.calls, late.looked.length, late.stopped], [0, 0, true]);
+});
+
+// The cache: what one run looked up is reused by the next (no lookup), for 7 days if found and 1 day if not; and the
+// board reads multi-stop routes from it.
+test("cache reuse: looked-up routes aren't asked again until they go stale", async () => {
+  const rows = parseRouteset(mdwAsked, mdwAnswer, NOW);
+  const cache = new Map(rows.map((r) => [r.callsign, r]));
+  assert.equal(chooseLookups(mdwAsked, cache, NOW + 3600_000).length, 0);
+  const missing = rows.filter((r) => !r.found).length;
+  assert.equal(chooseLookups(mdwAsked, cache, NOW + 25 * 3600_000).length, missing); // misses retried after a day
+  assert.equal(chooseLookups(mdwAsked, cache, NOW + 8 * 24 * 3600_000).length, mdwAsked.length); // everything after a week
+});
+
+// Multi-stop routes on the board: ASA1478 (SAN-ORD-SAN) is on the ORD-SAN board whichever leg it flies, with the
+// leg's direction; UAL1557 (ABQ-ORD-BWI) never is; the stops' positions come from the cache, not the trip airports.
+test("planBoard: a multi-stop route joins the pair on the leg it's flying", () => {
+  const pairs = watchPairs([{ from_airport: "ORD", to_airport: "SAN" }], coords);
+  const rows = parseRouteset(mdwAsked, mdwAnswer, NOW);
+  const routes = new Map(rows.map((r) => [r.callsign, r]));
+  const climbing: Seen = { hex: "a1b2c3", callsign: "ASA1478", type: "B39M", lat: 41.9, lon: -88.3, alt: 5000, ground: false, rate: 2200, track: 250, near: "ORD", dist: 20 };
+  const ual: Seen = { hex: "a1b2c4", callsign: "UAL1557", type: "B739", lat: 41.9, lon: -88.3, alt: 5000, ground: false, rate: 2200, track: 100, near: "ORD", dist: 20 };
+  const plan = planBoard({ pairs, coords: new Map([["ORD", ORD], ["SAN", SAN]]), seen: new Map([[climbing.hex, climbing], [ual.hex, ual]]), tracked: new Map(), routes, saved: [], now: NOW });
+  assert.deepEqual(plan.rows.map((r) => [r.hex, r.origin, r.destination, r.phase, r.flight, r.airline]), [["a1b2c3", "ORD", "SAN", "departing", "AS 1478", "Alaska"]]);
+  const down = { ...climbing, lat: 33.0, lon: -116.9, alt: 9000, rate: -1500, track: 250 };
+  const back = planBoard({ pairs, coords, seen: new Map([[down.hex, down]]), tracked: new Map(), routes, saved: [], now: NOW });
+  assert.equal(back.rows[0]?.destination, "SAN");
+  const arriving = { ...climbing, lat: 41.9, lon: -88.3, alt: 6000, rate: -1200, track: 80 };
+  const into = planBoard({ pairs, coords, seen: new Map([[arriving.hex, arriving]]), tracked: new Map(), routes, saved: [], now: NOW });
+  assert.deepEqual(into.rows.map((r) => `${r.origin}-${r.destination} ${r.phase}`), ["SAN-ORD arriving"]);
 });
 
 // The whole board on real aircraft: give two real O'Hare departures (and one SAN arrival) an ORD↔SAN route and
