@@ -172,6 +172,12 @@ test("planBoard: real aircraft on the ORD-SAN pair, a quiet second run, and the 
   const muchLater = planBoard({ pairs, coords, seen: away, tracked: new Map(), routes, saved, now: NOW + 11 * 60_000 });
   assert.deepEqual(muchLater.deletes.map((x) => x.hex).sort(), [o1.hex, o2.hex].sort());
 
+  // o1 seen again, but climbing out of SAN at 22,000 ft (the same flight number's next leg): it goes at once.
+  const nextLeg = new Map([...seen, [o1.hex, { ...o1, lat: 33.1, lon: -116.6, alt: 22_000, rate: 2000 }]]);
+  const leg = planBoard({ pairs, coords, seen: nextLeg, tracked: new Map(), routes, saved, now: NOW + 60_000 });
+  assert.ok(leg.deletes.some((x) => x.hex === o1.hex));
+  assert.ok(!leg.rows.some((r) => r.hex === o1.hex));
+
   // A pair nobody plans any more: its rows go.
   const none = planBoard({ pairs: [], coords, seen, tracked: new Map(), routes, saved, now: NOW });
   assert.equal(none.deletes.length, saved.length);

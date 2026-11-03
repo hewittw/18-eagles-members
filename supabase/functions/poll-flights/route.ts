@@ -271,6 +271,7 @@ export type Plan = { rows: TripFlightRow[]; deletes: Pick<TripFlightRow, "pair_k
  *   - a seen aircraft whose cached route is a→b or b→a joins its pair (unless it's already landed and wasn't on the board);
  *   - a saved flight not in any circle but found by hex is moved along its route (still matched by its saved origin/destination);
  *   - a saved flight seen nowhere stays as it was for up to 10 minutes after its last change, then goes;
+ *   - a saved flight that is seen but no longer on the route (flightState null: its next leg) goes at once;
  *   - a landed flight goes 5 minutes after it landed; rows of pairs no longer watched go.
  */
 export function planBoard({ pairs, coords, seen, tracked, routes, saved, now }: PlanInput): Plan {
@@ -322,7 +323,8 @@ export function planBoard({ pairs, coords, seen, tracked, routes, saved, now }: 
         rows.push({ ...strip(old), aircraft_type: t!.type ?? old.aircraft_type, ...st });
         c.flights++;
         if (tracked.has(old.hex)) c.tracked++;
-      } else if (age > (old.phase === "landed" ? LANDED_MS : UNSEEN_MS)) {
+      } else if (t || age > (old.phase === "landed" ? LANDED_MS : UNSEEN_MS)) {
+        // Seen, but not on this route any more (its next leg, or on the ground elsewhere), or seen nowhere for 10 minutes.
         deletes.push({ pair_key: p.key, hex: old.hex });
       } else {
         rows.push(strip(old));
