@@ -264,7 +264,7 @@ function Count({ n, on }: { n: number; on: boolean }) {
 
 function DealGrid({ deals, live, isNew, label }: { deals: Deal[]; live: ShopLive; isNew: (d: Deal) => boolean; label: string }) {
   return (
-    <ul aria-label={label} className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
+    <ul aria-label={label} className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
       {deals.map((d) => <DealCard key={d.id} d={d} flashAt={live.touched.get(d.id)} fresh={isNew(d)} />)}
     </ul>
   );
