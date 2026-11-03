@@ -97,7 +97,7 @@ flowchart TD
 
 Two live pages under `/clubhouse`, fed by workers on Supabase: **Tour** (the PGA TOUR leaderboard from ESPN and the
 world ranking from OWGR) and **Flights** ("Getting there": the flights between where the golfer is and where they're playing,
-from adsb.lol with adsb.fi as the fallback, routes from adsbdb). Each golfer picks what they follow or where they're
+from adsb.lol with adsb.fi as the fallback, routes from adsb.im, built on Virtual Radar Server standing data). Each golfer picks what they follow or where they're
 going, and the page updates without a refresh. The
 backend chart, as planned and as built, is in `docs/data-flow.md`.
 

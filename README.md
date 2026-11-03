@@ -19,7 +19,7 @@ security keeps those choices private.
   Talking points for class: [`docs/talking-points.md`](docs/talking-points.md).
 
 ### The system
-![The system as built: ESPN, OWGR, adsb.lol and adsb.fi and a route source (adsbdb in this diagram, since replaced by adsb.im) feed two Edge Functions run by Supabase Cron; they write changed rows to Postgres; Realtime pushes them to the Tour and Flights pages on Vercel; follows go through Server Actions with the Clerk token and RLS.](public/flows/system/flow-2.svg)
+![The system as built: ESPN, OWGR, adsb.lol and adsb.fi and adsb.im routes feed two Edge Functions run by Supabase Cron; they write changed rows to Postgres; Realtime pushes them to the Tour and Flights pages on Vercel; follows go through Server Actions with the Clerk token and RLS.](public/flows/system/flow-2.svg)
 
 ### How one change travels
 1. **Source.** A player birdies the 7th. ESPN's leaderboard JSON now says -4, thru 7.

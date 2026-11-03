@@ -680,7 +680,7 @@ function Credit() {
   );
   return (
     <p className="text-[0.85rem] leading-relaxed text-ink-2">
-      Positions from {a("https://adsb.lol/", "adsb.lol")} (ODbL) and {a("https://adsb.fi/", "adsb.fi")}, routes from {a("https://www.adsbdb.com/", "adsbdb")}, airports from {a("https://ourairports.com/data/", "OurAirports")}.
+      Positions from {a("https://adsb.lol/", "adsb.lol")} (ODbL) and {a("https://adsb.fi/", "adsb.fi")}, routes from {a("https://adsb.im/", "adsb.im")} (ODbL) and {a("https://github.com/vradarserver/standing-data", "Virtual Radar Server")} (CC0), airports from {a("https://ourairports.com/data/", "OurAirports")}.
     </p>
   );
 }
