@@ -45,3 +45,19 @@ export function airlineFor(callsign: string | null | undefined): string | null {
   const m = AIRLINE_CALLSIGN.exec(c);
   return m ? AIRLINES[m[1]] ?? null : null;
 }
+
+/** Operators a golfer can't buy a seat on (cargo, fractional and charter jets): never worth a route lookup. */
+export const NOT_PASSENGER: ReadonlySet<string> = new Set([
+  "FDX", "UPS", "GTI", "ABX", "ATN", "CKS", "BOX", "CLX", "GEC", "PAC", "SOO", "AJT", "WGN", "MTN", "CAO",
+  "EJA", "LXJ", "EJM", "XOJ", "TWY", "JRE", "VJA", "VJT", "WUP", "GPD", "JTZ", "FWK",
+]);
+
+/**
+ * "AAL1234" → true: an airline-looking callsign (three letters, then a flight number) from an operator that sells
+ * seats. N-numbers, cargo and business jets are false; they never fly a golfer's route.
+ */
+export function isAirlineCallsign(callsign: string | null | undefined): boolean {
+  const c = String(callsign ?? "").trim().toUpperCase();
+  const m = AIRLINE_CALLSIGN.exec(c);
+  return !!m && /^[A-Z]{3}[0-9]{1,4}[A-Z]{0,2}$/.test(c) && !NOT_PASSENGER.has(m[1]);
+}

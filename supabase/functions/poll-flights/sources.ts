@@ -1,6 +1,6 @@
 // Where the aircraft come from, in order. adsb.lol first; if it answers 429 (it rate-limits Supabase's shared Edge
 // egress) or fails in any way, adsb.fi for the same airport. Both serve readsb JSON with the same field names; only
-// the list's name differs (`ac` vs `aircraft`), which parseFlights accepts either way.
+// the list's name differs (`ac` vs `aircraft`), which aircraftList (parse.ts) accepts either way.
 // Pure: no Deno or npm imports. The fetcher, clock and sleep are passed in, so the Node tests drive it with fakes.
 
 export type SourceId = "lol" | "fi";
@@ -12,12 +12,19 @@ export type Source = {
   minGapMs: number;
 };
 
-export const RADIUS_NM = 15;
+/** The traffic circle around each trip airport: wide enough to catch a flight climbing out or starting down. */
+export const RADIUS_NM = 100;
 
 export const SOURCES: readonly Source[] = [
   { id: "lol", url: (lat, lon) => `https://api.adsb.lol/v2/point/${lat.toFixed(4)}/${lon.toFixed(4)}/${RADIUS_NM}`, minGapMs: 0 },
   { id: "fi", url: (lat, lon) => `https://opendata.adsb.fi/api/v2/lat/${lat.toFixed(4)}/lon/${lon.toFixed(4)}/dist/${RADIUS_NM}`, minGapMs: 1100 },
 ];
+
+/** Live positions for a few known aircraft, by hex: adsb.lol takes a comma list in one call; adsb.fi one hex a call. */
+export const hexUrl = {
+  lol: (hexes: readonly string[]) => `https://api.adsb.lol/v2/hex/${hexes.join(",")}`,
+  fi: (hex: string) => `https://opendata.adsb.fi/api/v2/hex/${hex}`,
+};
 
 export type Clock = { now: () => number; sleep: (ms: number) => Promise<void> };
 

@@ -1,163 +1,198 @@
-// The flights worker on two saved adsb.lol responses: the same O'Hare query about a minute apart (66 s by their `now`;
-// fixtures/adsblol-ord-a.json and -b.json, saved 2026-11-02). The parse decides what a golfer sees; the coarsening plus diffRows decide what gets
-// written, and every write is a Realtime message to every open Flights page.
+// The route-board worker (poll-flights) on saved real responses: adsb.lol's aircraft within 100 nm of O'Hare and of
+// San Diego (fixtures/adsblol-ord-100nm.json, adsblol-san-100nm.json), and two adsbdb answers (adsbdb-ual1234.json, a
+// route; adsbdb-unknown.json, the 404 body), all saved 2026-11-02 with curl and a real User-Agent. Each rule here
+// decides what a golfer sees on the board, or what a run spends of the free sources' goodwill.
+// (The old 15 nm airport-board tests went with airport_flights, which nothing writes any more.)
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { diffRows } from "../_shared/diff.ts";
-import { airlineFor } from "../poll-flights/airlines.ts";
-import { FLIGHT_FIELDS, FLIGHT_KEY, parseFlights, phaseOf, selectAirports, type FlightRow } from "../poll-flights/parse.ts";
-import { fetchFirst, SOURCES, Spacer, spacersFor, type Clock } from "../poll-flights/sources.ts";
+import { airlineFor, isAirlineCallsign } from "../poll-flights/airlines.ts";
+import { aircraftList, type AdsbAircraft } from "../poll-flights/parse.ts";
+import {
+  chooseLookups, flightNumber, flightState, isFresh, LOOKUP_BUDGET, matchRoute, mergeSeen, pairAirlines, pairKey, parseAdsbdb,
+  planBoard, seenAircraft, trackHexes, TRIP_FIELDS, TRIP_KEY, watchPairs, type Route, type SavedTripFlight, type TripFlightRow,
+} from "../poll-flights/route.ts";
+import { fetchFirst, hexUrl, SOURCES, Spacer, spacersFor, type Clock } from "../poll-flights/sources.ts";
 
-type Raw = { hex: string; flight?: string; r?: string; alt_baro?: number | "ground"; gs?: number; lat?: number; lon?: number; dst?: number };
-const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8")) as { ac: Raw[] };
-const A = fixture("adsblol-ord-a.json");
-const B = fixture("adsblol-ord-b.json");
-const rowsA = parseFlights(A, "ORD");
-const rowsB = parseFlights(B, "ORD");
-const diff = (saved: FlightRow[], next: FlightRow[]) => diffRows<FlightRow, "airport" | "hex">(saved, next, FLIGHT_KEY, FLIGHT_FIELDS);
+const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"));
+const ORD = { lat: 41.9786, lon: -87.9048 };
+const SAN = { lat: 32.7336, lon: -117.1897 };
+const CLD = { lat: 33.1283, lon: -117.2800 };
+const coords = new Map([["ORD", ORD], ["SAN", SAN], ["CLD", CLD], ["LAX", { lat: 33.9425, lon: -118.4081 }], ["EWR", { lat: 40.6925, lon: -74.1687 }]]);
+const ordList: AdsbAircraft[] = aircraftList(fixture("adsblol-ord-100nm.json"));
+const sanList: AdsbAircraft[] = aircraftList(fixture("adsblol-san-100nm.json"));
+const ordSeen = seenAircraft(ordList, "ORD", ORD);
+const sanSeen = seenAircraft(sanList, "SAN", SAN);
+const NOW = Date.parse("2026-11-02T23:00:00Z");
 
-// Every aircraft with a position becomes exactly one row (counted straight from the raw JSON, not by the parser),
-// including the three on the ground with no callsign, which are named by their registration instead.
-test("fixture A: one row per positioned aircraft, unnamed ones fall back to the registration", () => {
-  const positioned = new Set(A.ac.filter((a) => typeof a.lat === "number" && typeof a.lon === "number").map((a) => a.hex));
-  assert.equal(rowsA.length, positioned.size);
-  assert.equal(rowsA.length, 60);
-  for (const a of A.ac.filter((x) => !x.flight?.trim())) {
-    const row = rowsA.find((r) => r.hex === a.hex);
-    assert.equal(row?.callsign, a.r, `hex ${a.hex}`);
-  }
-  assert.ok(rowsA.every((r) => r.airport === "ORD" && r.callsign === r.callsign?.trim()));
+// Only airline flights can be on a golfer's route. Counted straight from the raw JSON with an independent filter.
+test("seenAircraft: keeps positioned airline callsigns only (no N-numbers, cargo, bizjets)", () => {
+  const raw = ordList.filter((a) => typeof a.lat === "number" && /^[A-Z]{3}\d{1,4}[A-Z]{0,2}$/.test((a.flight ?? "").trim())
+    && !/^(FDX|UPS|GTI|ABX|ATN|CKS|EJA|LXJ|JRE|GJE)/.test((a.flight ?? "").trim()));
+  assert.ok(ordSeen.length > 50, `${ordSeen.length} at ORD`);
+  assert.ok(ordSeen.length <= raw.length);
+  assert.ok(ordSeen.every((s) => isAirlineCallsign(s.callsign)));
+  assert.ok(!ordSeen.some((s) => /^(N\d|FDX|EJA|JRE|GTI)/.test(s.callsign)));
+  assert.ok(ordSeen.every((s) => s.dist >= 0 && s.dist <= 101));
+  assert.ok(sanSeen.length > 20, `${sanSeen.length} at SAN`);
+  assert.equal(isAirlineCallsign("N6052C"), false);
+  assert.equal(isAirlineCallsign("FDX1443"), false);
+  assert.equal(isAirlineCallsign("UAL1234"), true);
+  assert.equal(airlineFor("ASA500"), "Alaska");
 });
 
-// A busy hub 20 s in: planes on the ground, some arriving, some departing, some passing over. If a phase vanished,
-// the board's counts would silently lie.
-test("fixture A: all four phases appear, and ground rows sit at 0 ft", () => {
-  const phases = new Set(rowsA.map((r) => r.phase));
-  assert.deepEqual([...phases].sort(), ["arriving", "departing", "ground", "overhead"]);
-  const groundRaw = A.ac.filter((a) => a.alt_baro === "ground").map((a) => a.hex);
-  for (const hex of groundRaw) assert.equal(rowsA.find((r) => r.hex === hex)?.phase, "ground", hex);
-  for (const r of rowsA.filter((x) => x.phase === "ground")) assert.equal(r.alt_ft, 0, r.hex);
+// One aircraft in both circles counts once, from the nearer airport.
+test("mergeSeen: one sighting per hex, the nearest", () => {
+  const s = ordSeen[0];
+  const m = mergeSeen([ordSeen, [{ ...s, near: "MKE", dist: s.dist - 1 }]]);
+  assert.equal(m.size, new Set(ordSeen.map((x) => x.hex)).size);
+  assert.equal(m.get(s.hex)?.near, "MKE");
 });
 
-// The phase rules on hand-made aircraft, so each boundary is pinned: 12,000 ft ceiling, ±300 ft/min, the ground test.
-test("phaseOf: ground, arriving, departing, overhead at their boundaries", () => {
-  assert.equal(phaseOf({ alt_baro: "ground" }), "ground");
-  assert.equal(phaseOf({ alt_baro: 150, gs: 20 }), "ground");
-  assert.equal(phaseOf({ alt_baro: 150, gs: 140, baro_rate: -700 }), "arriving"); // short final, not taxiing
-  assert.equal(phaseOf({ alt_baro: 4000, baro_rate: -800 }), "arriving");
-  assert.equal(phaseOf({ alt_baro: 4000, baro_rate: 1500 }), "departing");
-  assert.equal(phaseOf({ alt_baro: 4000, baro_rate: -200 }), "overhead"); // nearly level
-  assert.equal(phaseOf({ alt_baro: 13000, baro_rate: -1500 }), "overhead"); // descending, but still en route
-  assert.equal(phaseOf({ alt_baro: 9000 }), "overhead"); // no vertical rate reported
+// adsbdb's real answer: EWR → ORD, United, printed "UA 1234"; the 404 body caches as not found.
+test("parseAdsbdb: a real route, and a real unknown callsign", () => {
+  const r = parseAdsbdb("UAL1234", fixture("adsbdb-ual1234.json"), NOW);
+  assert.deepEqual({ ...r, fetched_at: undefined }, { callsign: "UAL1234", origin: "EWR", destination: "ORD", airline: "United Airlines", flight: "UA 1234", found: true, fetched_at: undefined });
+  const u = parseAdsbdb("ZZZ9999", fixture("adsbdb-unknown.json"), NOW);
+  assert.equal(u.found, false);
+  assert.equal(u.origin, null);
+  assert.equal(flightNumber("AS500"), "AS 500");
+  assert.equal(flightNumber("nope"), null);
 });
 
-// Coarsening is what makes "only what changed" meaningful: altitude to the nearest 1,000 ft, distance to whole nm.
-test("fixture A: altitude and distance are coarsened", () => {
-  for (const r of rowsA) {
-    if (r.alt_ft !== null) assert.equal(r.alt_ft % 1000, 0, `${r.hex} alt ${r.alt_ft}`);
-    if (r.dist_nm !== null) assert.ok(Number.isInteger(r.dist_nm), `${r.hex} dst ${r.dist_nm}`);
-  }
-  const lxj = rowsA.find((r) => r.callsign === "LXJ575"); // alt_baro 45025, dst 22.587 in the raw JSON
-  assert.equal(lxj?.alt_ft, 45000);
-  assert.equal(lxj?.dist_nm, 23);
+// The cache's two lifetimes: a found route for 7 days, a "not found" for 1 day.
+test("isFresh: routes 7 days, misses 1 day", () => {
+  const at = (h: number) => new Date(NOW - h * 3600_000).toISOString();
+  assert.equal(isFresh({ found: true, fetched_at: at(24 * 6.9) }, NOW), true);
+  assert.equal(isFresh({ found: true, fetched_at: at(24 * 7.1) }, NOW), false);
+  assert.equal(isFresh({ found: false, fetched_at: at(23) }, NOW), true);
+  assert.equal(isFresh({ found: false, fetched_at: at(25) }, NOW), false);
 });
 
-// Callsign prefixes map to airlines (mainline, regional, bizjet), N-numbers to "Private", unknown designators to null.
-test("airlines: known prefixes map, N-numbers are private, unknown is null", () => {
-  const aal = rowsA.find((r) => r.callsign?.startsWith("AAL"));
-  assert.equal(aal?.airline, "American");
-  assert.equal(rowsA.find((r) => r.callsign?.startsWith("ENY"))?.airline, "Envoy");
-  assert.equal(rowsA.find((r) => r.callsign === "EJA401")?.airline, "NetJets");
-  assert.equal(rowsA.find((r) => r.callsign === "N6052C")?.airline, "Private");
-  assert.equal(airlineFor("ZZZ123"), null);
-  assert.equal(airlineFor(""), null);
-  assert.equal(airlineFor("UAL1"), "United");
-});
-
-// The common case at a 30 s tick: nothing a golfer would notice changed, so nothing is written.
-test("diff A → A: no upserts, no deletes", () => {
-  const d = diff(rowsA, parseFlights(A, "ORD"));
-  assert.deepEqual(d, { upserts: [], deletes: [] });
-});
-
-// A then B, with the expected sets computed independently from the raw JSON (coarsened by hand here): only new
-// planes and planes whose visible fields moved are upserted, and exactly the planes missing from B are deleted.
-test("diff A → B: only new/changed rows upsert, and exactly the planes missing from B are deleted", () => {
-  const hexA = new Set(A.ac.map((a) => a.hex));
-  const hexB = new Set(B.ac.map((a) => a.hex));
-  const expectedDeletes = [...hexA].filter((h) => !hexB.has(h)).sort();
-  const expectedNew = [...hexB].filter((h) => !hexA.has(h));
-
-  const d = diff(rowsA, rowsB);
-  assert.deepEqual(d.deletes.map((x) => x.hex).sort(), expectedDeletes);
-  assert.ok(d.deletes.every((x) => x.airport === "ORD"));
-  const up = new Set(d.upserts.map((r) => r.hex));
-  for (const h of expectedNew) assert.ok(up.has(h), `new plane ${h} not upserted`);
-
-  // Every upserted plane that was already there must differ in a visible field; every one left out must be identical.
-  const byHexA = new Map(rowsA.map((r) => [r.hex, r]));
-  for (const r of rowsB) {
-    const old = byHexA.get(r.hex);
-    if (!old) continue;
-    const differs = FLIGHT_FIELDS.some((f) => old[f] !== r[f]);
-    assert.equal(up.has(r.hex), differs, `${r.hex} ${r.callsign}`);
-  }
-  // Planes parked on the ground in both responses (same spot, same callsign) are never rewritten: the quiet part of
-  // the board costs nothing. Moving planes do cross a 1 nm or 1,000 ft line in a minute, and those are real changes.
-  const parked = rowsB.filter((r) => r.phase === "ground" && byHexA.get(r.hex)?.phase === "ground" && byHexA.get(r.hex)?.dist_nm === r.dist_nm && byHexA.get(r.hex)?.callsign === r.callsign);
-  assert.ok(parked.length >= 10, `only ${parked.length} parked`);
-  for (const r of parked) assert.ok(!up.has(r.hex), `parked ${r.hex} was upserted`);
-  assert.ok(d.upserts.length < rowsB.length, `${d.upserts.length} of ${rowsB.length} upserted`);
-  assert.ok(expectedDeletes.length > 0 && expectedNew.length > 0, "fixtures should have planes leaving and arriving");
-});
-
-// A plane holding at 4,300 ft that drifts to 4,450 ft is the same row; one that climbs through 4,500 is a change.
-test("coarsening hides tiny moves and keeps real ones", () => {
-  const base = { hex: "abc123", flight: "AAL1  ", lat: 42, lon: -88, baro_rate: 0 };
-  const [r1] = parseFlights({ ac: [{ ...base, alt_baro: 4300, dst: 9.2 }] }, "ORD");
-  const [r2] = parseFlights({ ac: [{ ...base, alt_baro: 4450, dst: 8.6 }] }, "ORD");
-  const [r3] = parseFlights({ ac: [{ ...base, alt_baro: 4600, dst: 8.6 }] }, "ORD");
-  assert.equal(diff([r1], [r2]).upserts.length, 0);
-  assert.equal(diff([r1], [r3]).upserts.length, 1);
-});
-
-// Bad entries never reach the database: no position, a malformed hex. A missing ac[] is an error (the run is "down").
-test("rows without a position or a valid hex are skipped; a response without ac[] throws", () => {
-  const rows = parseFlights({ ac: [{ hex: "a1b2c3", flight: "UAL9" }, { hex: "nothex", lat: 1, lon: 1 }, { hex: "A1B2C4", lat: 42, lon: -88, alt_baro: 3000 }] }, "ORD");
-  assert.deepEqual(rows.map((r) => r.hex), ["a1b2c4"]);
-  assert.throws(() => parseFlights({ msg: "error" }, "ORD"));
-});
-
-// One adsb.lol call per airport no matter how many golfers follow it, the most-followed first, at most 6, ORD always.
-test("selectAirports: dedupes across golfers, ranks by followers, caps at 6, always includes ORD", () => {
-  const follows = [
-    ...["SAN", "SAN", "SAN", "MRY", "MRY", "SAV", "EDI", "CHS", "PIT", "SEA"].map((airport) => ({ airport })),
-    { airport: "san" }, // case doesn't matter
+// ORD→SAN and SAN→ORD are one board; the most-shared pairs win the 4 places; a drive (SAN–CLD) and a no-trip
+// (same airport) are never watched.
+test("pairKey + watchPairs: normalised, ranked, capped at 4, drives skipped", () => {
+  assert.equal(pairKey("san", "ORD"), "ORD-SAN");
+  assert.equal(pairKey("ORD", "ORD"), null);
+  const trips = [
+    { from_airport: "ORD", to_airport: "SAN" }, { from_airport: "SAN", to_airport: "ORD" }, { from_airport: "ORD", to_airport: "LAX" },
+    { from_airport: "SAN", to_airport: "CLD" }, { from_airport: "SAN", to_airport: "CLD" }, { from_airport: "SAN", to_airport: "CLD" },
+    { from_airport: "ORD", to_airport: "ORD" }, { from_airport: "EWR", to_airport: "ORD" }, { from_airport: "EWR", to_airport: "LAX" },
+    { from_airport: "EWR", to_airport: "SAN" },
   ];
-  const picked = selectAirports(follows);
-  assert.equal(picked.length, 6);
-  assert.equal(new Set(picked).size, 6);
-  assert.deepEqual(picked.slice(0, 2), ["SAN", "MRY"]);
-  assert.ok(picked.includes("ORD"));
-  assert.deepEqual(selectAirports([]), ["ORD"]);
-  assert.deepEqual(selectAirports([{ airport: "ORD" }, { airport: "ORD" }, { airport: "SAN" }]), ["ORD", "SAN"]);
+  const pairs = watchPairs(trips, coords);
+  assert.deepEqual(pairs.map((p) => `${p.key}:${p.trips}`), ["ORD-SAN:2", "EWR-LAX:1", "EWR-ORD:1", "EWR-SAN:1"]);
+  assert.deepEqual(pairs[0], { key: "ORD-SAN", a: "ORD", b: "SAN", trips: 2 });
+  assert.deepEqual(watchPairs([]), []);
 });
 
-// ───────── The adsb.fi fallback ─────────
+test("matchRoute: either direction, nothing else", () => {
+  const p = { a: "ORD", b: "SAN" };
+  assert.equal(matchRoute({ found: true, origin: "ORD", destination: "SAN" }, p), "ab");
+  assert.equal(matchRoute({ found: true, origin: "SAN", destination: "ORD" }, p), "ba");
+  assert.equal(matchRoute({ found: true, origin: "EWR", destination: "ORD" }, p), null);
+  assert.equal(matchRoute({ found: false, origin: null, destination: null }, p), null);
+  assert.equal(matchRoute(undefined, p), null);
+});
 
-// adsb.fi answers with the same readsb fields under `aircraft` instead of `ac` (fixtures/adsbfi-ord.json, a real O'Hare
-// response saved 2026-11-02). The parser must read it the same way, or a fallback tick would empty the board.
-test("adsb.fi response: the `aircraft` list parses like adsb.lol's `ac`", () => {
-  const fi = JSON.parse(readFileSync(new URL("./fixtures/adsbfi-ord.json", import.meta.url), "utf8")) as { aircraft: Raw[] };
-  const rows = parseFlights(fi, "ORD");
-  const positioned = new Set(fi.aircraft.filter((a) => typeof a.lat === "number" && typeof a.lon === "number").map((a) => a.hex));
-  assert.equal(rows.length, positioned.size);
-  assert.ok(rows.length >= 10, `${rows.length} rows`);
-  assert.ok(rows.some((r) => r.phase === "ground"));
-  assert.ok(rows.some((r) => r.airline !== null));
-  // And fixture A with its list renamed gives exactly fixture A's rows.
-  assert.deepEqual(parseFlights({ aircraft: A.ac }, "ORD"), rowsA);
+// Phase and progress from a position: the four phases, at the places they change.
+test("flightState: departing, en route, arriving, landed; progress to 5 %", () => {
+  const climbing = flightState({ lat: 41.9, lon: -88.3, alt: 9400, ground: false, rate: 2200 }, ORD, SAN);
+  assert.equal(climbing?.phase, "departing");
+  assert.equal(climbing?.alt_ft, 9000);
+  assert.equal(climbing?.progress_pct, 0);
+  const mid = flightState({ lat: 37.5, lon: -103, alt: 36_200, ground: false, rate: 0 }, ORD, SAN)!;
+  assert.equal(mid.phase, "en_route");
+  assert.equal(mid.progress_pct % 5, 0);
+  assert.ok(mid.progress_pct >= 45 && mid.progress_pct <= 60, `${mid.progress_pct}`);
+  const final = flightState({ lat: 32.9, lon: -116.9, alt: 6100, ground: false, rate: -900 }, ORD, SAN);
+  assert.equal(final?.phase, "arriving");
+  assert.ok(final!.progress_pct >= 95);
+  assert.deepEqual(flightState({ lat: 32.734, lon: -117.19, alt: null, ground: true, rate: null }, ORD, SAN), { phase: "landed", progress_pct: 100, alt_ft: 0 });
+  assert.deepEqual(flightState({ lat: 41.98, lon: -87.9, alt: null, ground: true, rate: null }, ORD, SAN), { phase: "departing", progress_pct: 0, alt_ft: 0 });
+  assert.equal(flightState({ lat: 39.8, lon: -104.7, alt: null, ground: true, rate: null }, ORD, SAN), null); // on the ground at DEN
+  assert.equal(flightState({ lat: 41.97, lon: -87.95, alt: 300, ground: false, rate: 1500 }, ORD, SAN)?.alt_ft, 1000);
+});
+
+// The lookup budget on a real ORD minute: at most 30, each callsign once, never one already cached and fresh,
+// climbing/descending aircraft before level ones.
+test("chooseLookups: 30 at most, unique, cached skipped, moving aircraft first", () => {
+  const all = mergeSeen([ordSeen, sanSeen]);
+  const first = chooseLookups(all.values(), new Map(), NOW);
+  assert.equal(first.length, LOOKUP_BUDGET);
+  assert.equal(new Set(first).size, first.length);
+  const moving = new Set([...all.values()].filter((s) => !s.ground && Math.abs(s.rate ?? 0) > 300).map((s) => s.callsign));
+  const firstLevel = first.findIndex((c) => !moving.has(c));
+  if (firstLevel >= 0) assert.ok(first.slice(firstLevel).every((c) => !moving.has(c)), "a moving aircraft after a level one");
+  const cached = new Map(first.map((c) => [c, { found: true, fetched_at: new Date(NOW - 3600_000).toISOString() }]));
+  const second = chooseLookups(all.values(), cached, NOW);
+  assert.ok(second.every((c) => !cached.has(c)));
+  const stale = new Map(first.map((c) => [c, { found: false, fetched_at: new Date(NOW - 30 * 3600_000).toISOString() }]));
+  assert.deepEqual(chooseLookups(all.values(), stale, NOW), first);
+});
+
+// The whole board on real aircraft: give two real O'Hare departures (and one SAN arrival) an ORD↔SAN route and
+// check the board, then run it again unchanged (0 writes), then let time pass (drops).
+test("planBoard: real aircraft on the ORD-SAN pair, a quiet second run, and the drops", () => {
+  const pairs = watchPairs([{ from_airport: "ORD", to_airport: "SAN" }], coords);
+  const seen = mergeSeen([ordSeen, sanSeen]);
+  const [o1, o2] = ordSeen.filter((s) => !s.ground);
+  const s1 = sanSeen.find((s) => !s.ground)!;
+  const route = (cs: string, origin: string, destination: string): Route =>
+    ({ callsign: cs, origin, destination, airline: "Test Air", flight: null, found: true, fetched_at: new Date(NOW).toISOString() });
+  const routes = new Map([[o1.callsign, route(o1.callsign, "ORD", "SAN")], [o2.callsign, route(o2.callsign, "ORD", "SAN")], [s1.callsign, route(s1.callsign, "ORD", "SAN")], ["UAL1234", route("UAL1234", "EWR", "ORD")]]);
+  const plan = planBoard({ pairs, coords, seen, tracked: new Map(), routes, saved: [], now: NOW });
+  assert.deepEqual(new Set(plan.rows.map((r) => r.hex)), new Set([o1.hex, o2.hex, s1.hex]));
+  assert.ok(plan.rows.every((r) => r.pair_key === "ORD-SAN" && r.origin === "ORD" && r.destination === "SAN"));
+  assert.ok(plan.rows.every((r) => r.alt_ft === null || r.alt_ft % 1000 === 0));
+  assert.ok(plan.rows.every((r) => r.progress_pct !== null && r.progress_pct % 5 === 0));
+  assert.ok(plan.rows.find((r) => r.hex === s1.hex)!.progress_pct! >= 75); // within 100 nm of SAN on a 1,500 nm route
+  assert.deepEqual(plan.counts.get("ORD-SAN"), { flights: 3, tracked: 0 });
+
+  // Saved, then the same minute again: nothing to write.
+  const saved: SavedTripFlight[] = plan.rows.map((r) => ({ ...r, updated_at: new Date(NOW).toISOString() }));
+  const again = planBoard({ pairs, coords, seen, tracked: new Map(), routes, saved, now: NOW + 30_000 });
+  const d = diffRows<TripFlightRow, "pair_key" | "hex">(saved, again.rows, TRIP_KEY, TRIP_FIELDS, { deleteMissing: false });
+  assert.equal(d.upserts.length, 0);
+  assert.equal(again.deletes.length, 0);
+
+  // o1 has left both circles: found by hex mid-route → en route, counted as tracked. o2 is seen nowhere: kept
+  // for 10 minutes, then dropped.
+  const away = new Map([...seen].filter(([h]) => h !== o1.hex && h !== o2.hex));
+  assert.deepEqual(trackHexes(saved, new Set(away.keys()), pairs).sort(), [o1.hex, o2.hex].sort());
+  const mid = new Map([[o1.hex, { ...o1, lat: 37.5, lon: -103, alt: 36_000, rate: 0 }]]);
+  const later = planBoard({ pairs, coords, seen: away, tracked: mid, routes, saved, now: NOW + 5 * 60_000 });
+  assert.equal(later.rows.find((r) => r.hex === o1.hex)?.phase, "en_route");
+  assert.ok(later.rows.some((r) => r.hex === o2.hex));
+  assert.equal(later.counts.get("ORD-SAN")?.tracked, 1);
+  const muchLater = planBoard({ pairs, coords, seen: away, tracked: new Map(), routes, saved, now: NOW + 11 * 60_000 });
+  assert.deepEqual(muchLater.deletes.map((x) => x.hex).sort(), [o1.hex, o2.hex].sort());
+
+  // A pair nobody plans any more: its rows go.
+  const none = planBoard({ pairs: [], coords, seen, tracked: new Map(), routes, saved, now: NOW });
+  assert.equal(none.deletes.length, saved.length);
+});
+
+// A flight that lands stays a few minutes as "landed", then goes, and a plane already parked isn't added.
+test("planBoard: landed flights linger 5 minutes, and parked ones never join", () => {
+  const pairs = watchPairs([{ from_airport: "ORD", to_airport: "SAN" }], coords);
+  const parked = { hex: "abc123", callsign: "UAL9", type: "B738", lat: 32.734, lon: -117.19, alt: null, ground: true, rate: null, near: "SAN", dist: 0 };
+  const routes = new Map<string, Route>([["UAL9", { callsign: "UAL9", origin: "ORD", destination: "SAN", airline: null, flight: "UA 9", found: true, fetched_at: new Date(NOW).toISOString() }]]);
+  const seen = new Map([[parked.hex, parked]]);
+  assert.equal(planBoard({ pairs, coords, seen, tracked: new Map(), routes, saved: [], now: NOW }).rows.length, 0);
+  const row: SavedTripFlight = { pair_key: "ORD-SAN", hex: "abc123", callsign: "UAL9", flight: "UA 9", airline: "United", aircraft_type: "B738", origin: "ORD", destination: "SAN", phase: "landed", alt_ft: 0, progress_pct: 100, updated_at: new Date(NOW).toISOString() };
+  assert.equal(planBoard({ pairs, coords, seen, tracked: new Map(), routes, saved: [row], now: NOW + 2 * 60_000 }).rows.length, 1);
+  const gone = planBoard({ pairs, coords, seen, tracked: new Map(), routes, saved: [row], now: NOW + 6 * 60_000 });
+  assert.equal(gone.rows.length, 0);
+  assert.deepEqual(gone.deletes, [{ pair_key: "ORD-SAN", hex: "abc123" }]);
+});
+
+test("pairAirlines: short names, most flights first", () => {
+  assert.deepEqual(pairAirlines([
+    { callsign: "UAL1", airline: "United Airlines", found: true }, { callsign: "UAL2", airline: "United Airlines", found: true },
+    { callsign: "ASA3", airline: "Alaska Airlines", found: true }, { callsign: "QQQ1", airline: "Q Air", found: true }, { callsign: "AAL9", airline: null, found: false },
+  ]), ["United", "Alaska", "Q Air"]);
 });
 
 /** A fake clock: sleep advances time instantly and records each wait. */
@@ -168,25 +203,24 @@ function fakeClock(): Clock & { waits: number[] } {
 }
 const http = (status: number) => Object.assign(new Error(`HTTP ${status}`), { status });
 const describe = (e: unknown) => String((e as { status?: number }).status ?? "error");
-const ORD = { lat: 41.9786, lon: -87.9048 };
 
 // The fallback decision: adsb.lol first; adsb.fi only when adsb.lol fails (429 or anything else); both failing is a
-// failure that names both reasons (the worker then keeps that airport's rows).
+// failure that names both reasons. The circle is now 100 nm.
 test("fetchFirst: adsb.lol answers → adsb.fi is never called", async () => {
   const calls: string[] = [];
   const got = await fetchFirst(ORD, async (u) => { calls.push(u); return { ac: [] }; }, spacersFor(fakeClock()), describe);
   assert.equal(got.ok && got.source, "lol");
   assert.equal(calls.length, 1);
-  assert.match(calls[0], /api\.adsb\.lol\/v2\/point\/41\.9786\/-87\.9048\/15$/);
+  assert.match(calls[0], /api\.adsb\.lol\/v2\/point\/41\.9786\/-87\.9048\/100$/);
+  assert.equal(hexUrl.lol(["a1b2c3", "ad9ac9"]), "https://api.adsb.lol/v2/hex/a1b2c3,ad9ac9");
 });
 
 test("fetchFirst: adsb.lol 429 → the same airport from adsb.fi", async () => {
   const calls: string[] = [];
   const got = await fetchFirst(ORD, async (u) => { calls.push(u); if (u.includes("adsb.lol")) throw http(429); return { aircraft: [] }; }, spacersFor(fakeClock()), describe);
-  assert.ok(got.ok);
   assert.equal(got.ok && got.source, "fi");
   assert.deepEqual(got.tried, ["lol 429"]);
-  assert.match(calls[1], /opendata\.adsb\.fi\/api\/v2\/lat\/41\.9786\/lon\/-87\.9048\/dist\/15$/);
+  assert.match(calls[1], /opendata\.adsb\.fi\/api\/v2\/lat\/41\.9786\/lon\/-87\.9048\/dist\/100$/);
 });
 
 test("fetchFirst: any adsb.lol error falls back; both failing reports both", async () => {
@@ -194,17 +228,23 @@ test("fetchFirst: any adsb.lol error falls back; both failing reports both", asy
   assert.deepEqual(both, { ok: false, tried: ["lol 503", "fi 429"] });
 });
 
-// adsb.fi asks for at most one request a second: fallbacks from several airports in the same run (even two at once)
-// are queued at least 1.1 s apart; adsb.lol calls aren't held back.
+// adsb.fi asks for at most one request a second: fallbacks in the same run (even two at once) queue 1.1 s apart.
 test("adsb.fi calls in one run are spaced at least 1.1 s apart, even in parallel", async () => {
   const clock = fakeClock();
   const spacers = spacersFor(clock);
   const fiTimes: number[] = [];
   const fetcher = async (u: string) => { if (u.includes("adsb.lol")) throw http(429); fiTimes.push(clock.now()); return { aircraft: [] }; };
-  await Promise.all([fetchFirst(ORD, fetcher, spacers, describe), fetchFirst({ lat: 33.1, lon: -117.3 }, fetcher, spacers, describe)]);
+  await Promise.all([fetchFirst(ORD, fetcher, spacers, describe), fetchFirst(SAN, fetcher, spacers, describe)]);
   await fetchFirst(ORD, fetcher, spacers, describe);
   assert.equal(fiTimes.length, 3);
   for (let i = 1; i < fiTimes.length; i++) assert.ok(fiTimes[i] - fiTimes[i - 1] >= 1100, `gap ${fiTimes[i] - fiTimes[i - 1]}`);
   assert.equal(SOURCES.find((s) => s.id === "lol")?.minGapMs, 0);
   assert.ok(new Spacer(1100, clock) instanceof Spacer);
+});
+
+// adsb.fi's saved response (the `aircraft` list) still reads through the same parser.
+test("adsb.fi response: the `aircraft` list reads like adsb.lol's `ac`", () => {
+  const fi = fixture("adsbfi-ord.json");
+  assert.ok(aircraftList(fi).length >= 10);
+  assert.ok(seenAircraft(aircraftList(fi), "ORD", ORD).length >= 1);
 });
