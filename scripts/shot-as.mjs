@@ -13,7 +13,10 @@ const base = process.env.BASE ?? "http://localhost:3300";
 const width = +w;
 await clerkSetup({ publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, dotenv: false });
 const b = await chromium.launch({ headless: true });
-const ctx = await b.newContext({ viewport: { width, height: width < 600 ? 844 : 900 } });
+// GEO="lat,lon" grants geolocation at that point (for /clubhouse/flights).
+const geo = process.env.GEO?.split(",").map(Number);
+const ctx = await b.newContext({ viewport: { width, height: width < 600 ? 844 : 900 },
+  ...(geo ? { geolocation: { latitude: geo[0], longitude: geo[1] }, permissions: ["geolocation"] } : {}) });
 const page = await ctx.newPage();
 const errs = [];
 page.on("console", (m) => m.type() === "error" && errs.push(m.text().slice(0, 300)));
