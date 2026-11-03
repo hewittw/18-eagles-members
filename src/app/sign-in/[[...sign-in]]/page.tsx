@@ -14,7 +14,9 @@ export default function SignInPage() {
     >
       {/* Suspense: Clerk reads the request (cacheComponents is on). */}
       <Suspense fallback={<div className="h-[28rem] w-full max-w-[25rem]" aria-hidden="true" />}>
-        <SignIn fallbackRedirectUrl="/clubhouse" />
+        {/* Signing in always lands on the Clubhouse home, whatever page sent you here. A new golfer who signs up from
+            here goes through sign-up as before (to /clubhouse, which starts onboarding). */}
+        <SignIn forceRedirectUrl="/clubhouse" signUpFallbackRedirectUrl="/clubhouse" />
       </Suspense>
     </MembersEntrance>
   );

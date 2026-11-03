@@ -20,6 +20,7 @@ import { TrophyCase } from "./TrophyCase";
 import { BagStep, focusHeading, HomeCourseStep, NameGate, setupStep, SetupSteps } from "./Onboarding";
 import { TeeOff } from "./TeeOff";
 import { CourseConditions } from "./Conditions";
+import { LiveDesk } from "./LiveDesk";
 
 const GOALS: { value: Goal; label: string }[] = [
   { value: "100", label: "Break 100" },
@@ -100,7 +101,7 @@ export function Clubhouse() {
         {step === 2 && <BagStep />}
 
         {step === 3 && <section aria-labelledby="tee-off" className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-14">
-          <div className="min-w-0">
+          <div className="flex min-w-0 flex-col">
             <SectionHeading
               id="tee-off"
               eyebrow={active ? "Not this one?" : last ? "Coming back" : "Your first round · you're set"}
@@ -135,6 +136,7 @@ export function Clubhouse() {
               <li><ActionTile href="/clubhouse/courses" icon="map" title="Choose another course" detail={`${courses.length} courses`} /></li>
               <li><ActionTile href="/clubhouse/rounds/new" icon="pencil" title="Log a past round" detail="Already played it" /></li>
             </ul>
+            <LiveDesk className="mt-6 lg:flex-1" />
           </div>
           <div className="grid min-w-0 content-start gap-6">
             <CoursePlate course={teeCourse} />
