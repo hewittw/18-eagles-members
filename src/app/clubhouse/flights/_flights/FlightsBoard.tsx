@@ -411,8 +411,6 @@ function AirportSearch({ onPick, picked }: { onPick: (a: Airport) => void; picke
   const db = useSupabaseBrowser();
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState<Search>({ q: "", state: "idle", results: [] });
-  const input = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (!picked) input.current?.focus(); }, [picked]);
 
   useEffect(() => {
     const q = query.trim();
@@ -431,7 +429,7 @@ function AirportSearch({ onPick, picked }: { onPick: (a: Airport) => void; picke
   return (
     <div className="grid max-w-2xl gap-3">
       <Field label="Find an airport" hint="A code, a city, or a name: SAN, Monterey, Heathrow.">
-        {(a) => <TextInput {...a} ref={input} type="search" autoComplete="off" spellCheck={false} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Airport code, city or name" />}
+        {(a) => <TextInput {...a} type="search" autoComplete="off" spellCheck={false} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Airport code, city or name" />}
       </Field>
       <p className="sr-only" aria-live="polite">
         {view.state === "done" ? (view.results.length ? `${view.results.length} airport${view.results.length === 1 ? "" : "s"} found.` : "No airports found.") : ""}
@@ -501,7 +499,7 @@ function BoardBody({ board, from, to, out, back }: { board: TripBoard; from: Air
   if (!out.length && !back.length) {
     return (
       <ApiState kind="empty" title={`No flights between ${from.code} and ${to.code} in the air right now`}>
-        {board.airlines.length ? `${listOf(board.airlines)} fly this route; check back soon.` : "Check back soon; the board fills in by itself."}
+        {board.airlines.length ? `${listOf(board.airlines)} ${board.airlines.length === 1 ? "flies" : "fly"} this route; check back soon.` : "Check back soon; the board fills in by itself."}
       </ApiState>
     );
   }

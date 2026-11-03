@@ -176,3 +176,64 @@ test("golfer-a can't read, delete, or forge golfer-b's followed airports", async
     await b.page.context().close();
   }
 });
+
+// ───────── A5: trips ─────────
+// One trip per golfer (user_id is the primary key). golfer-b's real trip is left as it was: if b has none, the test
+// makes one and removes it at the end. golfer-a must not read it, change it, delete it, or write one in b's name.
+test("golfer-a can't read, change, delete, or forge golfer-b's trip", async ({ browser, request }) => {
+  type TripRow = { user_id: string; from_airport: string; to_airport: string; dest_label: string | null };
+  const b = await golferToken(browser, "golfer-b");
+  const cols = "user_id,from_airport,to_airport,dest_label";
+  const own = async (token: string) => (await (await request.get(rest(`trips?select=${cols}`), { headers: headers(token) })).json()) as TripRow[];
+
+  let bTrip = (await own(b.token))[0];
+  const made = !bTrip;
+  if (made) {
+    // 1. golfer-b plans a trip (user_id comes from b's token).
+    const add = await request.post(rest("trips"), {
+      headers: headers(b.token, { "Content-Type": "application/json", Prefer: "return=representation" }),
+      data: { from_airport: "ORD", to_airport: "SAN", dest_label: "RLS test" },
+    });
+    expect(add.status(), "golfer-b should be able to plan a trip").toBe(201);
+    bTrip = ((await add.json()) as TripRow[])[0];
+  }
+
+  const a = await golferToken(browser, "golfer-a");
+  try {
+    // 2. golfer-a reads every trip RLS allows: only their own.
+    const rows = await own(a.token);
+    expect(rows.filter((r) => r.user_id === b.userId), "golfer-a must NOT see golfer-b's trip").toEqual([]);
+    expect(rows.every((r) => r.user_id === a.userId), "every trip golfer-a sees is golfer-a's own").toBe(true);
+
+    // 3. golfer-a tries to change b's trip: RLS hides the row, so nothing is updated.
+    const upd = await request.patch(rest(`trips?user_id=eq.${b.userId}`), {
+      headers: headers(a.token, { "Content-Type": "application/json", Prefer: "return=representation" }),
+      data: { to_airport: "LAX", dest_label: "Hijacked" },
+    });
+    expect(upd.ok() ? await upd.json() : [], "golfer-a's update must change nothing").toEqual([]);
+
+    // 4. golfer-a tries to delete it: nothing is deleted.
+    const del = await request.delete(rest(`trips?user_id=eq.${b.userId}`), { headers: headers(a.token, { Prefer: "return=representation" }) });
+    expect(await del.json(), "golfer-a's delete must remove nothing").toEqual([]);
+
+    // 5. golfer-a tries to write a trip in b's name, as an insert and as an upsert: both refused.
+    for (const prefer of ["return=minimal", "resolution=merge-duplicates,return=minimal"]) {
+      const forged = await request.post(rest("trips?on_conflict=user_id"), {
+        headers: headers(a.token, { "Content-Type": "application/json", Prefer: prefer }),
+        data: { user_id: b.userId, from_airport: "JFK", to_airport: "LAX", dest_label: "Forged" },
+      });
+      expect(forged.ok(), `forged write (${prefer}) returned ${forged.status()}`).toBe(false);
+    }
+
+    // 6. golfer-b's trip is exactly as it was.
+    expect(await own(b.token), "golfer-b's trip is untouched").toEqual([bTrip]);
+
+    // 7. Signed out: nothing.
+    const anon = await request.get(rest("trips?select=user_id"), { headers: headers() });
+    expect(anon.ok() ? await anon.json() : [], `anon read returned ${anon.status()}`).toEqual([]);
+  } finally {
+    if (made) await request.delete(rest("trips?dest_label=eq.RLS%20test"), { headers: headers(b.token) });
+    await a.page.context().close();
+    await b.page.context().close();
+  }
+});
