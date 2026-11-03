@@ -97,7 +97,7 @@ flowchart TD
 
 Two live pages under `/clubhouse`, fed by workers on Supabase: **Tour** (the PGA TOUR leaderboard from ESPN and the
 world ranking from OWGR) and the **Pro Shop** (what six golf brands have on sale, from each brand's own public store
-feed). Each golfer picks what they follow or watch, and the page updates without a refresh. The Pro Shop replaced
+feed). Each golfer picks which tour players they follow, and both pages update without a refresh. The Pro Shop replaced
 **Flights** on 2026-11-02 (README, "Pivot: Flights → Pro Shop"); `/clubhouse/flights` now redirects to it. The
 backend chart, as planned, as built, and after the pivot, is in `docs/data-flow.md`.
 
@@ -126,28 +126,18 @@ flowchart TD
   T9 -- "Unfollow" --> U1["Removed · Undo"]
 ```
 
-### 5 · Watch a category and see new deals live
+### 5 · Browse the Pro Shop and see markdowns arrive live
 ```mermaid
 flowchart TD
-  S0([Open /clubhouse/shop]) --> S1["Checking for the latest…<br/>band: on sale · brands · deepest cut<br/>Your watch list · On sale now"]
+  S0([Open /clubhouse/shop]) --> S1["Checking for the latest…<br/>the freshness line · On sale now"]
   S1 --> S2{"Anything on sale?"}
   S2 -- "No" --> S3["Nothing on sale right now<br/>We check every five minutes;<br/>the first one appears on its own"]
   S2 -- "Read failed" --> E0["We couldn't read the shop<br/>Reload in a moment"]
-  S2 -- "Yes" --> S4{"Watching anything yet?"}
-  S4 -- "No" --> S5["Nothing watched yet<br/>Pick a category above<br/>On sale now: every card, deepest cut first"]
-  S5 --> S6["Press a chip: Balls 10<br/>it flips at once"]
-  S4 -- "Yes" --> S9
-  S6 --> V1{"Saved?<br/>Server Action · Clerk token · RLS · limit trigger"}
-  V1 -- "A 5th category" --> E1["Toast: You're watching 4 categories, the most we keep.<br/>Stop watching one to add another. The chip flips back."]
-  V1 -- "Network or database error" --> E2["Toast: Couldn't watch Balls. Check your connection."]
-  V1 -- "Yes" --> S9["Your watch list, first<br/>a card per deal: brand · name · −12% tile<br/>$69 and the struck $78 · In stock or Sold out"]
-  S9 --> S10{"Deals in that category?"}
-  S10 -- "None" --> S11["Nothing in Other on sale right now<br/>the first markdown appears here, at the top"]
-  S10 -- "Yes" --> S12["A brand marks one down, drops a price, or sells out<br/>(the worker's next 5-minute run)<br/>the card arrives or changes and washes Fairway Tint once<br/>a screen reader hears: Price drop, now $19"]
-  S9 --> S13["Everything else on sale<br/>category chips: All · Apparel · Hats …"]
+  S2 -- "Yes" --> S9["On sale now, one board for everyone<br/>a card per deal: brand · name · −12% tile<br/>$69 and the struck $78 · In stock or Sold out"]
+  S9 --> S13["Category chips: All · Apparel · Hats …"]
   S13 -- "A chip with nothing in it" --> S14["Nothing in Hats on sale right now<br/>Show every category"]
   S9 -- "A card" --> S15["The brand's own product page<br/>in a new tab"]
-  S9 -- "Press a watched chip" --> U1["Stopped watching Balls · Undo"]
+  S9 --> S12["A brand marks one down, drops a price, or sells out<br/>(the worker's next 5-minute run)<br/>the card arrives or changes and washes Fairway Tint once<br/>a screen reader hears: Price drop, now $19"]
   S12 --> F1{"The freshness line"}
   F1 -- "fresh" --> F2["Updated 4 minutes ago"]
   F1 -- "stale" --> F3["Last updated 20 minutes ago.<br/>Waiting for the next update."]

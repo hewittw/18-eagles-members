@@ -586,3 +586,12 @@ Evidence and contact sheets: `screenshots/a5/review/` (gitignored).
   `getToken({ skipCache: true })`). After: 8 minutes, a token refresh on schedule, no expiry, the 04:50 and 04:55 runs
   both pushed to the page. Rejected: rejoining channels after a close (it would hide the cause and still drop changes
   in the gap).
+
+## 2026-11-03 · The Pro Shop, simplified: one live board
+- **The user asked to simplify the shop.** "Your watch list" and its category chips are gone, and so are the band's
+  three numbers (On sale / Brands / Deepest cut). The page is now one shared board, "On sale now", with one row of
+  category filters and only the freshness line in its header.
+- **Why it's enough:** the assignment's per-user choice (Clerk + RLS) is already met on Tour by `followed_players`; a
+  second list on the shop added little.
+- **Kept, unused:** the `watched_categories` table, its trigger and RLS stay in the database (dropping it is
+  destructive and needs the user); the page no longer reads or writes it. The RLS test still covers it.

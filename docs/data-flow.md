@@ -167,7 +167,7 @@ keep `worker_runs` to 2 days and `cron.job_run_details` to 1 day.
 Flights was too complicated and too often wrong: free flight data is raw positions only, routes needed licensed or
 brittle sources (adsbdb's terms ruled out caching; adsb.im guesses multi-stop routes), and adsb.lol rate-limited
 Supabase's shared egress. The second live page is now the **Pro Shop**: what six golf brands have on sale, from each
-brand's public Shopify feed, with the categories a golfer watches first. Slickdeals was considered first and ruled out
+brand's public Shopify feed, on one shared board with category filters. Slickdeals was considered first and ruled out
 by its robots.txt and terms (README, "Pivot: Flights → Pro Shop"; per-store terms notes in `docs/credits.md`).
 The pattern is unchanged: Cron → worker → only what changed → Realtime → the open page.
 
@@ -185,12 +185,12 @@ flowchart TB
     DEALS["poll-deals<br/>Edge Function<br/>secret → 6 stores, 1.5 s apart →<br/>on sale ≥ 5 % → categorise → diffRows"]
     SHARED[("Shared tables<br/>tour_events · tour_leaderboard<br/>tour_rankings · shop_deals<br/>worker_runs")]
     RT["Realtime<br/>supabase_realtime<br/>RLS per subscriber"]
-    MINE[("Per-golfer tables<br/>followed_players ≤ 20<br/>watched_categories ≤ 4<br/>RLS: sub = user_id")]
+    MINE[("Per-golfer table<br/>followed_players ≤ 20<br/>RLS: sub = user_id<br/>(watched_categories kept, unused)")]
   end
   subgraph Vercel["Vercel · Next.js · branch live-data"]
     direction LR
     TP["/clubhouse/tour"]
-    SP["/clubhouse/shop<br/>watch list first"]
+    SP["/clubhouse/shop<br/>On sale now · category chips"]
     SA["Server Actions<br/>follow-actions.ts"]
   end
   CDN["cdn.shopify.com<br/>product photos, 480 px"]
@@ -208,7 +208,6 @@ flowchart TB
   RT -->|"source=eq.deals<br/>shop_deals *"| SP
   CDN -.->|"img, lazy"| SP
   TP -->|follow| SA
-  SP -->|"watch / unwatch"| SA
   CLERK -->|getToken| SA
   SA -->|"publishable key<br/>+ Clerk token"| MINE
 ```
@@ -218,8 +217,8 @@ flowchart TB
 |---|---|---|
 | `poll-flights` every 30 s: adsb.lol (adsb.fi fallback) + adsb.im routes, ≤ 9 calls a run | `poll-deals` every 5 min: one GET per store, six stores, 1.5 s apart | Sales change over hours, not seconds; one polite request per store is enough, and no source rate-limits us. |
 | `trip_flights`, `trip_pairs`, `callsign_routes` | `shop_deals` (id `brand:product`, title, category, price, was_price, pct_off, available, image, url, first_seen_at) | One small table (~140 rows), coarsened so a store re-saving a product isn't a change. |
-| `trips` (one per golfer), `followed_airports` | `watched_categories` (≤ 4 of 6, before-insert trigger), the hw4 RLS convention | "Watch Balls" is the golfer's whole choice; less is more. |
-| The flights page, geolocation, airport suggestions | `/clubhouse/shop`: a watch list, then everything else with category chips; `/clubhouse/flights` redirects | The user: Flights was "too complicated and isn't working very well." |
+| `trips` (one per golfer), `followed_airports` | Nothing per golfer on the shop. `watched_categories` (≤ 4 of 6, before-insert trigger, the hw4 RLS convention) was built, then dropped from the page; the table is kept, unused | The user asked to simplify the shop; per-golfer follows are already met on Tour (`followed_players`). |
+| The flights page, geolocation, airport suggestions | `/clubhouse/shop`: one shared board, "On sale now", with category chips and only the freshness line in the header; `/clubhouse/flights` redirects | The user: Flights was "too complicated and isn't working very well." |
 | Flights tables in the Realtime publication, cron `poll-flights` | Both removed by `20261102170000_stop_flights.sql`; the tables, rows and the deployed function stay | Nothing destructive without the user. |
 | `worker_runs.source` in (tour, rankings, flights) | plus `deals` | One freshness line per source. |
 | A failed run = down | A Pro Shop run is ok if any store answered; the failed ones keep their rows and are named in `detail` | One store's outage shouldn't blank the other five, or call the whole shop down. |

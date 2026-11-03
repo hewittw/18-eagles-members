@@ -43,7 +43,7 @@ export default function Flows() {
   const pick = (word: string) => a5Flows.find((f) => f.title.includes(word));
   const a5 = [
     { title: "The system, as built", code: asBuilt, note: "Drawn before any code in docs/data-flow.md, redrawn from the code once it ran, and redrawn again when the Pro Shop replaced Flights. The tables of what changed, and why, are in the same file.", src: "/flows/system/flow-3.svg" },
-    pick("Trace"), pick("Freshness"), pick("tour player"), pick("Watch a category"),
+    pick("Trace"), pick("Freshness"), pick("tour player"), pick("Browse the Pro Shop"),
   ].filter((d): d is NonNullable<typeof d> => !!d && !!d.code).map((d) => ({ ...d, size: svgSize(d.src) }));
 
   return (

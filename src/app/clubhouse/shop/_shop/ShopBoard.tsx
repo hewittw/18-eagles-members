@@ -1,24 +1,20 @@
 "use client";
 // /clubhouse/shop: the Pro Shop. What six golf brands have marked down right now, read from their own public store
 // feeds by our worker (supabase/functions/poll-deals), saved in shop_deals, and pushed here by Realtime: a new sale,
-// a price drop, selling out. The categories a golfer watches come first ("Your watch list"); everything else is below,
-// with one row of category chips. Kept deliberately plain: a grid of cards, each a link to the brand's own page.
+// a price drop, selling out. Every deal is in one grid, with one row of category chips to narrow it. Kept deliberately plain: a grid of cards, each a link to the brand's own page.
 import { useMemo, useState, type ReactNode } from "react";
 import { ApiState, Freshness, LivePauseNotice, PageHeader, PhotoBand } from "@/components/golf";
 import { Button, cx, SectionHeading, ToggleChip } from "@/components/ui";
 import { useSupabaseBrowser } from "@/lib/live/browser";
-import { MAX_CATEGORIES } from "@/lib/live/limits";
 import { BRANDS, brandName, CATEGORIES, categoryLabel, type CategoryId } from "@/lib/live/shop";
 import { useFlash } from "@/lib/live/useFlash";
 import { useNow } from "@/lib/live/useNow";
 import { useWorkerHealth, type WorkerHealth } from "@/lib/live/useWorkerHealth";
 import { Page } from "../../_components/Placeholder";
-import { useShopLive, type Deal, type ShopLive } from "./useShopLive";
-import { useWatched, type WatchedState } from "./useWatched";
+import { useShopLive, type Deal, type DealChange, type ShopLive } from "./useShopLive";
 
 /** The worker's schedule (supabase/migrations/20261102170300_cron_deals.sql): fresh = a good run within 15 minutes. */
 const EVERY_SEC = 300;
-const WATCH_PREVIEW = 8;
 const REST_PREVIEW = 24;
 // The band's photo: Winged Foot's gate, "Members and Guests Only" (docs/credits.md, Winged Foot g1.jpg).
 const BAND_PHOTO = { src: "/courses/winged-foot-west/graded/g1.jpg", credit: "Anthony22, CC BY-SA 3.0" };
@@ -27,12 +23,16 @@ const BAND_PHOTO = { src: "/courses/winged-foot-west/graded/g1.jpg", credit: "An
 const order = (a: Deal, b: Deal) =>
   Number(b.available) - Number(a.available) || b.pct_off - a.pct_off || Number(a.price) - Number(b.price) || a.title.localeCompare(b.title);
 
+/** "a, b and c" */
+const andList = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+// The section's lede, from the catalog: every category but "Other", every brand by its short name ("Good Good Golf" → "Good Good").
+const SHOP_LEDE = `Markdowns on ${andList(CATEGORIES.filter((c) => c.id !== "other").map((c) => c.label.toLowerCase()))}, straight from each brand’s own store: ${andList(BRANDS.map((b) => b.name.replace(/ Golf$/, "")))}.`;
+
 export function ShopBoard() {
   const db = useSupabaseBrowser();
   // Freshness first: it subscribes to worker_runs before the deals' snapshot is read.
   const health = useWorkerHealth("deals", EVERY_SEC);
   const live = useShopLive(db);
-  const watched = useWatched(db);
 
   const sorted = useMemo(() => [...live.deals].sort(order), [live.deals]);
   const counts = useMemo(() => {
@@ -52,15 +52,14 @@ export function ShopBoard() {
             className="bg-transparent"
             eyebrow="Members’ pro shop"
             title="Pro Shop"
-            lede={`On sale now from golf brands’ own stores. Watch up to ${MAX_CATEGORIES} categories and they come first; new markdowns appear as they’re posted.`}
+            lede={`On sale now from golf brands’ own stores. New markdowns appear as they’re posted.`}
           />
-          <ShopSummary live={live} health={health} />
+          <ShopSummary health={health} />
         </div>
       </PhotoBand>
+      <Announcer change={live.lastChange} />
       <Page className="grid gap-12 md:gap-16">
-        <WatchList live={live} watched={watched} sorted={sorted} counts={counts} isNew={isNew} />
-        <TheRest live={live} watched={watched} sorted={sorted} counts={counts} isNew={isNew} health={health} />
-        <WatchAnnouncer live={live} watched={watched} />
+        <TheRest live={live} sorted={sorted} counts={counts} isNew={isNew} />
 
         <p className="max-w-measure text-[0.85rem] leading-relaxed text-ink-2">
           Sale prices and stock from each brand&rsquo;s own public store:{" "}
@@ -83,119 +82,25 @@ export function ShopBoard() {
 
 // ───────── The band's summary ─────────
 
-function ShopSummary({ live, health }: { live: ShopLive; health: WorkerHealth }) {
-  const n = live.deals.length;
-  const brands = new Set(live.deals.map((d) => d.brand)).size;
-  const deepest = live.deals.reduce((m, d) => Math.max(m, d.pct_off), 0);
+/** Just the freshness line, under a brass rule: the counts live with the cards below. */
+function ShopSummary({ health }: { health: WorkerHealth }) {
   return (
-    <div className="mt-8 grid gap-4 border-t border-gold/35 pt-5 md:mt-10">
-      {live.load === "loading" ? (
-        <ApiState kind="loading" tone="green" shape="line" label="Loading what's on sale" />
-      ) : n ? (
-        <dl className="flex flex-wrap gap-x-10 gap-y-4">
-          <Stat label="On sale" value={String(n)} />
-          <Stat label="Brands" value={`${brands} of ${BRANDS.length}`} />
-          <Stat label="Deepest cut" value={<><span aria-hidden="true">−</span>{deepest}%<span className="sr-only"> off</span></>} />
-        </dl>
-      ) : null}
+    <div className="mt-6 border-t border-gold/35 pt-4 md:mt-8">
       <Freshness health={health} what="The Pro Shop" tone="green" />
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <dt className="caps text-label text-gold">{label}</dt>
-      <dd className="mt-1 font-numeral text-[1.9rem] font-semibold leading-none tabular-nums text-on-green">{value}</dd>
-    </div>
-  );
-}
-
-// ───────── Your watch list ─────────
-
-type SectionProps = { live: ShopLive; watched: WatchedState; sorted: Deal[]; counts: Map<CategoryId, number>; isNew: (d: Deal) => boolean };
-
-function WatchList({ live, watched, sorted, counts, isNew }: SectionProps) {
-  const [all, setAll] = useState(false);
-  const list = watched.list;
-  const n = list?.length ?? 0;
-  const mine = useMemo(() => (list ? sorted.filter((d) => list.includes(d.category)) : []), [sorted, list]);
-  const empty = list?.filter((c) => !counts.get(c)) ?? [];
-  const shown = all ? mine : mine.slice(0, WATCH_PREVIEW);
-
-  let body: ReactNode;
-  if (!list || live.load === "loading") body = <ApiState kind="loading" shape="list" label="Loading your watch list" />;
-  else if (n === 0) {
-    body = (
-      <ApiState kind="empty" title="Nothing watched yet">
-        Pick a category above (Balls, say, or Training aids). Its markdowns will sit here first, and a new one shows up
-        while you&rsquo;re looking.
-      </ApiState>
-    );
-  } else if (live.load === "error" && !live.deals.length) {
-    body = <ApiState kind="down" title="We couldn’t read the shop">Reload the page in a moment. Your watch list is saved.</ApiState>;
-  } else {
-    body = (
-      <div className="grid gap-5">
-        {mine.length > 0 && <DealGrid deals={shown} live={live} isNew={isNew} label="Deals in your watched categories" />}
-        {empty.map((c) => (
-          <ApiState key={c} kind="empty" title={`Nothing in ${categoryLabel(c)} on sale right now`}>
-            The moment one of the {BRANDS.length} brands marks one down, it appears here, at the top.
-          </ApiState>
-        ))}
-        {mine.length > WATCH_PREVIEW && (
-          <div>
-            <Button variant="secondary" size="sm" aria-expanded={all} onClick={() => setAll((v) => !v)}>
-              {all ? `Show the first ${WATCH_PREVIEW}` : `Show all ${mine.length}`}
-            </Button>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <section aria-labelledby="watch-h" className="grid gap-5">
-      <SectionHeading
-        id="watch-h"
-        eyebrow="Watched"
-        title="Your watch list"
-        action={list ? <p className="font-numeral text-[1.05rem] font-medium tabular-nums text-ink-2">{n} of {MAX_CATEGORIES} categories</p> : undefined}
-      />
-      <div role="group" aria-labelledby="watch-chips-label" className="grid gap-2.5">
-        <p id="watch-chips-label" className="caps text-label text-ink-2">Watch a category</p>
-        <ul className="flex flex-wrap gap-2">
-          {CATEGORIES.map((c) => {
-            const on = watched.isWatching(c.id);
-            return (
-              <li key={c.id}>
-                <ToggleChip pressed={on} onPressedChange={() => watched.toggle(c.id)} aria-busy={watched.busy.has(c.id) || undefined} disabled={!list}>
-                  {c.label}{" "}
-                  <span className={cx("font-numeral tabular-nums", on ? "text-on-green/85" : "text-ink-2")}>
-                    <span className="sr-only">, </span>{counts.get(c.id) ?? 0}<span className="sr-only"> on sale</span>
-                  </span>
-                </ToggleChip>
-              </li>
-            );
-          })}
-        </ul>
-        {watched.error && <p className="text-[0.95rem] text-error" role="status">{watched.error}</p>}
-      </div>
-      {body}
-    </section>
-  );
-}
+type SectionProps = { live: ShopLive; sorted: Deal[]; counts: Map<CategoryId, number>; isNew: (d: Deal) => boolean };
 
 // ───────── Everything else ─────────
 
-function TheRest({ live, watched, sorted, counts, isNew, health }: SectionProps & { health: WorkerHealth }) {
+function TheRest({ live, sorted, counts, isNew }: SectionProps) {
   const [pick, setPick] = useState<CategoryId | null>(null);
   const [all, setAll] = useState(false);
-  const list = watched.list ?? [];
-  const cats = CATEGORIES.filter((c) => !list.includes(c.id));
-  const chosen = pick && cats.some((c) => c.id === pick) ? pick : null;
-  const rest = sorted.filter((d) => !list.includes(d.category));
+  const cats = CATEGORIES;
+  const chosen = pick;
+  const rest = sorted;
   const matched = chosen ? rest.filter((d) => d.category === chosen) : rest;
   const shown = all ? matched : matched.slice(0, REST_PREVIEW);
   const choose = (c: CategoryId | null) => { setPick(c); setAll(false); };
@@ -216,15 +121,15 @@ function TheRest({ live, watched, sorted, counts, isNew, health }: SectionProps 
     );
   } else if (!matched.length) {
     body = (
-      <ApiState kind="empty" title={chosen ? `Nothing in ${categoryLabel(chosen)} on sale right now` : "Everything on sale is on your watch list"}
-        action={chosen ? <Button size="sm" variant="secondary" onClick={() => choose(null)}>Show every category</Button> : undefined}>
-        {chosen ? "Watch it, and the first one marked down will sit at the top of your watch list." : "It’s all above."}
+      <ApiState kind="empty" title={`Nothing in ${chosen ? categoryLabel(chosen) : "this category"} on sale right now`}
+        action={<Button size="sm" variant="secondary" onClick={() => choose(null)}>Show every category</Button>}>
+        The moment one of the {BRANDS.length} brands marks one down, it appears here on its own.
       </ApiState>
     );
   } else {
     body = (
       <div className="grid gap-5">
-        <DealGrid deals={shown} live={live} isNew={isNew} label={chosen ? `${categoryLabel(chosen)} on sale` : "Everything else on sale"} />
+        <DealGrid deals={shown} live={live} isNew={isNew} label={chosen ? `${categoryLabel(chosen)} on sale` : "Everything on sale"} />
         {matched.length > REST_PREVIEW && (
           <div>
             <Button variant="secondary" size="sm" aria-expanded={all} onClick={() => setAll((v) => !v)}>
@@ -238,9 +143,8 @@ function TheRest({ live, watched, sorted, counts, isNew, health }: SectionProps 
 
   return (
     <section aria-labelledby="rest-h" className="grid content-start gap-5">
-      <SectionHeading id="rest-h" eyebrow="Every brand" title={list.length ? "Everything else on sale" : "On sale now"}
+      <SectionHeading id="rest-h" eyebrow="Every brand" title="On sale now" lede={SHOP_LEDE}
         action={live.deals.length ? <p role="status" className="font-numeral text-[1.05rem] font-medium tabular-nums text-ink-2">{matched.length} {matched.length === 1 ? "item" : "items"}</p> : undefined} />
-      <Freshness health={health} what="The Pro Shop" />
       {rest.length > 0 && cats.length > 1 && (
         <div role="group" aria-label="Show one category" className="flex flex-wrap gap-2">
           <ToggleChip pressed={!chosen} onPressedChange={() => choose(null)}>All <Count n={rest.length} on={!chosen} /></ToggleChip>
@@ -348,17 +252,11 @@ function useNewCheck(deals: Deal[]) {
   };
 }
 
-/** One polite announcement when something in a watched category changes (never the clock, never other categories). */
-function WatchAnnouncer({ live, watched }: { live: ShopLive; watched: WatchedState }) {
-  const c = live.lastChange;
-  let msg = "";
-  if (c && watched.isWatching(c.after.category)) {
-    const a = c.after;
-    const what = `${a.title} from ${brandName(a.brand)}`;
-    if (c.kind === "new") msg = `New in ${categoryLabel(a.category)}: ${what}, ${usd(a.price)}, ${a.pct_off}% off.`;
-    else if (c.kind === "cheaper") msg = `Price drop: ${what}, now ${usd(a.price)}.`;
-    else if (c.kind === "sold-out") msg = `${what} just sold out.`;
-    else if (c.kind === "back") msg = `${what} is back in stock, ${usd(a.price)}.`;
-  }
-  return <p className="sr-only" aria-live="polite">{msg}</p>;
+/** Says a pushed change out loud (screen readers, polite): a new markdown, a price move, a sell-out. */
+const SAID: Record<DealChange["kind"], string | null> = {
+  new: "New markdown", cheaper: "Price drop", pricier: "Price up", "sold-out": "Sold out", back: "Back in stock", other: null,
+};
+function Announcer({ change }: { change: DealChange | null }) {
+  const what = change && SAID[change.kind];
+  return <p className="sr-only" aria-live="polite">{what ? `${what}: ${change.after.title}, $${change.after.price}.` : ""}</p>;
 }

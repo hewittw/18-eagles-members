@@ -125,8 +125,9 @@ Ask these in order, then the four below.
 5. *Why `verify_jwt = false`?* Cron has no user. The Vault secret is the check instead, so no key sits in the cron SQL.
 6. *Why drop the image's `?v=` and not store `updated_at`?* Shopify bumps both whenever a store re-saves a product, so
    every row would "change" every 5 minutes and push 138 messages to every open page for nothing.
-7. *Fifty golfers watch Balls. How many store requests?* Still six a run, one per store, shared by everyone: the worker
-   reads the stores, the pages read Supabase.
+7. *Fifty golfers open the Pro Shop. How many store requests?* Still six a run, one per store, shared by everyone: the
+   worker reads the stores, the pages read Supabase. The board is the same for everyone; per-golfer choices live on
+   Tour (`followed_players`). `watched_categories` is still in the database, unused since we simplified the shop.
 8. *One store is down. What does the page show?* Its cards stay as they were; the run is still ok and its detail names
    the store. Only if all six fail does the line say down.
 9. *Why not Slickdeals?* Its robots.txt disallows the RSS feed and its terms forbid showing its offers on another site
@@ -174,7 +175,7 @@ has its own mark and words, and a screen reader hears only when the state change
 ESPN and OWGR parses, the player key that joins them, the adaptive polling rules, the six stores' feeds (prices, stock,
 images, categories, the filters), and the diff: the same response twice writes nothing, and a price drop, a sell-out
 and an ended sale write exactly those rows. `npm run test:rls` proves one golfer can't see, delete or forge another's
-follows or watch list. In the logs, the Pro Shop's first run wrote 138 rows and every run since wrote 0, which is
+follows. In the logs, the Pro Shop's first run wrote 138 rows and every run since wrote 0, which is
 'only what changed' working. And the logs are where we found adsb.lol returning 429 to Supabase's servers, one of the
 reasons we retired Flights."
 

@@ -4,15 +4,15 @@
 
 18 Eagles now has two live pages. **Tour** shows this week's PGA TOUR leaderboard (ESPN) and the Official World Golf
 Ranking (OWGR), with the players you follow first. **Pro Shop** shows what six golf brands have marked down right now,
-read from each brand's own public store feed, with the categories you watch first. Workers on Supabase fetch each
+read from each brand's own public store feed, on one shared board with category filters. Workers on Supabase fetch each
 source on a schedule, save only what changed, and record every run. Supabase Realtime then pushes each change to the
 open pages, so they update without a refresh: a birdie on the leaderboard, a new markdown, a price drop, a sell-out.
-Each golfer chooses what they follow, and row-level security keeps those choices private.
+Each golfer chooses which players they follow, and row-level security keeps those choices private.
 
 - **Tour:** https://18-eagles-live.vercel.app/clubhouse/tour
 - **Pro Shop:** https://18-eagles-live.vercel.app/clubhouse/shop (the old `/clubhouse/flights` redirects here)
-- Sign in (any email; your follows and your watch list are private to you), follow a player or watch a category,
-  and leave the page open.
+- Sign in (any email; your follows are private to you), follow a player or open the Pro Shop, and leave the page
+  open.
 - Diagrams: [`docs/data-flow.md`](docs/data-flow.md) (the chart drawn before code, the one as built, and the pivot),
   [`flows.md`](flows.md) (user flows, freshness states, one update traced), also on the site's `/flows` page.
   Talking points for class: [`docs/talking-points.md`](docs/talking-points.md).
@@ -47,17 +47,18 @@ course you're playing). On 2026-11-02 we retired it and built the **Pro Shop** i
   passed: **Bad Birdie, Good Good Golf, Lag Shot, Malbon Golf, Seed Golf, SuperSpeed Golf**. The rest were left out,
   among them Snell, Vice, Sunday, Stitch, Seamus, LAB Golf, Bettinardi and Blue Tees. Most use Shopify's template
   terms ("spider, crawl, or scrape"), forbid automated access outright, or forbid republishing their material. Each store's note is in [`docs/credits.md`](docs/credits.md#pro-shop-brand-stores).
-- **Kept simple on purpose.** One page: your watch list (up to 4 categories) first, then everything else with one row
-  of category chips. Each card shows the markdown the way the hand-operated board shows a score under par: red
-  numerals on a white tile. It also shows the old price struck through, stock in words, and a link straight to the
-  brand's product page.
+- **Kept simple on purpose.** One shared board, "On sale now", with one row of category chips and only the freshness
+  line above it. It first had a per-golfer watch list (up to 4 categories) and three numbers in the header; the user
+  asked to simplify it, so both went (the `watched_categories` table is kept, unused). Each card shows the markdown
+  the way the hand-operated board shows a score under par: red numerals on a white tile. It also shows the old price
+  struck through, stock in words, and a link straight to the brand's product page.
 - **What stayed.** The flights tables, their rows, and the deployed `poll-flights` function are untouched (dropping
   them is destructive and needs the user). Only its cron job was unscheduled and its tables taken out of the Realtime
   publication (`supabase/migrations/20261102170000_stop_flights.sql`). The page, its components, the airport and trip
   client code, and their tests were removed from the app.
 
 ### The system
-![The system as built: ESPN and OWGR feed poll-tour, six brands' Shopify stores feed poll-deals, both run by Supabase Cron; they write changed rows to Postgres; Realtime pushes them to the Tour and Pro Shop pages on Vercel; follows and watches go through Server Actions with the Clerk token and RLS.](public/flows/system/flow-3.svg)
+![The system as built: ESPN and OWGR feed poll-tour, six brands' Shopify stores feed poll-deals, both run by Supabase Cron; they write changed rows to Postgres; Realtime pushes them to the Tour and Pro Shop pages on Vercel; Tour follows go through Server Actions with the Clerk token and RLS.](public/flows/system/flow-3.svg)
 
 ### How one change travels
 1. **Source.** Bad Birdie marks the Mauve Chalk hat down from $23 to $19. Its `/products.json` now says
@@ -76,7 +77,7 @@ course you're playing). On 2026-11-02 we retired it and built the **Pro Shop** i
 6. **Realtime to the browser.** For each open Pro Shop page, Realtime checks RLS as that golfer's Clerk token
    (select grant + select policy) and sends the row over the WebSocket.
 7. **Screen.** `useShopLive` puts the row into React state. The card washes Fairway Tint once (no motion under
-   reduced motion) and now reads −50 %. If you watch Hats, a polite live region says "Price drop: Active Bad Hat from
+   reduced motion) and now reads −50 %. A polite live region says "Price drop: Active Bad Hat from
    Bad Birdie, now $19." The `worker_runs` insert turns the freshness line to "Updated just now".
 
 ### Sources and how we stay under their limits
@@ -135,7 +136,7 @@ The page reads the latest `worker_runs` row for its source, then gets each new r
   (`SUPABASE_SECRET_KEYS`, or `SUPABASE_SERVICE_ROLE_KEY`). It isn't in the code, the repo, Vercel, or the Next.js
   app. The app uses the publishable key plus the golfer's Clerk token, in the browser (`src/lib/live/browser.ts`) and
   in Server Actions (`src/lib/server/follow-actions.ts`).
-- **Follows and watch lists are private.** `followed_players` and `watched_categories` (and the retired
+- **Follows are private.** `followed_players` (and the unused `watched_categories`, and the retired
   `followed_airports` and `trips`) have RLS on, with four policies requiring `(select auth.jwt())->>'sub' = user_id`.
   The limits (20 players, 4 categories) are before-insert triggers.
 - **Shared tables are read-only.** `tour_*`, `shop_deals` and `worker_runs`: RLS on, one select policy for
@@ -155,7 +156,8 @@ saved 2026-11-02) with Node's test runner. 49 tests pass today.
 | `deals.test.ts` | The six stores' saved feeds (`shopify-*-2026-11-02.json`; `body_html` dropped and full-price products trimmed to 15 per store, every kept record as served). Parse, field by field on one real hat: id `bad-birdie:<product id>`, $23 from $38 = 39 % off, in stock, the brand's product URL, the CDN image at 480 px. Only real sales (Malbon's full-price feed gives none; cents survive: $17.50); every row fits the table's checks; sold-out items stay, marked; subscriptions and duplicate "(Copy)" listings are filtered out (both are in the real feeds); only Shopify's CDN, no `?v=`; a malformed feed gives no rows. Categories: polos named after gear ("Divot Polo", "Tees Of Destiny Polo") stay apparel; real items from every category; "tee" vs "tees" vs "ball marker". The app's copy of the brands and categories matches the worker's. Diff: the same feeds twice → 0 upserts, 0 deletes; a database round-trip ("23.00") isn't a change; a price drop, a sell-out and an ended sale write exactly those rows, and a store re-saving everything (`updated_at`, image `?v=`) writes nothing. |
 
 `npm run test:rls` (Playwright, the Clerk test users) adds four tests to Assignment 4's: followed players, watched
-categories, and the retired followed airports and trips (the tables still hold rows, so they stay protected).
+categories (kept in the database, no longer used by the page), and the retired followed airports and trips (the
+tables still exist, so they stay protected).
 golfer-a can't see golfer-b's rows, change or delete them, or write one in golfer-b's name; a signed-out caller gets
 nothing. 7 passed on 2026-11-03.
 
