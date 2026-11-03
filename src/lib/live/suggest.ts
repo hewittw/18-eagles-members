@@ -7,7 +7,7 @@
 // And the other airports a golfer might mean (nearbyAlternatives): the rule picks one, the page offers up to two more.
 
 export type AirportKind = "large" | "medium";
-export type Placed = { code: string; kind: AirportKind; lat: number; lon: number };
+export type Placed = { code: string; kind: AirportKind; lat: number; lon: number; country?: string | null };
 export type Suggestion<T extends Placed> = { airport: T; miles: number };
 
 export const NEAR_MI = 75;
@@ -50,8 +50,11 @@ export function nearbyAlternatives<T extends Placed>(lat: number, lon: number, a
     const miles = haversineMi(lat, lon, a.lat, a.lon);
     if (miles <= NEAR_MI) out.push({ airport: a, miles });
   }
+  // Same country as the pick first (Rancho Santa Fe offers SNA before Tijuana), then large, then nearest.
+  const home = airports.find((a) => a.code === exclude)?.country ?? null;
+  const abroad = (s: Suggestion<T>) => (home && s.airport.country && s.airport.country !== home ? 1 : 0);
   const rank = (s: Suggestion<T>) => (s.airport.kind === "large" ? 0 : 1);
-  return out.sort((x, y) => rank(x) - rank(y) || x.miles - y.miles).slice(0, max);
+  return out.sort((x, y) => abroad(x) - abroad(y) || rank(x) - rank(y) || x.miles - y.miles).slice(0, max);
 }
 
 /** The lat/lon box (degrees) that holds every airport within `miles` of a point, for the database read. */

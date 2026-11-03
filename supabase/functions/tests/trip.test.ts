@@ -16,7 +16,7 @@ for (const f of readdirSync(dir).filter((x) => /^20261102131\d{3}_airports.*\.sq
   for (const line of seed.split("\n")) {
     const p = line.split("|");
     if (p.length !== 7) continue;
-    airports.push({ code: p[0], name: p[2], lat: Number(p[5]), lon: Number(p[6]), kind: large.has(p[0]) ? "large" : "medium" });
+    airports.push({ code: p[0], name: p[2], country: p[4], lat: Number(p[5]), lon: Number(p[6]), kind: large.has(p[0]) ? "large" : "medium" });
   }
 }
 const at = (lat: number, lon: number) => suggestAirport(lat, lon, airports);
@@ -106,4 +106,11 @@ test("boxAround holds the 250 mi radius; pairKey sorts", () => {
   }
   assert.equal(pairKey("SAN", "ord"), "ORD-SAN");
   assert.equal(pairKey("SAN", "SAN"), null);
+});
+
+// Alternatives stay in the pick's country first: from Rancho Santa Fe (pick SAN) the first alternative isn't Tijuana.
+test("alternatives prefer the pick's country", () => {
+  const list = alts(33.0203, -117.2025).map((a) => a.airport.code);
+  assert.ok(list.length > 0);
+  assert.notEqual(list[0], "TIJ");
 });
