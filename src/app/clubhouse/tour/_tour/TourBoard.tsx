@@ -9,6 +9,7 @@ import { Button, cx, Field, SectionHeading, TextInput } from "@/components/ui";
 import { useSupabaseBrowser } from "@/lib/live/browser";
 import { MAX_PLAYERS } from "@/lib/live/limits";
 import { playerKey } from "@/lib/live/playerKey";
+import { useFlash } from "@/lib/live/useFlash";
 import { useWorkerHealth, type WorkerHealth } from "@/lib/live/useWorkerHealth";
 import { Page } from "../../_components/Placeholder";
 import { useFollows, type FollowsState } from "./useFollows";
@@ -502,20 +503,4 @@ function useFitsWindow(ref: RefObject<HTMLElement | null>, top: number): boolean
     return () => { ro.disconnect(); window.removeEventListener("resize", check); };
   }, [ref, top]);
   return fits;
-}
-
-// ───────── The brief highlight ─────────
-
-/** A row a pushed change touched washes Fairway Tint and fades back, once. Nothing under reduced motion. */
-function useFlash<T extends HTMLElement>(at: number | undefined) {
-  const ref = useRef<T>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!at || !el || typeof el.animate !== "function") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    if (Date.now() - at > 3000) return;
-    const tint = getComputedStyle(document.documentElement).getPropertyValue("--color-tint-2").trim() || "#D7E7E0";
-    el.animate([{ backgroundColor: tint }, { backgroundColor: "transparent" }], { duration: 1800, easing: "ease-out" });
-  }, [at]);
-  return ref;
 }

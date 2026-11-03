@@ -10,7 +10,7 @@ import { useSupabaseBrowser } from "./browser";
 import { useLivePause } from "./useLivePause";
 import { tickNow, useNow } from "./useNow";
 
-export type WorkerSource = "tour" | "rankings" | "flights";
+export type WorkerSource = "tour" | "rankings" | "flights" | "deals";
 export type WorkerHealthState = "loading" | "fresh" | "stale" | "down" | "paused";
 
 /** One row of public.worker_runs. */
@@ -124,7 +124,7 @@ const subscriberFor = (source: WorkerSource) => {
 
 /**
  * useWorkerHealth(source, everySec) → { state, lastOkAt, lastRun }
- * `everySec` is the worker's schedule (tour 10, flights 30, rankings 3600). Every caller for the same source shares
+ * `everySec` is the worker's schedule (tour 10, deals 300, rankings 3600). Every caller for the same source shares
  * one channel and one snapshot (see above); the channel closes when the last caller unmounts or the page is paused
  * (useLivePause), and on resume it subscribes again, then refetches.
  */

@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { MouseEvent } from "react";
 import { cx } from "../ui/cx";
 
-export type NavKey = "clubhouse" | "courses" | "cards" | "stats" | "tour" | "flights" | "locker";
+export type NavKey = "clubhouse" | "courses" | "cards" | "stats" | "tour" | "shop" | "locker";
 
 export const NAV: { key: NavKey; label: string; href: string; hint: string }[] = [
   { key: "clubhouse", label: "Clubhouse", href: "/clubhouse", hint: "Home: your index and the next round" },
@@ -11,7 +11,7 @@ export const NAV: { key: NavKey; label: string; href: string; hint: string }[] =
   { key: "cards", label: "Cards", href: "/clubhouse/rounds", hint: "Every round, kept" },
   { key: "stats", label: "Stats", href: "/clubhouse/stats", hint: "How you play" },
   { key: "tour", label: "Tour", href: "/clubhouse/tour", hint: "Live leaderboard and your players" },
-  { key: "flights", label: "Flights", href: "/clubhouse/flights", hint: "Live traffic at your airports" },
+  { key: "shop", label: "Shop", href: "/clubhouse/shop", hint: "Pro Shop: what golf brands have on sale now" },
   { key: "locker", label: "Locker", href: "/clubhouse/locker", hint: "Your bag and settings" },
 ];
 
@@ -26,8 +26,8 @@ export function NavIcon({ k, className }: { k: NavKey; className?: string }) {
       {k === "stats" && (<><path {...p} d="M3 20.5 H21" /><path {...p} d="M5.5 20.5 V12 H9 V20.5 M10.5 20.5 V7 H14 V20.5 M15.5 20.5 V14.5 H19 V20.5" /></>)}
       {/* Tour: the leaderboard on its two posts, a column of names and a column of scores. */}
       {k === "tour" && (<><rect {...p} x="3" y="3" width="18" height="12.5" rx="0.5" /><path {...p} d="M6 6.8 H12 M6 9.3 H12 M6 11.8 H12 M15 6.8 H18 M15 9.3 H18 M15 11.8 H18" /><path {...p} d="M7 15.5 V21.5 M17 15.5 V21.5" /></>)}
-      {/* Flights: an airliner seen from above. */}
-      {k === "flights" && <path {...p} d="M12 2.2 C12.9 2.2 13.4 3.2 13.4 4.4 V9.4 L21.2 13.8 V15.9 L13.4 13.4 V18.3 L15.9 20.1 V21.6 L12 20.6 L8.1 21.6 V20.1 L10.6 18.3 V13.4 L2.8 15.9 V13.8 L10.6 9.4 V4.4 C10.6 3.2 11.1 2.2 12 2.2 Z" />}
+      {/* Shop: a swing tag on its string, the Pro Shop's price ticket. */}
+      {k === "shop" && (<><path {...p} d="M12.4 3.2 H4.2 C3.6 3.2 3.2 3.6 3.2 4.2 V12.4 L11.6 20.8 L20.8 11.6 Z" /><circle {...p} cx="7.6" cy="7.6" r="1.5" /><path {...p} d="M6.6 6.6 C5.2 5.2 3.6 3.4 2 2.2" /></>)}
       {k === "locker" && (<><rect {...p} x="5" y="2.5" width="14" height="19" rx="0.5" /><path {...p} d="M8 5.5 H16 M8 7.5 H16 M8 9.5 H16" /><path {...p} d="M15.5 13.5 V16" /></>)}
     </svg>
   );
