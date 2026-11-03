@@ -3,7 +3,10 @@ import { cx } from "./cx";
 
 export type TagProps = { tone?: "neutral" | "green" | "gold"; children: ReactNode; className?: string };
 
-/** A small condensed-caps label: "Links", "Major host", "Personal best". Text, so never color alone. */
+/**
+ * A small condensed-caps label: "Links", "Major host", "Personal best". Text, so never color alone. No icon: a tag
+ * is a label, not an action, and the gold tone's old four-point star read as a "+" (the user took "Home" for "add").
+ */
 export function Tag({ tone = "neutral", children, className }: TagProps) {
   return (
     <span
@@ -15,7 +18,6 @@ export function Tag({ tone = "neutral", children, className }: TagProps) {
         className,
       )}
     >
-      {tone === "gold" && <svg viewBox="0 0 8 8" className="size-2" aria-hidden="true"><path d="M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z" fill="currentColor" /></svg>}
       {children}
     </span>
   );

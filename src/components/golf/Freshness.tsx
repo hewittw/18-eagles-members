@@ -21,8 +21,9 @@ export function Freshness({ health, what = "The live data", tone = "paper", clas
   const green = tone === "green";
   const { state, lastOkAt } = health;
   const ago = lastOkAt && now ? since(lastOkAt, now) : null;
-  // The tour worker skips ESPN when no round is in play and records "idle: …": we checked, but didn't re-fetch.
-  const idle = !!health.lastOk?.detail?.startsWith("idle");
+  // The tour worker skips ESPN when no round is in play and records "idle: no live round": we checked, but didn't
+  // re-fetch. (The flights worker's "idle: no trips" is only ever the moment before a first trip is saved.)
+  const idle = !!health.lastOk?.detail?.startsWith("idle: no live round");
 
   const line =
     state === "loading" ? "Checking for the latest…"

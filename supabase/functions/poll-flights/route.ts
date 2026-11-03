@@ -192,7 +192,9 @@ const ON_FIELD_NM = 10;
  *   arriving:  airborne within 80 nm of the destination, in the second half, descending or under 15,000 ft.
  *   en_route:  everything else in the air.
  *   alt_ft:    to the nearest 1,000 ft; 0 on the ground; at least 1,000 in the air.
- * On the ground anywhere else (a diversion, a stale position) → null: not on this route right now.
+ * On the ground anywhere else (a diversion, a stale position) → null: not on this route right now. Also null: climbing
+ * away near the destination, or descending near the origin. Airlines reuse a flight number for every leg of a day
+ * (WN 3224 MDW→SAN→…), and adsbdb knows one route per callsign, so that is the next (or previous) leg, not this one.
  */
 export function flightState(s: Pick<Seen, "lat" | "lon" | "alt" | "ground" | "rate">, origin: Pt, destination: Pt): FlightState | null {
   const dO = haversineNm(s.lat, s.lon, origin.lat, origin.lon);
@@ -207,6 +209,7 @@ export function flightState(s: Pick<Seen, "lat" | "lon" | "alt" | "ground" | "ra
   const alt = s.alt === null ? null : Math.min(60_000, Math.max(1000, Math.round(s.alt / 1000) * 1000));
   const low = s.alt !== null && s.alt < TERMINAL_FT;
   const rate = s.rate ?? 0;
+  if (s.alt !== null && s.alt > 8000 && ((raw >= 0.85 && rate > 500) || (raw <= 0.15 && rate < -500))) return null;
   let phase: Phase = "en_route";
   if (dD < TERMINAL_NM && raw >= 0.5 && (rate < -300 || low)) phase = "arriving";
   else if (dO < TERMINAL_NM && raw < 0.5 && (rate > 300 || low)) phase = "departing";
@@ -330,7 +333,11 @@ export function planBoard({ pairs, coords, seen, tracked, routes, saved, now }: 
   return { rows, deletes, counts };
 }
 
-const strip = ({ updated_at: _u, ...r }: SavedTripFlight): TripFlightRow => r;
+const strip = (r: SavedTripFlight): TripFlightRow => {
+  const row = { ...r } as Partial<SavedTripFlight>;
+  delete row.updated_at;
+  return row as TripFlightRow;
+};
 
 /** The airlines known (from cached routes) to fly a pair, most flights first, at most 6: for the empty board's copy. */
 export function pairAirlines(routes: readonly Pick<Route, "callsign" | "airline" | "found">[]): string[] {

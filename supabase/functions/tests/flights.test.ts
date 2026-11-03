@@ -113,6 +113,9 @@ test("flightState: departing, en route, arriving, landed; progress to 5 %", () =
   assert.deepEqual(flightState({ lat: 41.98, lon: -87.9, alt: null, ground: true, rate: null }, ORD, SAN), { phase: "departing", progress_pct: 0, alt_ft: 0 });
   assert.equal(flightState({ lat: 39.8, lon: -104.7, alt: null, ground: true, rate: null }, ORD, SAN), null); // on the ground at DEN
   assert.equal(flightState({ lat: 41.97, lon: -87.95, alt: 300, ground: false, rate: 1500 }, ORD, SAN)?.alt_ft, 1000);
+  // The same flight number on its next leg: climbing out of SAN, or on its way down into ORD. Not this route.
+  assert.equal(flightState({ lat: 33.1, lon: -116.6, alt: 22_000, ground: false, rate: 2000 }, ORD, SAN), null);
+  assert.equal(flightState({ lat: 41.6, lon: -88.6, alt: 14_000, ground: false, rate: -1800 }, ORD, SAN), null);
 });
 
 // The lookup budget on a real ORD minute: at most 30, each callsign once, never one already cached and fresh,

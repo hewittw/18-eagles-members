@@ -1,132 +1,147 @@
 "use client";
-// /clubhouse/flights, "Getting there": the airport nearest each of the golfer's courses, a live board for each
-// airport they follow, and a search to add one. Everything arrives through Supabase: the board is a snapshot, then
-// Realtime pushes of only the rows the poll-flights worker changed. The browser never calls adsb.lol.
+// /clubhouse/flights, "Getting there". Three short steps, top to bottom: you're near ORD (from the browser's location,
+// which never leaves this tab) → where are you playing? (your courses, or somewhere else) → the flights between the two
+// airports right now, or "you can drive this one". Nothing renders past the location panel until a position is known.
+// The choice is saved as a trip (two airport codes and a label, setTrip); the board is a snapshot of trip_flights,
+// then Realtime pushes of only the rows the poll-flights worker changed. The browser never calls a flight source.
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { ApiState, Freshness, LivePauseNotice, PageHeader, PhotoBand } from "@/components/golf";
-import { FollowToggle } from "@/components/golf/FollowToggle";
-import { PHASE_LABEL, PhaseMark, type Phase } from "@/components/golf/flights/PhaseMark";
-import { Button, cx, Field, SectionHeading, Tag, TextInput } from "@/components/ui";
+import { PhaseMark } from "@/components/golf/flights/PhaseMark";
+import { Button, cx, Field, Tag, TextInput, useToast } from "@/components/ui";
 import { courseGeo, defaultHome } from "@/lib/courses";
 import type { Course } from "@/lib/course-types";
 import { useClub } from "@/lib/hooks";
-import { AIRPORT_COLS, nearestAirport, searchAirports, type Airport } from "@/lib/live/airports";
+import { airportByCode, haversineMi, searchAirports, suggestNear, type Airport } from "@/lib/live/airports";
 import { useSupabaseBrowser } from "@/lib/live/browser";
-import { MAX_AIRPORTS } from "@/lib/live/limits";
-import { useWorkerHealth, type WorkerHealth, type WorkerRun } from "@/lib/live/useWorkerHealth";
+import { DRIVE_MI, pairKey } from "@/lib/live/suggest";
+import { useGeolocation, type GeoState } from "@/lib/live/useGeolocation";
+import { useWorkerHealth, type WorkerHealth } from "@/lib/live/useWorkerHealth";
+import { getTrip, setTrip, type Trip } from "@/lib/server/trip-actions";
 import { Page } from "../../_components/Placeholder";
-import { useAirportFollows, type AirportFollows } from "./useAirportFollows";
-import { useFlightsLive, type FlightRow } from "./useFlightsLive";
+import { useTripFlights, type TripBoard, type TripFlight } from "./useTripFlights";
 
 const EVERY_SEC = 30;
-const PHASES: Phase[] = ["arriving", "departing", "ground", "overhead"];
-const TILE_LABEL: Record<Phase, string> = { arriving: "Arriving", departing: "Departing", ground: "On the ground", overhead: "Passing" };
 const PREVIEW = 6;
 // The band's photo: Pebble Beach's 18th along Carmel Bay, the trip a golfer flies in for (docs/credits.md, Pebble Beach hero.jpg).
 const BAND_PHOTO = { src: "/courses/pebble-beach/graded/hero.jpg", credit: "Bernard Gagnon, CC BY-SA 3.0" };
+const ELSEWHERE = "elsewhere";
+
+/** "Chicago O'Hare International Airport" → "Chicago O'Hare International" (the board's voice; the code is beside it). */
+const shortName = (a: Airport) => a.name.replace(/\s+Airport$/i, "");
+const miles = (n: number) => `${Math.max(1, Math.round(n)).toLocaleString("en-US")} mi`;
+const cityOf = (a: Airport | null | undefined, code: string) => a?.city?.split(/[/,]/)[0]?.trim() || code;
 
 export function FlightsBoard() {
-  const db = useSupabaseBrowser();
-  // Freshness first: it subscribes to worker_runs before any table snapshot is read.
-  const health = useWorkerHealth("flights", EVERY_SEC);
-  const follows = useAirportFollows(!!db);
-  const codes = useMemo(() => follows.list?.map((a) => a.code) ?? null, [follows.list]);
-  const live = useFlightsLive(db, codes);
-  const info = useAirportInfo(db, codes);
-
+  const geo = useGeolocation();
   return (
     <>
       <PhotoBand aria-label="Flights" photo={BAND_PHOTO}>
         <div className="mx-auto max-w-ledger px-4 pb-12 pt-10 sm:px-6 md:pb-20 md:pt-16 lg:px-8">
-          <PageHeader
-            tone="green"
-            className="bg-transparent"
-            eyebrow="Getting there"
-            title="Flights"
-            lede="The airport nearest each of your courses, and what's moving around the ones you follow, as it happens."
-          />
+          <PageHeader tone="green" className="bg-transparent" eyebrow="Getting there" title="Flights" lede="Where you are, where you're playing, and the flights between them, live." />
         </div>
       </PhotoBand>
-      <Page className="grid gap-12 md:gap-16">
-        <div className="grid gap-5">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-rule py-3">
-            <Freshness health={health} what="The flights board" />
-            <p className="text-[0.92rem] text-ink-2">
-              Live traffic within 15 nm. Data from{" "}
-              <a className="link" href="https://adsb.lol/" target="_blank" rel="noreferrer">adsb.lol<span className="sr-only"> (opens in a new tab)</span></a> and{" "}
-              <a className="link" href="https://adsb.fi/" target="_blank" rel="noreferrer">adsb.fi<span className="sr-only"> (opens in a new tab)</span></a>.
-            </p>
-          </div>
-        </div>
-
-        <NearYourCourses follows={follows} />
-
-        <YourAirports follows={follows} live={live} info={info} health={health} />
-
-        <AddAirport follows={follows} />
-
-        <p className="max-w-measure text-[0.85rem] leading-relaxed text-ink-2">
-          Aircraft positions from{" "}
-          <a className="link" href="https://adsb.lol/" target="_blank" rel="noreferrer">adsb.lol<span className="sr-only"> (opens in a new tab)</span></a>{" "}
-          (ODbL 1.0), or from{" "}
-          <a className="link" href="https://adsb.fi/" target="_blank" rel="noreferrer">adsb.fi<span className="sr-only"> (opens in a new tab)</span></a>{" "}
-          when adsb.lol can&apos;t answer, checked every 30 seconds for the airports golfers follow. Airport list from{" "}
-          <a className="link" href="https://ourairports.com/data/" target="_blank" rel="noreferrer">OurAirports<span className="sr-only"> (opens in a new tab)</span></a>{" "}
-          (public domain). Positions only: arriving and departing are read from height and climb near the field, not from a timetable.
-        </p>
-
+      <Page className="grid gap-10 md:gap-12">
+        {geo.state.kind === "ready" ? <TripPlanner geo={geo.state} relocate={geo.request} /> : <LocationGate state={geo.state} request={geo.request} />}
         <LivePauseNotice what="the flights board" />
       </Page>
     </>
   );
 }
 
-// ───────── Airport names for the followed codes ─────────
+// ───────── The location gate ─────────
 
-function useAirportInfo(db: ReturnType<typeof useSupabaseBrowser>, codes: string[] | null): Map<string, Airport> {
-  const [info, setInfo] = useState<Map<string, Airport>>(() => new Map());
-  const key = codes ? [...codes].sort().join(",") : "";
-  useEffect(() => {
-    if (!db || !key) return;
-    let live = true;
-    void db.from("airports").select(AIRPORT_COLS).in("code", key.split(",")).returns<Airport[]>().then(({ data }) => {
-      if (!live || !data) return;
-      setInfo((m) => { const n = new Map(m); for (const a of data) n.set(a.code, a); return n; });
-    });
-    return () => { live = false; };
-  }, [db, key]);
-  return info;
+function PinMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={cx("size-9 shrink-0", className)} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 28 C16 28 7 18.5 7 12.5 A9 9 0 0 1 25 12.5 C25 18.5 16 28 16 28 Z" />
+      <circle cx="16" cy="12.5" r="3.2" />
+      <path d="M9 29 H23" strokeDasharray="2 2.5" />
+    </svg>
+  );
 }
 
-const placeOf = (a: Airport | undefined) => (a ? [a.city, a.country].filter(Boolean).join(", ") : "");
-const spokenName = (code: string, a?: Airport) => (a ? `${code}, ${a.name}` : code);
+function LocationGate({ state, request }: { state: Exclude<GeoState, { kind: "ready" }>; request: () => void }) {
+  const k = state.kind;
+  const title =
+    k === "denied" ? "Location is turned off for this site"
+    : k === "unavailable" ? "We couldn't find where you are"
+    : k === "insecure" ? "Location needs a secure connection"
+    : k === "unsupported" ? "This browser can't share a location"
+    : "Turn on your location to plan getting there";
+  return (
+    <section aria-labelledby="gate-h" className="max-w-2xl rounded-xl border border-rule bg-paper-2 p-5 shadow-card sm:p-7">
+      <div className="flex gap-4">
+        <PinMark className="mt-0.5 text-green" />
+        <div className="grid min-w-0 gap-3">
+          <h2 id="gate-h" className="font-serif text-[1.35rem] font-bold leading-snug text-balance text-ink">{title}</h2>
+          <div role="status" className="grid gap-2 text-[1rem] leading-relaxed text-ink-2">
+            {(k === "idle" || k === "checking") && <p>We find the airport nearest you, then the flights from there to where you&apos;re playing.</p>}
+            {k === "asking" && <p>Finding you… If your browser asks, choose <span className="font-semibold text-ink">Allow</span>.</p>}
+            {k === "denied" && (
+              <>
+                <p>Flights needs your location, and this browser has been told not to share it with us.</p>
+                <p>To turn it back on: click the settings icon at the left of the address bar, set <span className="font-semibold text-ink">Location</span> to <span className="font-semibold text-ink">Allow</span>, then reload this page. On an iPhone or iPad: Settings → Privacy &amp; Security → Location Services → your browser → While Using.</p>
+              </>
+            )}
+            {k === "unavailable" && <p>{state.timedOut ? "Your device didn't find a position within 15 seconds." : "Your device couldn't find a position right now."} Check that location services are on, then try again.</p>}
+            {k === "insecure" && <p>Browsers only share a location over https. Open this page at an address starting with https:// and try again.</p>}
+            {k === "unsupported" && <p>Try a current version of Safari, Chrome, Firefox or Edge.</p>}
+          </div>
+          {k !== "insecure" && k !== "unsupported" && k !== "denied" && (
+            <div className="pt-1">
+              <Button variant="primary" onClick={request} disabled={k === "checking" || k === "asking"} aria-busy={k === "asking" || undefined}>
+                {k === "unavailable" ? "Try again" : k === "asking" ? "Finding you…" : "Use my location"}
+              </Button>
+            </div>
+          )}
+          {k === "denied" && <div className="pt-1"><Button variant="secondary" onClick={() => window.location.reload()}>Reload the page</Button></div>}
+          <p className="text-[0.9rem] text-ink-2">Your location stays in this browser. We save only the airport code.</p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-// ───────── Near your courses ─────────
+// ───────── The trip ─────────
 
-type Nearest = { state: "loading" } | { state: "ok"; airport: Airport; miles: number } | { state: "none" } | { state: "error" };
+type Pos = { lat: number; lon: number };
+type Near = { state: "loading" } | { state: "ok"; airport: Airport; miles: number } | { state: "none" } | { state: "error" };
+type Dest = { kind: "course"; slug: string } | { kind: "airport"; airport: Airport } | { kind: "elsewhere" } | null;
 
-function NearYourCourses({ follows }: { follows: AirportFollows }) {
+function TripPlanner({ geo, relocate }: { geo: Pos & { at: number }; relocate: () => void }) {
   const db = useSupabaseBrowser();
+  const toast = useToast();
+  const health = useWorkerHealth("flights", EVERY_SEC);
   const { ready, store, course } = useClub();
-  const [all, setAll] = useState(false);
 
-  // The golfer's courses: home first, then the ones they've played (latest first), then the ones they added.
-  const { courses, homeSlug, unlocated } = useMemo(() => {
+  // Step 1: the airport nearest the golfer. Recomputed only when the position changes.
+  const [origin, setOrigin] = useState<Near>({ state: "loading" });
+  useEffect(() => {
+    if (!db) return;
+    let live = true;
+    suggestNear(db, geo.lat, geo.lon)
+      .then((s) => { if (live) setOrigin(s ? { state: "ok", ...s } : { state: "none" }); })
+      .catch(() => { if (live) setOrigin({ state: "error" }); });
+    return () => { live = false; };
+  }, [db, geo.lat, geo.lon]);
+
+  // The golfer's courses with a location: home first, then the ones they've played (latest first), then the ones they added.
+  const { courses, homeSlug } = useMemo(() => {
     const home = store.profile.homeCourse ? course(store.profile.homeCourse) : defaultHome(null, store.customCourses);
     const played = [...store.rounds].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt).map((r) => course(r.courseSlug));
     const seen = new Set<string>();
     const list: Course[] = [];
-    let unlocatedCount = 0;
     for (const c of [home, ...played, ...store.customCourses]) {
-      if (!c || seen.has(c.slug)) continue;
+      if (!c || seen.has(c.slug) || !courseGeo(c)) continue;
       seen.add(c.slug);
-      if (courseGeo(c)) list.push(c); else unlocatedCount++;
+      list.push(c);
     }
-    return { courses: list, homeSlug: home?.slug ?? null, unlocated: unlocatedCount };
+    return { courses: list, homeSlug: home?.slug ?? null };
   }, [store.profile.homeCourse, store.rounds, store.customCourses, course]);
 
-  const [nearest, setNearest] = useState<Map<string, Nearest>>(() => new Map());
+  // Each course's airport, by the same rule.
+  const [courseAir, setCourseAir] = useState<Map<string, Near>>(() => new Map());
   const asked = useRef(new Set<string>());
   useEffect(() => {
     if (!db) return;
@@ -134,296 +149,432 @@ function NearYourCourses({ follows }: { follows: AirportFollows }) {
       if (asked.current.has(c.slug)) continue;
       asked.current.add(c.slug);
       const g = courseGeo(c)!;
-      nearestAirport(db, g.lat, g.lng)
-        .then((r) => setNearest((m) => new Map(m).set(c.slug, r ? { state: "ok", ...r } : { state: "none" })))
-        .catch(() => { asked.current.delete(c.slug); setNearest((m) => new Map(m).set(c.slug, { state: "error" })); });
+      suggestNear(db, g.lat, g.lng)
+        .then((r) => setCourseAir((m) => new Map(m).set(c.slug, r ? { state: "ok", ...r } : { state: "none" })))
+        .catch(() => { asked.current.delete(c.slug); setCourseAir((m) => new Map(m).set(c.slug, { state: "error" })); });
     }
   }, [db, courses]);
 
-  const shown = all ? courses : courses.slice(0, PREVIEW);
+  // The saved trip, restored once the courses' airports are known.
+  const [saved, setSaved] = useState<Trip | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    getTrip().then((r) => { if (live) setSaved(r.ok ? r.trip : null); }).catch(() => { if (live) setSaved(null); });
+    return () => { live = false; };
+  }, []);
+  // The golfer's explicit choice wins; until they make one, the saved trip is shown as chosen: as its course when the
+  // label and airport still match one, else as "somewhere else" with that airport.
+  const [chosen, setDest] = useState<Dest>(null);
+  const savedCourse = useMemo<{ slug: string } | "pending" | null>(() => {
+    if (saved === undefined || !ready) return "pending";
+    if (!saved) return null;
+    const match = courses.find((c) => (c.shortName || c.name) === saved.label);
+    const near = match ? courseAir.get(match.slug) : undefined;
+    if (match && (!near || near.state === "loading")) return "pending";
+    return match && near?.state === "ok" && near.airport.code === saved.to ? { slug: match.slug } : null;
+  }, [saved, ready, courses, courseAir]);
+  const [savedAirport, setSavedAirport] = useState<Airport | null>(null);
+  useEffect(() => {
+    if (!db || !saved || savedCourse !== null) return;
+    let live = true;
+    airportByCode(db, saved.to).then((a) => { if (live) setSavedAirport(a); }).catch(() => {});
+    return () => { live = false; };
+  }, [db, saved, savedCourse]);
+  const dest: Dest = chosen
+    ?? (savedCourse && savedCourse !== "pending" ? { kind: "course", slug: savedCourse.slug } : savedCourse === null && savedAirport ? { kind: "airport", airport: savedAirport } : null);
+
+  // Where we're flying into, and what to call it.
+  const destCourse = dest?.kind === "course" ? courses.find((c) => c.slug === dest.slug) ?? null : null;
+  const destNear = destCourse ? courseAir.get(destCourse.slug) : undefined;
+  const destAirport = dest?.kind === "airport" ? dest.airport : destNear?.state === "ok" ? destNear.airport : null;
+  const destLabel = destCourse ? destCourse.shortName || destCourse.name : destAirport ? shortName(destAirport) : null;
+  const fromAirport = origin.state === "ok" ? origin.airport : null;
+
+  // Save the trip when the choice (or the origin) changes. Debounced, so arrowing through the list saves once.
+  const lastSaved = useRef<string | null>(null);
+  useEffect(() => {
+    if (saved === undefined || !fromAirport || !destAirport) return;
+    const sig = `${fromAirport.code}>${destAirport.code}>${destLabel ?? ""}`;
+    if (lastSaved.current === null && saved && `${saved.from}>${saved.to}>${saved.label ?? ""}` === sig) { lastSaved.current = sig; return; }
+    if (lastSaved.current === sig) return;
+    const t = setTimeout(() => {
+      lastSaved.current = sig;
+      setTrip(fromAirport.code, destAirport.code, destLabel)
+        .then((r) => { if (!r.ok) { lastSaved.current = null; toast({ message: r.error }); } })
+        .catch(() => { lastSaved.current = null; toast({ message: "Couldn't save your trip. Check your connection." }); });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [saved, fromAirport, destAirport, destLabel, toast]);
+
+  // Drive or fly: the same airport, or the place within 150 mi of the golfer, straight line.
+  const destPoint: Pos | null = destCourse ? (() => { const g = courseGeo(destCourse)!; return { lat: g.lat, lon: g.lng }; })() : destAirport ? { lat: destAirport.lat, lon: destAirport.lon } : null;
+  const away = destPoint ? haversineMi(geo.lat, geo.lon, destPoint.lat, destPoint.lon) : null;
+  const drive = !!(destAirport && fromAirport && (destAirport.code === fromAirport.code || (away !== null && away < DRIVE_MI)));
+  const pair = fromAirport && destAirport && !drive ? pairKey(fromAirport.code, destAirport.code) : null;
+
   return (
-    <section aria-labelledby="near-h" className="grid gap-5">
-      <SectionHeading id="near-h" eyebrow="Fly in for the round" title="Near your courses" lede="The closest airport with airline service to each course you call home or have played." />
+    <>
+      <YouAreNear origin={origin} relocate={relocate} />
+      {origin.state === "ok" && (
+        <WherePlaying
+          ready={ready}
+          courses={courses}
+          homeSlug={homeSlug}
+          courseAir={courseAir}
+          dest={dest}
+          setDest={setDest}
+        />
+      )}
+      {origin.state === "ok" && destAirport && destLabel && fromAirport && (
+        drive ? (
+          <section aria-labelledby="drive-h" aria-live="polite" className="grid max-w-2xl gap-2 rounded-xl border border-rule bg-paper-2 p-5 shadow-card sm:p-6">
+            <h2 id="drive-h" className="font-serif text-[1.35rem] font-bold leading-snug text-ink">You can drive this one</h2>
+            <p className="text-[1rem] leading-relaxed text-ink-2">
+              {destLabel} is <span className="font-numeral text-[1.05rem] font-semibold tabular-nums text-ink">{miles(away ?? 0)}</span> from you, straight line
+              {destAirport.code === fromAirport.code ? `, and ${destAirport.code} is the nearest airport to you both` : ""}.
+            </p>
+          </section>
+        ) : pair ? (
+          <RouteBoard pair={pair} from={fromAirport} to={destAirport} health={health} />
+        ) : null
+      )}
+      {origin.state === "ok" && <Credit />}
+    </>
+  );
+}
+
+function YouAreNear({ origin, relocate }: { origin: Near; relocate: () => void }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-rule py-4">
+      <div role="status" className="min-w-0">
+      {origin.state === "loading" && <p className="text-[1.05rem] text-ink-2">Finding the airport nearest you…</p>}
+      {origin.state === "error" && <p className="text-[1.05rem] text-ink-2">Couldn&apos;t look up the airports near you. Check your connection, then update your location.</p>}
+      {origin.state === "none" && <p className="text-[1.05rem] text-ink-2">There&apos;s no airport with airline service within 250 miles of you.</p>}
+      {origin.state === "ok" && (
+        <p className="min-w-0 text-[1.05rem] leading-snug text-ink-2">
+          You&apos;re near <span className="font-numeral text-[1.3rem] font-semibold tracking-wide text-ink">{origin.airport.code}</span>
+          <span aria-hidden="true"> · </span><span className="text-ink">{shortName(origin.airport)}</span>
+          <span aria-hidden="true"> · </span><span className="whitespace-nowrap font-numeral tabular-nums">{miles(origin.miles)}</span>
+        </p>
+      )}
+      </div>
+      <Button variant="quiet" size="sm" onClick={relocate}>Update location</Button>
+    </div>
+  );
+}
+
+// ───────── Where are you playing? (one choice list) ─────────
+
+function WherePlaying({ ready, courses, homeSlug, courseAir, dest, setDest }: {
+  ready: boolean; courses: Course[]; homeSlug: string | null; courseAir: Map<string, Near>; dest: Dest; setDest: (d: Dest) => void;
+}) {
+  const [all, setAll] = useState(false);
+  const selectedSlug = dest?.kind === "course" ? dest.slug : null;
+  const elsewhere = dest?.kind === "airport" || dest?.kind === "elsewhere";
+  // Keep the chosen course visible even when the list is trimmed.
+  const shown = all ? courses : courses.slice(0, PREVIEW).concat(selectedSlug && courses.findIndex((c) => c.slug === selectedSlug) >= PREVIEW ? courses.filter((c) => c.slug === selectedSlug) : []);
+  const values = [...shown.map((c) => c.slug), ELSEWHERE];
+  const current = selectedSlug ?? (elsewhere ? ELSEWHERE : null);
+  const refs = useRef(new Map<string, HTMLDivElement>());
+
+  const choose = useCallback((v: string) => {
+    if (v === ELSEWHERE) { if (dest?.kind !== "airport") setDest({ kind: "elsewhere" }); }
+    else setDest({ kind: "course", slug: v });
+  }, [dest, setDest]);
+
+  const onKey = (e: KeyboardEvent<HTMLDivElement>, v: string) => {
+    const i = values.indexOf(v);
+    let next: number | null = null;
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") next = (i + 1) % values.length;
+    else if (e.key === "ArrowUp" || e.key === "ArrowLeft") next = (i - 1 + values.length) % values.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = values.length - 1;
+    else if (e.key === " " || e.key === "Enter") { e.preventDefault(); choose(v); return; }
+    if (next === null) return;
+    e.preventDefault();
+    choose(values[next]);
+    refs.current.get(values[next])?.focus();
+  };
+  const tabStop = current ?? values[0];
+
+  return (
+    <section aria-labelledby="where-h" className="grid gap-4">
+      <h2 id="where-h" className="font-serif text-[clamp(1.5rem,3vw,1.9rem)] font-bold leading-tight text-ink">Where are you playing?</h2>
       {!ready ? (
-        <ApiState kind="loading" shape="list" label="Finding the airports near your courses" />
-      ) : courses.length === 0 ? (
-        <ApiState kind="empty" title="None of your courses has a location yet">
-          {unlocated
-            ? "The courses you've added were entered by hand, without a map pin, so there's no airport to suggest. "
-            : "Choose a home course or play a round, and its airport shows up here. "}
-          <Link className="link" href="/clubhouse/courses">Browse the courses</Link>.
-        </ApiState>
+        <ApiState kind="loading" shape="list" label="Loading your courses" />
       ) : (
         <>
-          <ul className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+          <div role="radiogroup" aria-labelledby="where-h" className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
             {shown.map((c) => (
-              <CourseAirport key={c.slug} course={c} home={c.slug === homeSlug} near={nearest.get(c.slug) ?? { state: "loading" }} follows={follows} />
+              <CourseOption
+                key={c.slug}
+                course={c}
+                home={c.slug === homeSlug}
+                near={courseAir.get(c.slug) ?? { state: "loading" }}
+                checked={selectedSlug === c.slug}
+                tabIndex={tabStop === c.slug ? 0 : -1}
+                onChoose={() => choose(c.slug)}
+                onKeyDown={(e) => onKey(e, c.slug)}
+                refFn={(el) => { if (el) refs.current.set(c.slug, el); else refs.current.delete(c.slug); }}
+              />
             ))}
-          </ul>
+            <ElsewhereOption
+              checked={elsewhere}
+              airport={dest?.kind === "airport" ? dest.airport : null}
+              tabIndex={tabStop === ELSEWHERE ? 0 : -1}
+              onChoose={() => choose(ELSEWHERE)}
+              onKeyDown={(e) => onKey(e, ELSEWHERE)}
+              refFn={(el) => { if (el) refs.current.set(ELSEWHERE, el); else refs.current.delete(ELSEWHERE); }}
+            />
+          </div>
           {courses.length > PREVIEW && (
             <div><Button variant="quiet" size="sm" aria-expanded={all} onClick={() => setAll((v) => !v)}>{all ? "Show fewer courses" : `Show all ${courses.length} courses`}</Button></div>
           )}
+          {courses.length === 0 && (
+            <p className="text-[0.95rem] text-ink-2">
+              None of your courses has a map location yet. <Link className="link" href="/clubhouse/courses">Choose a home course</Link>, or pick somewhere else.
+            </p>
+          )}
+          {elsewhere && <AirportSearch onPick={(a) => setDest({ kind: "airport", airport: a })} picked={dest?.kind === "airport" ? dest.airport.code : null} />}
         </>
       )}
     </section>
   );
 }
 
-/** One course and its airport, as a card in the same build as Tour's player cards (name + toggle, then the tile row). */
-function CourseAirport({ course, home, near, follows }: { course: Course; home: boolean; near: Nearest; follows: AirportFollows }) {
-  const atLimit = (follows.list?.length ?? 0) >= MAX_AIRPORTS;
+const optionClass = (checked: boolean) => cx(
+  "group/opt grid min-w-0 cursor-pointer content-start gap-3 rounded-xl border p-4 text-left shadow-card outline-none transition-[background-color,border-color] duration-150",
+  "focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
+  checked ? "border-green-3 bg-green-3 text-on-green" : "border-rule bg-paper-2 text-ink hover:border-ink hover:bg-paper-3 active:translate-y-px",
+);
+
+function Pip({ checked }: { checked: boolean }) {
+  return (
+    <span aria-hidden="true" className="mt-1.5 grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] border-current">
+      <span className={cx("size-2 rounded-full bg-gold transition-transform duration-150 motion-reduce:transition-none", checked ? "scale-100" : "scale-0")} />
+    </span>
+  );
+}
+
+type OptionProps = { checked: boolean; tabIndex: number; onChoose: () => void; onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void; refFn: (el: HTMLDivElement | null) => void };
+
+function CourseOption({ course, home, near, checked, tabIndex, onChoose, onKeyDown, refFn }: OptionProps & { course: Course; home: boolean; near: Near }) {
   const name = course.shortName || course.name;
+  const id = `opt-${course.slug}`;
   return (
-    <li className="grid min-w-0 content-start gap-3 rounded-xl border border-rule bg-paper-2 p-4 shadow-card">
-      <div className="flex min-w-0 items-start justify-between gap-3">
-        <div className="min-w-0 pt-1">
-          <h3 className="font-serif text-[1.15rem] font-bold leading-snug text-balance text-ink">{name}</h3>
-          {home && <Tag tone="gold" className="mt-1.5">Home</Tag>}
+    <div ref={refFn} role="radio" aria-checked={checked} aria-labelledby={`${id}-n`} aria-describedby={`${id}-d`} tabIndex={tabIndex} onClick={onChoose} onKeyDown={onKeyDown} className={optionClass(checked)}>
+      <div className="flex min-w-0 items-start gap-3">
+        <Pip checked={checked} />
+        <div className="min-w-0">
+          <p id={`${id}-n`} className={cx("font-serif text-[1.15rem] font-bold leading-snug text-balance", checked ? "text-on-green" : "text-ink")}>{name}</p>
+          {home && <Tag className="mt-1.5">Home course</Tag>}
         </div>
-        {near.state === "ok" && (
-          <FollowToggle
-            label={spokenName(near.airport.code, near.airport)}
-            following={follows.isFollowing(near.airport.code)}
-            busy={follows.busy.has(near.airport.code)}
-            disabled={atLimit && !follows.isFollowing(near.airport.code)}
-            onToggle={() => follows.toggle(near.airport.code)}
-            compact
-          />
-        )}
       </div>
-      <div className="flex min-w-0 items-center gap-3 border-t border-rule pt-3">
-        {near.state === "loading" && (
-          <>
-            <span className="tile grid min-h-12 min-w-14 shrink-0 place-items-center rounded-xs" aria-hidden="true" />
-            <span className="block h-4 w-40 max-w-full animate-pulse rounded-xs bg-paper-3 motion-reduce:animate-none" aria-hidden="true" />
-            <span className="sr-only">Finding the airport nearest {name}</span>
-          </>
-        )}
+      <p id={`${id}-d`} className={cx("min-w-0 border-t pt-3 text-[0.95rem] leading-snug", checked ? "border-white/25 text-paper-3" : "border-rule text-ink-2")}>
+        {near.state === "loading" && <span className="block h-4 w-40 max-w-full animate-pulse rounded-xs bg-paper-3 motion-reduce:animate-none"><span className="sr-only">Finding the airport for {name}</span></span>}
         {near.state === "ok" && (
           <>
-            <p className="tile grid min-h-12 min-w-14 shrink-0 place-items-center rounded-xs px-2 font-numeral text-[1.2rem] font-semibold leading-none tracking-wide text-ink" aria-hidden="true">
-              {near.airport.code}
-            </p>
-            <p className="min-w-0 text-[0.92rem] leading-snug text-ink-2">
-              <span className="sr-only">{name}: </span>
-              <span className="text-[1rem] text-ink">Fly into <span className="font-numeral text-[1.05rem] font-semibold tracking-wide">{near.airport.code}</span>{" "}
-                <span aria-hidden="true">·</span> <span className="whitespace-nowrap font-numeral tabular-nums">{Math.max(1, Math.round(near.miles))} mi</span></span>
-              <span className="block text-pretty">{near.airport.name}</span>
-            </p>
+            <span className={checked ? "text-on-green" : "text-ink"}>Fly into <span className="font-numeral text-[1.1rem] font-semibold tracking-wide">{near.airport.code}</span>
+              <span aria-hidden="true"> · </span><span className="whitespace-nowrap font-numeral tabular-nums">{miles(near.miles)}</span></span>
+            <span aria-hidden="true"> · </span><span className="text-pretty">{shortName(near.airport)}</span>
           </>
         )}
-        {near.state === "none" && <p className="min-w-0 text-[0.95rem] leading-snug text-ink-2">No airport with airline service within a few hundred miles.</p>}
-        {near.state === "error" && <p className="min-w-0 text-[0.95rem] leading-snug text-ink-2">Couldn&apos;t look up the nearest airport. It will try again when you come back.</p>}
-      </div>
-    </li>
-  );
-}
-
-// ───────── Your airports ─────────
-
-/** What the latest worker run said about one airport, read from its detail ("ORD 43 (+3 −2 ~5), SAN failed: …"). */
-type Sweep =
-  | { kind: "swept"; count: number }
-  | { kind: "failed"; why: string }
-  | { kind: "unswept" } // the run happened after the follow, but this airport wasn't among the 6 swept
-  | { kind: "waiting" }; // no run since the follow yet
-
-function sweepOf(code: string, run: WorkerRun | null, followedAt: string | undefined): Sweep {
-  const d = run?.detail ?? "";
-  const ok = new RegExp(`(?:^|, )${code} (\\d+) (?:[a-z]+ )?\\(`).exec(d);
-  if (ok) return { kind: "swept", count: Number(ok[1]) };
-  const bad = new RegExp(`(?:^|, )${code} failed: ([^,]*)`).exec(d);
-  if (bad) return { kind: "failed", why: bad[1] };
-  if (run && followedAt && Date.parse(run.started_at) > Date.parse(followedAt) + 1000) return { kind: "unswept" };
-  return { kind: "waiting" };
-}
-
-function YourAirports({ follows, live, info, health }: { follows: AirportFollows; live: ReturnType<typeof useFlightsLive>; info: Map<string, Airport>; health: WorkerHealth }) {
-  const list = follows.list;
-  return (
-    <section aria-labelledby="yours-h" className="grid gap-6">
-      <SectionHeading
-        id="yours-h"
-        eyebrow="The board"
-        title="Your airports"
-        lede={list && list.length ? `Watching ${list.length} of ${MAX_AIRPORTS}. Arrivals first, nearest the field at the top.` : undefined}
-      />
-      {follows.error && list && list.length === 0 ? (
-        <ApiState kind="down" title="Your airports didn't load">{follows.error}</ApiState>
-      ) : list === null ? (
-        <ApiState kind="loading" shape="list" label="Loading your airports" />
-      ) : list.length === 0 ? (
-        <ApiState
-          kind="empty"
-          title="You're not watching any airports yet"
-          action={<FollowToggle label="ORD, Chicago O'Hare International Airport" text="Follow ORD" following={false} busy={follows.busy.has("ORD")} onToggle={() => follows.toggle("ORD")} />}
-        >
-          Follow the airport near one of your courses above, or find one below. Chicago O&apos;Hare is always watched, if you want to see a busy board right now.
-        </ApiState>
-      ) : (
-        <div className="grid gap-8 lg:grid-cols-2 lg:items-start [&>*]:min-w-0">
-          {list.map((f) => (
-            <AirportBoard
-              key={f.code}
-              code={f.code}
-              airport={info.get(f.code)}
-              rows={live.byAirport.get(f.code) ?? []}
-              loading={live.load === "loading" && !live.byAirport.has(f.code)}
-              loadFailed={live.load === "error"}
-              sweep={sweepOf(f.code, health.lastRun, f.since)}
-              health={health}
-              touched={live.touched}
-              follows={follows}
-            />
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-/** Arriving and departing nearest the field first; on the ground by callsign; passing over nearest first. */
-function sortRows(phase: Phase, rows: FlightRow[]): FlightRow[] {
-  const d = (r: FlightRow) => r.dist_nm ?? 999;
-  const name = (r: FlightRow) => r.callsign ?? r.hex;
-  return [...rows].sort((a, b) => (phase === "ground" ? name(a).localeCompare(name(b)) : d(a) - d(b) || name(a).localeCompare(name(b))));
-}
-
-function AirportBoard({ code, airport, rows, loading, loadFailed, sweep, health, touched, follows }: {
-  code: string; airport: Airport | undefined; rows: FlightRow[]; loading: boolean; loadFailed: boolean; sweep: Sweep; health: WorkerHealth;
-  touched: Map<string, number>; follows: AirportFollows;
-}) {
-  const groups = useMemo(() => {
-    const g = new Map<Phase, FlightRow[]>(PHASES.map((p) => [p, []]));
-    for (const r of rows) g.get(r.phase)?.push(r);
-    return PHASES.map((p) => ({ phase: p, rows: sortRows(p, g.get(p)!) }));
-  }, [rows]);
-  const held = rows.length > 0 && (health.state === "down" || health.state === "stale" || sweep.kind === "failed");
-  // No counts to post until a sweep has actually looked (a quiet sweep posts zeros; waiting or failed posts dashes).
-  const waiting = rows.length === 0 && (sweep.kind !== "swept" || loading);
-  const titleId = `ap-${code}`;
-
-  return (
-    <article aria-labelledby={titleId} className={cx("min-w-0 overflow-hidden rounded-2xl border bg-paper-2 shadow-card", held ? "border-dashed border-rule-strong" : "border-rule")}>
-      <header className="tex-locker on-green grid gap-5 px-4 pb-4 pt-5 sm:px-6">
-        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-          <div className="min-w-0">
-            <p className="caps text-label text-gold">{placeOf(airport) || " "}</p>
-            <h3 id={titleId} className="mt-1 font-display text-[clamp(2.6rem,7vw,3.6rem)] leading-[0.95] tracking-[0.02em]">
-              {code}<span className="sr-only">{airport ? `, ${airport.name}` : ""}</span>
-            </h3>
-            <p className="mt-1.5 font-serif text-[0.98rem] leading-snug text-paper-3" aria-hidden="true">{airport?.name ?? " "}</p>
-          </div>
-          <FollowToggle tone="green" label={spokenName(code, airport)} following busy={follows.busy.has(code)} onToggle={() => follows.toggle(code)} />
-        </div>
-        <dl className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2" aria-label={`${code} right now`}>
-          {groups.map(({ phase, rows: g }) => (
-            <div key={phase} className="tile flex min-w-0 flex-col-reverse items-center justify-end gap-1 rounded-xs px-1 py-2 text-center text-ink">
-              <dt className="caps text-label leading-tight text-ink-2 text-balance">{TILE_LABEL[phase]}</dt>
-              <dd className="font-numeral text-[clamp(1.5rem,4vw,2rem)] font-semibold leading-none tabular-nums">{waiting ? "–" : g.length}</dd>
-            </div>
-          ))}
-        </dl>
-        {held && <p className="caps text-label text-gold">{sweep.kind === "failed" ? "Couldn’t reach the flight feeds; showing the last good update" : "Showing the last good update"}</p>}
-      </header>
-
-      <div className="px-4 py-4 sm:px-6 sm:py-5">
-        {rows.length === 0 ? (
-          <EmptyBoard code={code} sweep={sweep} loading={loading} loadFailed={loadFailed} />
-        ) : (
-          <div className="grid gap-6">
-            {groups.filter((g) => g.rows.length).map((g) => (
-              <PhaseGroup key={g.phase} code={code} phase={g.phase} rows={g.rows} touched={touched} />
-            ))}
-          </div>
-        )}
-      </div>
-    </article>
-  );
-}
-
-function EmptyBoard({ code, sweep, loading, loadFailed }: { code: string; sweep: Sweep; loading: boolean; loadFailed: boolean }) {
-  if (loading) return <ApiState kind="loading" shape="list" label={`Loading traffic at ${code}`} />;
-  if (loadFailed) return <ApiState kind="down" title="The board didn't load">Check your connection; it fills in as soon as the next update arrives.</ApiState>;
-  if (sweep.kind === "swept") {
-    return <ApiState kind="empty" title="Quiet skies">Nothing within 15 nm of {code} on the last check. A new arrival shows up here within 30 seconds.</ApiState>;
-  }
-  if (sweep.kind === "failed") {
-    // A failed airport means both feeds missed it (adsb.lol first, then adsb.fi: "ORD failed: lol 429; fi timed out").
-    return (
-      <ApiState kind="down" title="Couldn’t reach the flight feeds">
-        Neither flight feed answered for {code} on the last check. The next one tries again in 30 seconds.
-      </ApiState>
-    );
-  }
-  if (sweep.kind === "unswept") {
-    return (
-      <ApiState kind="empty" title="Not watched right now">
-        We watch the six airports golfers follow most, and {code} isn&apos;t among them right now. It joins when one drops off.
-      </ApiState>
-    );
-  }
-  // Waiting for the first sweep: a calm runway of placeholders, not a spinner.
-  return (
-    <div className="grid gap-3" role="status">
-      <p className="flex items-center gap-2.5 text-[0.98rem] text-ink-2">
-        <svg viewBox="0 0 16 16" className="size-4 shrink-0 text-green" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="8" cy="8" r="5.5" strokeDasharray="2.2 2.4" /></svg>
-        <span><span className="font-semibold text-ink">Waiting for the first check.</span> A new airport fills in within 30 seconds.</span>
+        {near.state === "none" && "No airport with airline service within 250 miles."}
+        {near.state === "error" && "Couldn't look up its airport. It tries again when you come back."}
       </p>
-      <ul aria-hidden="true" className="grid gap-2">
-        {[64, 48, 56].map((w, i) => (
-          <li key={i} className="flex items-center justify-between gap-4 border-b border-dashed border-rule py-2">
-            <span className="h-4 rounded-xs bg-paper-3" style={{ width: `${w}%` }} />
-            <span className="h-4 w-14 rounded-xs bg-paper-3" />
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
 
-function PhaseGroup({ code, phase, rows, touched }: { code: string; phase: Phase; rows: FlightRow[]; touched: Map<string, number> }) {
-  const [all, setAll] = useState(false);
-  const shown = all ? rows : rows.slice(0, PREVIEW);
-  const id = `ph-${code}-${phase}`;
+function ElsewhereOption({ checked, airport, tabIndex, onChoose, onKeyDown, refFn }: OptionProps & { airport: Airport | null }) {
+  return (
+    <div ref={refFn} role="radio" aria-checked={checked} aria-labelledby="opt-else-n" aria-describedby="opt-else-d" tabIndex={tabIndex} onClick={onChoose} onKeyDown={onKeyDown} className={optionClass(checked)}>
+      <div className="flex min-w-0 items-start gap-3">
+        <Pip checked={checked} />
+        <p id="opt-else-n" className={cx("font-serif text-[1.15rem] font-bold leading-snug", checked ? "text-on-green" : "text-ink")}>Somewhere else</p>
+      </div>
+      <p id="opt-else-d" className={cx("min-w-0 border-t pt-3 text-[0.95rem] leading-snug", checked ? "border-white/25 text-paper-3" : "border-rule text-ink-2")}>
+        {airport ? (
+          <>
+            <span className="text-on-green">Fly into <span className="font-numeral text-[1.1rem] font-semibold tracking-wide">{airport.code}</span></span>
+            <span aria-hidden="true"> · </span>{shortName(airport)}
+          </>
+        ) : "Pick any airport."}
+      </p>
+    </div>
+  );
+}
+
+type Search = { q: string; state: "idle" | "loading" | "done" | "error"; results: Airport[] };
+
+function AirportSearch({ onPick, picked }: { onPick: (a: Airport) => void; picked: string | null }) {
+  const db = useSupabaseBrowser();
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState<Search>({ q: "", state: "idle", results: [] });
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (!picked) input.current?.focus(); }, [picked]);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!db || q.length < 2) return;
+    let live = true;
+    const t = setTimeout(() => {
+      setSearch((s) => ({ ...s, q, state: "loading" }));
+      searchAirports(db, q)
+        .then((results) => { if (live) setSearch({ q, state: "done", results }); })
+        .catch(() => { if (live) setSearch({ q, state: "error", results: [] }); });
+    }, 250);
+    return () => { live = false; clearTimeout(t); };
+  }, [db, query]);
+
+  const view = query.trim().length >= 2 ? search : { q: "", state: "idle" as const, results: [] };
+  return (
+    <div className="grid max-w-2xl gap-3">
+      <Field label="Find an airport" hint="A code, a city, or a name: SAN, Monterey, Heathrow.">
+        {(a) => <TextInput {...a} ref={input} type="search" autoComplete="off" spellCheck={false} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Airport code, city or name" />}
+      </Field>
+      <p className="sr-only" aria-live="polite">
+        {view.state === "done" ? (view.results.length ? `${view.results.length} airport${view.results.length === 1 ? "" : "s"} found.` : "No airports found.") : ""}
+      </p>
+      {view.state === "loading" && view.results.length === 0 && <ApiState kind="loading" shape="list" label="Searching airports" />}
+      {view.state === "error" && <ApiState kind="down" title="The search didn't go through">Check your connection and try again.</ApiState>}
+      {view.state === "done" && view.results.length === 0 && (
+        <ApiState kind="empty" title={`No airport matches “${view.q}”`}>We list airports with airline service. Try the nearest city, or the three-letter code.</ApiState>
+      )}
+      {view.results.length > 0 && view.state !== "error" && (
+        <ul className={cx("divide-y divide-rule border-y border-rule", view.state === "loading" && "opacity-60")}>
+          {view.results.map((a) => (
+            <li key={a.code}>
+              <button
+                type="button"
+                onClick={() => { onPick(a); setQuery(""); }}
+                aria-pressed={picked === a.code}
+                className="grid w-full grid-cols-[3.6rem_minmax(0,1fr)] items-center gap-x-3 px-1 py-3 text-left outline-none hover:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus active:translate-y-px sm:grid-cols-[4.5rem_minmax(0,1fr)] sm:gap-x-4"
+              >
+                <span className="font-display text-[1.7rem] leading-none text-ink sm:text-[2rem]">{a.code}</span>
+                <span className="min-w-0">
+                  <span className="block truncate text-[1rem] font-medium text-ink">{a.name}</span>
+                  <span className="block truncate text-[0.9rem] text-ink-2">{[a.city, a.country].filter(Boolean).join(", ")}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// ───────── The route board ─────────
+
+function RouteBoard({ pair, from, to, health }: { pair: string; from: Airport; to: Airport; health: WorkerHealth }) {
+  const db = useSupabaseBrowser();
+  const board = useTripFlights(db, pair);
+  const out = board.flights.filter((f) => f.origin === from.code).sort(byProgress);
+  const back = board.flights.filter((f) => f.origin === to.code).sort(byProgress);
+  return (
+    <section aria-labelledby="board-h" className="grid gap-5">
+      <div className="grid gap-2">
+        <h2 id="board-h" className="font-serif text-[clamp(1.5rem,3vw,1.9rem)] font-bold leading-tight text-ink">
+          Flights between <span className="font-numeral tracking-wide">{from.code}</span> and <span className="font-numeral tracking-wide">{to.code}</span> right now
+        </h2>
+        <Freshness health={health} what="The flights board" />
+      </div>
+      <BoardBody board={board} from={from} to={to} out={out} back={back} />
+    </section>
+  );
+}
+
+const byProgress = (a: TripFlight, b: TripFlight) => (b.progress_pct ?? 0) - (a.progress_pct ?? 0) || (a.flight ?? a.hex).localeCompare(b.flight ?? b.hex);
+
+function BoardBody({ board, from, to, out, back }: { board: TripBoard; from: Airport; to: Airport; out: TripFlight[]; back: TripFlight[] }) {
+  if (board.load === "loading") return <ApiState kind="loading" shape="list" label={`Loading flights between ${from.code} and ${to.code}`} />;
+  if (board.load === "error") return <ApiState kind="down" title="The board didn't load">Check your connection; it fills in as soon as the next update arrives.</ApiState>;
+  if (board.load === "waiting") {
+    return (
+      <div role="status" className="flex items-center gap-3 rounded-xl border border-rule bg-paper-2 p-5 text-[1rem] text-ink-2 shadow-card">
+        <svg viewBox="0 0 16 16" className="size-5 shrink-0 text-green" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="8" cy="8" r="5.5" strokeDasharray="2.2 2.4" /></svg>
+        <p><span className="font-semibold text-ink">Finding flights on your route…</span> First check within 30 seconds.</p>
+      </div>
+    );
+  }
+  if (!out.length && !back.length) {
+    return (
+      <ApiState kind="empty" title={`No flights between ${from.code} and ${to.code} in the air right now`}>
+        {board.airlines.length ? `${listOf(board.airlines)} fly this route; check back soon.` : "Check back soon; the board fills in by itself."}
+      </ApiState>
+    );
+  }
+  return (
+    <div className="grid gap-8 lg:grid-cols-2 lg:items-start [&>*]:min-w-0">
+      <Direction title={`To ${cityOf(to, to.code)}`} rows={out} touched={board.touched} none={`Nothing on its way to ${to.code} right now.`} />
+      <Direction title={`Back to ${cityOf(from, from.code)}`} rows={back} touched={board.touched} none={`Nothing heading back to ${from.code} right now.`} />
+    </div>
+  );
+}
+
+const listOf = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
+
+function Direction({ title, rows, touched, none }: { title: string; rows: TripFlight[]; touched: Map<string, number>; none: string }) {
+  const id = `dir-${title.replace(/\W+/g, "-").toLowerCase()}`;
   return (
     <section aria-labelledby={id} className="min-w-0">
-      <h4 id={id} className="flex items-center gap-2 border-b border-ink pb-1.5 text-green">
-        <PhaseMark phase={phase} />
-        <span className="caps text-label">{PHASE_LABEL[phase]}</span>
+      <h3 id={id} className="flex items-baseline gap-2 border-b border-ink pb-1.5 text-green">
+        <span className="caps text-label">{title}</span>
         <span className="ml-auto font-numeral text-[1rem] font-semibold tabular-nums text-ink">{rows.length}</span>
-      </h4>
-      <ul className="divide-y divide-rule">
-        {shown.map((r) => <FlightLi key={r.hex} r={r} flashAt={touched.get(`${r.airport}:${r.hex}`)} />)}
-      </ul>
-      {rows.length > PREVIEW && (
-        <Button variant="quiet" size="sm" className="mt-1 -ml-3" aria-expanded={all} onClick={() => setAll((v) => !v)}>
-          {all ? "Show fewer" : `Show all ${rows.length}`}<span className="sr-only"> {PHASE_LABEL[phase].toLowerCase()} at {code}</span>
-        </Button>
+      </h3>
+      {rows.length ? (
+        <ul className="divide-y divide-rule">{rows.map((r) => <FlightRow key={r.hex} r={r} flashAt={touched.get(r.hex)} />)}</ul>
+      ) : (
+        <p className="py-3 text-[0.95rem] text-ink-2">{none}</p>
       )}
     </section>
   );
 }
 
-// Altitude is stored to the nearest 1,000 ft, so an airborne 0 means "under 500 ft" (short final, just off the runway).
-const fmtAlt = (r: FlightRow) =>
-  r.phase === "ground" ? "Ground" : r.alt_ft === null ? "–" : r.alt_ft === 0 ? "Under 500 ft" : `${r.alt_ft.toLocaleString("en-US")} ft`;
-const fmtDist = (r: FlightRow) => (r.dist_nm === null ? "" : `${r.dist_nm} nm`);
+function whereWords(r: TripFlight): string {
+  if (r.phase === "departing") return r.alt_ft === 0 ? `At the gate or taxiing at ${r.origin}` : `Climbing out of ${r.origin}`;
+  if (r.phase === "arriving") return `On approach to ${r.destination}`;
+  if (r.phase === "landed") return `Landed at ${r.destination}`;
+  return r.progress_pct !== null ? `En route · ${r.progress_pct}% of the way` : "En route";
+}
 
-function FlightLi({ r, flashAt }: { r: FlightRow; flashAt: number | undefined }) {
+function FlightRow({ r, flashAt }: { r: TripFlight; flashAt: number | undefined }) {
   const ref = useFlash<HTMLLIElement>(flashAt);
-  const who = [r.airline, r.aircraft_type].filter(Boolean).join(" · ");
+  const name = r.flight ?? r.callsign ?? r.hex.toUpperCase();
+  const alt = r.phase !== "landed" && r.alt_ft ? `${r.alt_ft.toLocaleString("en-US")} ft` : null;
   return (
-    <li ref={ref} className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 py-2.5">
-      <div className="min-w-0">
-        <span className="font-numeral text-[1.18rem] font-semibold leading-tight tracking-[0.04em] text-ink">{r.callsign ?? r.hex.toUpperCase()}</span>
-        <span className="block truncate text-[0.9rem] text-ink-2">{who || "Operator not listed"}</span>
-      </div>
-      <div className="text-right font-numeral tabular-nums leading-tight">
-        <span className="block text-[1.05rem] text-ink">{fmtAlt(r)}</span>
-        <span className="block text-[0.9rem] text-ink-2">{fmtDist(r)}<span className="sr-only">{r.dist_nm !== null ? " from the field" : ""}</span></span>
-      </div>
+    <li ref={ref} className="grid gap-1.5 py-3">
+      <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span className="font-numeral text-[1.2rem] font-semibold leading-tight tracking-[0.04em] text-ink">{name}</span>
+        <span className="text-[0.95rem] text-ink-2">
+          {r.airline && <>{r.airline}<span aria-hidden="true"> · </span></>}
+          <span className="whitespace-nowrap font-numeral tracking-wide">{r.origin} <span aria-hidden="true">→</span><span className="sr-only">to</span> {r.destination}</span>
+        </span>
+      </p>
+      <p className="flex min-w-0 flex-wrap items-center gap-x-2 text-[0.95rem] text-ink">
+        <PhaseMark phase={r.phase} className="size-4 text-green" />
+        <span>{whereWords(r)}</span>
+        {alt && <><span aria-hidden="true" className="text-ink-2">·</span><span className="font-numeral tabular-nums text-ink-2">{alt}</span></>}
+      </p>
+      {r.phase === "en_route" && r.progress_pct !== null && <Progress pct={r.progress_pct} from={r.origin} to={r.destination} />}
     </li>
+  );
+}
+
+/** A thin drawn line from origin to destination, the flown part solid, a brass dot where the plane is. */
+function Progress({ pct, from, to }: { pct: number; from: string; to: string }) {
+  const p = Math.min(100, Math.max(0, pct));
+  return (
+    <div className="flex items-center gap-2 pt-0.5" aria-hidden="true">
+      <span className="font-numeral text-[0.8rem] tracking-wide text-ink-2">{from}</span>
+      <span className="relative h-3 min-w-0 flex-1">
+        <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 border-t border-dashed border-rule-strong" />
+        <span className="absolute left-0 top-1/2 h-0.5 -translate-y-1/2 bg-green" style={{ width: `${p}%` }} />
+        <span className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-green-3 bg-gold" style={{ left: `${p}%` }} />
+      </span>
+      <span className="font-numeral text-[0.8rem] tracking-wide text-ink-2">{to}</span>
+    </div>
   );
 }
 
@@ -441,77 +592,13 @@ function useFlash<T extends HTMLElement>(at: number | undefined) {
   return ref;
 }
 
-// ───────── Add an airport ─────────
-
-type Search = { q: string; state: "idle" | "loading" | "done" | "error"; results: Airport[] };
-
-function AddAirport({ follows }: { follows: AirportFollows }) {
-  const db = useSupabaseBrowser();
-  const [query, setQuery] = useState("");
-  const [search, setSearch] = useState<Search>({ q: "", state: "idle", results: [] });
-  const count = follows.list?.length ?? 0;
-  const atLimit = count >= MAX_AIRPORTS;
-
-  useEffect(() => {
-    const q = query.trim();
-    if (!db || q.length < 2) return;
-    let live = true;
-    const t = setTimeout(() => {
-      setSearch((s) => ({ ...s, q, state: "loading" }));
-      searchAirports(db, q)
-        .then((results) => { if (live) setSearch({ q, state: "done", results }); })
-        .catch(() => { if (live) setSearch({ q, state: "error", results: [] }); });
-    }, 250);
-    return () => { live = false; clearTimeout(t); };
-  }, [db, query]);
-
-  const active = query.trim().length >= 2;
-  const view = active ? search : { q: "", state: "idle" as const, results: [] };
+function Credit() {
+  const a = (href: string, text: string) => (
+    <a className="link" href={href} target="_blank" rel="noreferrer">{text}<span className="sr-only"> (opens in a new tab)</span></a>
+  );
   return (
-    <section aria-labelledby="add-h" className="grid gap-5">
-      <SectionHeading id="add-h" eyebrow="Anywhere with airline service" title="Add an airport" lede={`Follow up to ${MAX_AIRPORTS}. ${count ? `You're watching ${count}.` : ""}`} />
-      <div className="max-w-xl">
-        <Field label="Find an airport" hint="A code, a city, or a name: SAN, Monterey, Heathrow.">
-          {(a) => (
-            <TextInput {...a} type="search" autoComplete="off" spellCheck={false} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Airport code, city or name" />
-          )}
-        </Field>
-      </div>
-      <p className="sr-only" aria-live="polite">
-        {view.state === "done" ? (view.results.length ? `${view.results.length} airport${view.results.length === 1 ? "" : "s"} found.` : "No airports found.") : ""}
-      </p>
-      {atLimit && <p id="limit-note" className="text-[0.95rem] text-ink-2">You&apos;re following {MAX_AIRPORTS} airports, the most we watch. Unfollow one above to add another.</p>}
-      {view.state === "loading" && view.results.length === 0 && <ApiState kind="loading" shape="list" label="Searching airports" />}
-      {view.state === "error" && <ApiState kind="down" title="The search didn't go through">Check your connection and try again.</ApiState>}
-      {view.state === "done" && view.results.length === 0 && (
-        <ApiState kind="empty" title={`No airport matches “${view.q}”`}>
-          We list airports with airline service. Try the nearest city, or the three-letter code.
-        </ApiState>
-      )}
-      {view.results.length > 0 && view.state !== "error" && (
-        <ul className={cx("max-w-3xl divide-y divide-rule border-y border-rule", view.state === "loading" && "opacity-60")}>
-          {view.results.map((a) => {
-            const on = follows.isFollowing(a.code);
-            return (
-              <li key={a.code} className="grid grid-cols-[3.6rem_minmax(0,1fr)_auto] items-center gap-x-3 py-3 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto] sm:gap-x-4">
-                <span className="font-display text-[1.7rem] leading-none text-ink sm:text-[2rem]">{a.code}</span>
-                <span className="min-w-0">
-                  <span className="block truncate text-[1rem] font-medium text-ink">{a.name}</span>
-                  <span className="block truncate text-[0.9rem] text-ink-2">{placeOf(a)}</span>
-                </span>
-                <FollowToggle
-                  label={spokenName(a.code, a)}
-                  following={on}
-                  busy={follows.busy.has(a.code)}
-                  disabled={atLimit && !on}
-                  describedBy={atLimit && !on ? "limit-note" : undefined}
-                  onToggle={() => follows.toggle(a.code)}
-                />
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </section>
+    <p className="text-[0.85rem] leading-relaxed text-ink-2">
+      Positions from {a("https://adsb.lol/", "adsb.lol")} (ODbL) and {a("https://adsb.fi/", "adsb.fi")}, routes from {a("https://www.adsbdb.com/", "adsbdb")}, airports from {a("https://ourairports.com/data/", "OurAirports")}.
+    </p>
   );
 }
