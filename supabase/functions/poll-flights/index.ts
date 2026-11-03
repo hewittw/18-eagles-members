@@ -99,10 +99,12 @@ async function poll(db: SupabaseClient, t0: number): Promise<{ ok: boolean; rows
   const sightings: Seen[][] = [];
   const used: Record<SourceId, number> = { lol: 0, fi: 0 };
   let lol429 = false;
+  const fellBack = new Map<string, number>(); // why a source was passed over this run ("lol 429" → 3)
   for (let i = 0; i < airports.length; i += PARALLEL) {
     const got = await Promise.all(airports.slice(i, i + PARALLEL).map((code) => circle(code, coords.get(code), spacers)));
     for (const g of got) {
       if (g.tried.some((t) => t === "lol 429")) lol429 = true;
+      if (g.ok) for (const t of g.tried) fellBack.set(t, (fellBack.get(t) ?? 0) + 1);
       if (g.ok) { sightings.push(g.seen); used[g.source]++; }
       else failed.push(`${g.code} failed: ${g.detail}`);
     }
@@ -170,7 +172,8 @@ async function poll(db: SupabaseClient, t0: number): Promise<{ ok: boolean; rows
   const routesNote = looked.length || lookupNote
     ? `routes ${ROUTE_SOURCE} ${looked.filter((r) => r.found).length}/${looked.length} found in ${calls} call${calls === 1 ? "" : "s"}`
     : `routes ${ROUTE_SOURCE} all cached`;
-  const traffic = `traffic ${(["lol", "fi"] as const).filter((k) => used[k]).map((k) => `${k}×${used[k]}`).join(" ") || "none"}`;
+  const why = [...fellBack].map(([t, n]) => `${t}×${n}`).join(" ");
+  const traffic = `traffic ${(["lol", "fi"] as const).filter((k) => used[k]).map((k) => `${k}×${used[k]}`).join(" ") || "none"}${why ? ` (${why})` : ""}`;
   return { ok: true, rowsChanged: changed, detail: [...parts, routesNote, traffic, ...failed, lookupNote].filter(Boolean).join(", ") };
 }
 
