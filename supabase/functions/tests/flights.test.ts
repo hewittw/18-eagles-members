@@ -116,6 +116,12 @@ test("flightState: departing, en route, arriving, landed; progress to 5 %", () =
   // The same flight number on its next leg: climbing out of SAN, or on its way down into ORD. Not this route.
   assert.equal(flightState({ lat: 33.1, lon: -116.6, alt: 22_000, ground: false, rate: 2000 }, ORD, SAN), null);
   assert.equal(flightState({ lat: 41.6, lon: -88.6, alt: 14_000, ground: false, rate: -1800 }, ORD, SAN), null);
+  assert.equal(flightState({ lat: 41.95, lon: -87.8, alt: 2000, ground: false, rate: -800 }, ORD, SAN), null); // landing at ORD
+  // At cruise mid-route: heading roughly toward SAN (south-west, ~240°) is on the route; heading north-east isn't.
+  assert.equal(flightState({ lat: 37.5, lon: -103, alt: 36_000, ground: false, rate: 0, track: 240 }, ORD, SAN)?.phase, "en_route");
+  assert.equal(flightState({ lat: 37.5, lon: -103, alt: 36_000, ground: false, rate: 0, track: 50 }, ORD, SAN), null);
+  // Inside the terminal area a plane may point anywhere (vectors, a downwind leg): no track check there.
+  assert.equal(flightState({ lat: 32.9, lon: -116.9, alt: 9000, ground: false, rate: -900, track: 30 }, ORD, SAN)?.phase, "arriving");
 });
 
 // The lookup budget on a real ORD minute: at most 30, each callsign once, never one already cached and fresh,
