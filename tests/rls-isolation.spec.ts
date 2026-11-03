@@ -177,6 +177,58 @@ test("golfer-a can't read, delete, or forge golfer-b's followed airports", async
   }
 });
 
+// ───────── A5: watched categories (the Pro Shop) ─────────
+// The same checks for watched_categories. category is one of six fixed values, so the test uses ones golfer-b isn't
+// already watching (b keeps any real watches) and removes only what it made.
+test("golfer-a can't read, delete, or forge golfer-b's watched categories", async ({ browser, request }) => {
+  const b = await golferToken(browser, "golfer-b");
+  const before = await request.get(rest("watched_categories?select=category"), { headers: headers(b.token) });
+  const bHas = new Set(((await before.json()) as { category: string }[]).map((r) => r.category));
+  const [cat, forgedCat] = ["other", "training", "bags", "balls", "hats", "apparel"].filter((c) => !bHas.has(c));
+  expect(forgedCat, "two categories golfer-b doesn't watch").toBeTruthy();
+
+  // 1. golfer-b watches a category (user_id is filled in by the database from b's token).
+  const add = await request.post(rest("watched_categories"), {
+    headers: headers(b.token, { "Content-Type": "application/json", Prefer: "return=minimal" }),
+    data: { category: cat },
+  });
+  expect(add.status(), "golfer-b should be able to watch a category").toBe(201);
+
+  const a = await golferToken(browser, "golfer-a");
+  try {
+    // 2. golfer-a reads everything RLS allows: only golfer-a's own rows, never b's.
+    const all = await request.get(rest("watched_categories?select=category,user_id"), { headers: headers(a.token) });
+    expect(all.ok()).toBe(true);
+    const rows = (await all.json()) as { category: string; user_id: string }[];
+    expect(rows.filter((r) => r.user_id === b.userId), "golfer-a must NOT see golfer-b's watch list").toEqual([]);
+    expect(rows.every((r) => r.user_id === a.userId), "every watch golfer-a sees is golfer-a's own").toBe(true);
+
+    // 3. golfer-a tries to delete b's watch: RLS hides the row, so nothing of b's is deleted.
+    const del = await request.delete(rest(`watched_categories?category=eq.${cat}&user_id=eq.${b.userId}`), { headers: headers(a.token, { Prefer: "return=representation" }) });
+    expect(await del.json(), "golfer-a's delete must remove nothing").toEqual([]);
+
+    // 4. golfer-a tries to insert a watch in golfer-b's name: the insert policy refuses it.
+    const forged = await request.post(rest("watched_categories"), {
+      headers: headers(a.token, { "Content-Type": "application/json", Prefer: "return=minimal" }),
+      data: { user_id: b.userId, category: forgedCat },
+    });
+    expect(forged.ok(), `forged insert returned ${forged.status()}`).toBe(false);
+
+    // 5. golfer-b still has the watch they made, and nothing forged.
+    const mine = await request.get(rest(`watched_categories?select=category&category=in.(${cat},${forgedCat})`), { headers: headers(b.token) });
+    expect(await mine.json(), "golfer-b's watch survives, and the forged one doesn't exist").toEqual([{ category: cat }]);
+
+    // 6. Signed out (publishable key, no token): nothing at all.
+    const anon = await request.get(rest("watched_categories?select=category"), { headers: headers() });
+    expect(anon.ok() ? await anon.json() : [], `anon read returned ${anon.status()}`).toEqual([]);
+  } finally {
+    // Clean up with b's own token: only the rows this test made.
+    await request.delete(rest(`watched_categories?category=in.(${cat},${forgedCat})`), { headers: headers(b.token) });
+    await a.page.context().close();
+    await b.page.context().close();
+  }
+});
+
 // ───────── A5: trips ─────────
 // One trip per golfer (user_id is the primary key). golfer-b's real trip is left as it was: if b has none, the test
 // makes one and removes it at the end. golfer-a must not read it, change it, delete it, or write one in b's name.
