@@ -89,47 +89,62 @@ export function useTourLive(db: SupabaseClient | null): TourLive {
     });
   };
 
-  // 1. The event. The table holds one event (the worker replaces last week's), but read the newest to be safe.
+  // 1+2. The event and its leaderboard, together. Both channels subscribe at once (the table holds one event: the worker
+  //    replaces last week's, and its rows go with it by cascade, so the board channel needs no event filter; rows of
+  //    any other event are dropped here). When BOTH say SUBSCRIBED (again after a reconnect), one request reads the
+  //    newest event with its board embedded (tour_leaderboard references tour_events). Before, the board's channel
+  //    and read waited for the event's read: four round trips in a row instead of two.
+  const eventIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!db || paused) return;
     let live = true;
-    const fetchEvent = async () => {
-      const { data, error } = await db.from("tour_events").select(EVENT_COLS).order("starts_at", { ascending: false, nullsFirst: false }).limit(1).maybeSingle<TourEvent>();
+    const fetchAll = async () => {
+      const { data, error } = await db
+        .from("tour_events")
+        .select(`${EVENT_COLS}, tour_leaderboard(${BOARD_COLS})`)
+        .order("starts_at", { ascending: false, nullsFirst: false })
+        .order("sort_order", { ascending: true, referencedTable: "tour_leaderboard" })
+        .limit(400, { referencedTable: "tour_leaderboard" })
+        .limit(1)
+        .maybeSingle<TourEvent & { tour_leaderboard: BoardRow[] | null }>();
       if (!live) return;
-      if (error) { setEventLoad("error"); return; }
-      setEvent(data ?? null);
+      if (error) { setEventLoad("error"); setBoardLoad("error"); return; }
+      const { tour_leaderboard: rows, ...ev } = data ?? { tour_leaderboard: null };
+      const next = data ? (ev as TourEvent) : null;
+      eventIdRef.current = next?.id ?? null;
+      setEvent(next);
       setEventLoad("ready");
+      setBoardMap(new Map((rows ?? []).map((r) => [r.player_key, r])));
+      setBoardLoad("ready");
     };
-    const ch = db
+    const ready = { event: false, board: false };
+    const onStatus = (which: keyof typeof ready) => (s: string) => {
+      if (s === "SUBSCRIBED") { ready[which] = true; if (ready.event && ready.board) void fetchAll(); }
+      else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT") { ready[which] = false; void fetchAll(); }
+    };
+    const evCh = db
       .channel(`tour_events:${tag()}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "tour_events" }, (p: RealtimePostgresChangesPayload<TourEvent>) => {
         if (p.eventType === "DELETE") {
           const gone = (p.old as Partial<TourEvent>).id;
           setEvent((e) => (e && e.id === gone ? null : e));
-          void fetchEvent();
-        } else {
-          const row = p.new as TourEvent;
-          setEvent((e) => (!e || e.id === row.id || (row.starts_at ?? "") >= (e.starts_at ?? "") ? row : e));
+          if (gone === eventIdRef.current) eventIdRef.current = null;
+          void fetchAll();
+          return;
         }
+        const row = p.new as TourEvent;
+        if (row.id === eventIdRef.current) { setEvent(row); return; }
+        // A new event: its rows (already arriving on the board channel) are the ones to keep; read its board.
+        eventIdRef.current = row.id;
+        setEvent(row);
+        setBoardMap(new Map());
+        void fetchAll();
       })
-      .subscribe((s) => { if (s === "SUBSCRIBED" || s === "CHANNEL_ERROR" || s === "TIMED_OUT") void fetchEvent(); });
-    return () => { live = false; void db.removeChannel(ch); };
-  }, [db, paused]);
+      .subscribe(onStatus("event"));
 
-  // 2. The leaderboard for that event: inserts/updates filtered to it; deletes can't be filtered by Realtime, so
-  //    they're checked against the event here (the old record carries the primary key: event_id, player_key).
-  const eventId = event?.id ?? null;
-  useEffect(() => {
-    if (!db || !eventId || paused) return;
-    let live = true;
-    const fetchBoard = async () => {
-      const { data, error } = await db.from("tour_leaderboard").select(BOARD_COLS).eq("event_id", eventId).order("sort_order", { ascending: true }).limit(400).returns<BoardRow[]>();
-      if (!live) return;
-      if (error) { setBoardLoad("error"); return; }
-      setBoardMap(new Map((data ?? []).map((r) => [r.player_key, r])));
-      setBoardLoad("ready");
-    };
+    // The leaderboard: deletes carry only the primary key (event_id, player_key), checked against the event here.
     const onRow = (p: RealtimePostgresChangesPayload<BoardRow>) => {
+      const eventId = eventIdRef.current;
       if (p.eventType === "DELETE") {
         const old = p.old as Partial<BoardRow>;
         if (old.event_id && old.event_id !== eventId) return;
@@ -144,14 +159,12 @@ export function useTourLive(db: SupabaseClient | null): TourLive {
       touch([row.player_key]);
       setLastChange({ key: row.player_key, before, after: row });
     };
-    const ch = db
-      .channel(`tour_leaderboard:${eventId}:${tag()}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "tour_leaderboard", filter: `event_id=eq.${eventId}` }, onRow)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tour_leaderboard", filter: `event_id=eq.${eventId}` }, onRow)
-      .on("postgres_changes", { event: "DELETE", schema: "public", table: "tour_leaderboard" }, onRow)
-      .subscribe((s) => { if (s === "SUBSCRIBED" || s === "CHANNEL_ERROR" || s === "TIMED_OUT") void fetchBoard(); });
-    return () => { live = false; void db.removeChannel(ch); };
-  }, [db, eventId, paused]);
+    const boardCh = db
+      .channel(`tour_leaderboard:${tag()}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tour_leaderboard" }, onRow)
+      .subscribe(onStatus("board"));
+    return () => { live = false; void db.removeChannel(evCh); void db.removeChannel(boardCh); };
+  }, [db, paused]);
 
   // 3. The world ranking (top 200).
   useEffect(() => {
@@ -181,6 +194,7 @@ export function useTourLive(db: SupabaseClient | null): TourLive {
   }, [db, paused]);
 
   // Rows of another (older) event never show, and with no event there's no board to wait for.
+  const eventId = event?.id ?? null;
   const board = [...boardMap.values()].filter((r) => r.event_id === eventId).sort((a, b) => (a.sort_order ?? 9999) - (b.sort_order ?? 9999) || a.name.localeCompare(b.name));
   const rankings = [...rankMap.values()].sort((a, b) => a.rank - b.rank);
   return { event, eventLoad, board, boardLoad: eventLoad === "error" ? "error" : eventLoad === "ready" && !eventId ? "ready" : boardLoad, rankings, rankLoad, touched, lastChange };

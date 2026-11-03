@@ -1,12 +1,16 @@
 "use client";
-// Who this golfer follows, through the follow Server Actions (Clerk token + publishable key → RLS). Optimistic:
+// Who this golfer follows. The list is read with the page's browser client (publishable key + the golfer's Clerk
+// token → RLS on followed_players: only their own rows exist), not a Server Action: Next dispatches Server Actions one
+// at a time, so a read action queued behind the journal's loadClub and arrived a round trip late. Follow and unfollow
+// stay Server Actions (follow-actions.ts), the same door as every write. Optimistic:
 // the button flips at once; if the server says no (the 20-player limit, a dropped connection) it flips back and a
 // toast says why. Unfollowing offers Undo instead of a confirm.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui";
 import { MAX_PLAYERS } from "@/lib/live/limits";
 import { playerKey } from "@/lib/live/playerKey";
-import { followPlayer, listFollows, unfollowPlayer } from "@/lib/server/follow-actions";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { followPlayer, unfollowPlayer } from "@/lib/server/follow-actions";
 
 export type Followed = { key: string; name: string };
 
@@ -19,7 +23,7 @@ export type FollowsState = {
   toggle: (name: string) => void;
 };
 
-export function useFollows(enabled: boolean): FollowsState {
+export function useFollows(db: SupabaseClient | null): FollowsState {
   const toast = useToast();
   const [list, setList] = useState<Followed[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,15 +32,19 @@ export function useFollows(enabled: boolean): FollowsState {
   useEffect(() => { listRef.current = list; }, [list]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!db) return;
     let live = true;
-    void listFollows().then((r) => {
-      if (!live) return;
-      if (r.ok) { setList(r.players.map((p) => ({ key: p.playerKey, name: p.name ?? p.playerKey }))); setError(null); }
-      else { setError(r.error); setList((l) => l ?? []); }
-    }).catch(() => { if (live) { setError("Couldn't load who you follow. Try again in a moment."); setList((l) => l ?? []); } });
+    const fail = () => { if (live) { setError("Couldn't load who you follow. Try again in a moment."); setList((l) => l ?? []); } };
+    void db.from("followed_players").select("player_key, name").order("created_at", { ascending: true }).limit(MAX_PLAYERS * 2)
+      .returns<{ player_key: string; name: string | null }[]>()
+      .then(({ data, error }) => {
+        if (!live) return;
+        if (error) { fail(); return; }
+        setList((data ?? []).map((p) => ({ key: p.player_key, name: p.name ?? p.player_key })));
+        setError(null);
+      }, fail);
     return () => { live = false; };
-  }, [enabled]);
+  }, [db]);
 
   const setBusyKey = (key: string, on: boolean) => setBusy((b) => { const n = new Set(b); if (on) n.add(key); else n.delete(key); return n; });
 

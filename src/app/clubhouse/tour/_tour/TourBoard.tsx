@@ -26,7 +26,7 @@ export function TourBoard() {
   const tourHealth = useWorkerHealth("tour", 10);
   const rankHealth = useWorkerHealth("rankings", 3600);
   const live = useTourLive(db);
-  const follows = useFollows(!!db);
+  const follows = useFollows(db);
   const [query, setQuery] = useState("");
   // "Show all" on either list (lifted here so the ranking knows whether to hold still beside the leaderboard).
   const [boardAll, setBoardAll] = useState(false);
