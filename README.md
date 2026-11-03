@@ -157,7 +157,7 @@ saved 2026-11-02) with Node's test runner. 49 tests pass today.
 `npm run test:rls` (Playwright, the Clerk test users) adds four tests to Assignment 4's: followed players, watched
 categories, and the retired followed airports and trips (the tables still hold rows, so they stay protected).
 golfer-a can't see golfer-b's rows, change or delete them, or write one in golfer-b's name; a signed-out caller gets
-nothing.
+nothing. 7 passed on 2026-11-03.
 
 ### Operating it
 Read-only checks in the Supabase SQL editor (or the MCP's `execute_sql`):

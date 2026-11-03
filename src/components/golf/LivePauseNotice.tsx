@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLivePause } from "@/lib/live/useLivePause";
 import { cx } from "../ui/cx";
 
-export function LivePauseNotice({ what = "the scores" }: { /** What stopped updating: "the scores", "the flights board". */ what?: string }) {
+export function LivePauseNotice({ what = "the scores" }: { /** What stopped updating: "the scores", "the sale prices". */ what?: string }) {
   const { reason, resume } = useLivePause();
   const [back, setBack] = useState(false);
   const backTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

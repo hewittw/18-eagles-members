@@ -9,7 +9,7 @@ import { cx } from "../ui/cx";
 
 export type FreshnessProps = {
   health: WorkerHealth;
-  /** What's live, for the announcement and the stale/down lines: "The leaderboard", "Flights". */
+  /** What's live, for the announcement and the stale/down lines: "The leaderboard", "The Pro Shop". */
   what?: string;
   tone?: "paper" | "green";
   className?: string;
@@ -22,7 +22,7 @@ export function Freshness({ health, what = "The live data", tone = "paper", clas
   const { state, lastOkAt } = health;
   const ago = lastOkAt && now ? since(lastOkAt, now) : null;
   // The tour worker skips ESPN when no round is in play and records "idle: no live round": we checked, but didn't
-  // re-fetch. (The flights worker's "idle: no trips" is only ever the moment before a first trip is saved.)
+  // re-fetch.
   const idle = !!health.lastOk?.detail?.startsWith("idle: no live round");
 
   const line =

@@ -14,7 +14,7 @@ export type PhotoBandProps = {
 };
 
 /**
- * The full-bleed Locker Green band a page leads with (the Clubhouse hero, Tour, Flights): a photograph behind a
+ * The full-bleed Locker Green band a page leads with (the Clubhouse hero, Tour, Pro Shop): a photograph behind a
  * Masters-green wash, deepest behind the text so every word keeps its contrast, and the photo credit in the corner.
  * Without a photo it's the plain Locker Green band.
  */

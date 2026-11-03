@@ -1,5 +1,5 @@
 "use client";
-// Follow / unfollow (a tour player on /clubhouse/tour, an airport on /clubhouse/flights): one shared toggle, so the
+// Follow / unfollow (a tour player on /clubhouse/tour; it also took airports on the retired Flights page): one shared toggle, so the
 // two live pages press the same way. It is ToggleChip's grammar in Button's type: a real button with aria-pressed,
 // condensed caps, a drawn plus at rest and a brass tick on Locker Green when pressed (state is never colour alone).
 // The visible word stays "Follow" and the accessible name is "Follow <label>", so the visible label is always

@@ -1,10 +1,10 @@
 "use client";
-// The Realtime budget guard. A live tab nobody is looking at still receives every push (a Flights tab: ~5–9k
-// messages an hour; a month of that alone is past Supabase Free's 2M). So the live pages stop listening when:
+// The Realtime budget guard. A live tab nobody is looking at still receives every push (a Tour tab in a live
+// round: ~900 messages an hour; the retired Flights board's first build: ~5–9k, past Supabase Free's 2M in a month). So the live pages stop listening when:
 //   • hidden: the tab has been in the background for over 60 s (resumes by itself when it's visible again), or
 //   • idle:   the tab is visible but nobody has touched it (pointer, key, scroll, focus) for 30 minutes
 //             (resumes only when the golfer presses "Resume live updates": see golf/LivePauseNotice).
-// Every live subscription (useWorkerHealth, useTourLive, useFlightsLive) puts `paused` in its effect's
+// Every live subscription (useWorkerHealth, useTourLive, useShopLive) puts `paused` in its effect's
 // dependencies and returns early while paused, so the cleanup removes its channel (supabase.removeChannel; with
 // no channels left, realtime-js closes the socket itself ~50 s later). Resuming re-runs the effect: subscribe
 // FIRST, then refetch the snapshot on SUBSCRIBED, the same order as on mount, so no change falls in the gap.
