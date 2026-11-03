@@ -26,18 +26,25 @@ We skip the rest: odds, broadcasts, every stroke, player photos.
 `rankingsList[].rank`, `.lastWeekRank`, `.pointsAverage`, `.player.fullName`, `.player.country.name`. It changes once a
 week (Monday). We store rank, last week's rank, average points (to 2 decimals), name and country.
 
-**adsb.lol** (`api.adsb.lol/v2/point/{lat}/{lon}/15`) and **adsb.fi** (same data, the list is `aircraft` instead of
-`ac`). Saved copies: `adsblol-ord-a.json`, `adsblol-ord-b.json` (66 s apart), `adsbfi-ord.json`.
+**adsb.lol** (`api.adsb.lol/v2/point/{lat}/{lon}/100`, and `/v2/hex/{hex,hex…}` for flights that left the circles)
+and **adsb.fi** (same data, the list is `aircraft` instead of `ac`). Saved copies: `adsblol-ord-100nm.json`,
+`adsblol-san-100nm.json` (the route board), `adsbfi-ord.json`; the first build's 15 nm `adsblol-ord-a/b.json` stay.
 | Field | Means | Changes | We use it for |
 |---|---|---|---|
-| `hex` | the aircraft's transponder id | never | the key, with the airport |
+| `hex` | the aircraft's transponder id | never | the key, with the pair (`MDW-SAN`) |
 | `flight`, `r` | callsign (space-padded), registration | per flight | the callsign, and the airline from its first three letters |
 | `t` | aircraft type (B738, E75L) | never | the type |
 | `alt_baro` ("ground" or feet), `alt_geom` | altitude | every second in the air | rounded to 1,000 ft; "ground" = on the ground |
-| `baro_rate`, `geom_rate` | climb or descent, ft/min | every second | the phase: arriving (descending below 12,000 ft), departing (climbing), overhead |
+| `baro_rate`, `geom_rate` | climb or descent, ft/min | every second | the phase on its route (departing, en route, arriving), and spotting another leg of the same flight number |
+| `track` | direction over the ground | every second | at cruise, a track more than 100° off the destination means it's on another leg |
 | `gs` | ground speed, knots | every second | the ground test (under 200 ft and slower than 50 kt) |
-| `lat`, `lon`, `dst` | position, distance from our point in nm | every second | distance, rounded to whole nm |
+| `lat`, `lon`, `dst` | position, distance from our point in nm | every second | progress along the route (flown ÷ (flown + to go)), rounded to 5 % |
 | `now` | the server's time | every call | not stored |
+
+**adsbdb** (`api.adsbdb.com/v0/callsign/{CALLSIGN}`). Saved copies: `adsbdb-ual1234.json`, `adsbdb-unknown.json` (the 404).
+`response.flightroute.origin.iata_code` and `.destination.iata_code` (the route), `.airline.name`, `.callsign_iata`
+("UA1234", shown as "UA 1234"). A callsign it doesn't know answers 404 `{"response":"unknown callsign"}`. Routes change
+rarely, so each answer is cached 7 days (a miss 1 day) in `callsign_routes`, which only the worker can read.
 We drop speed, heading, squawk, signal strength, and everything else, so a plane holding steady isn't a change.
 
 ## Step 2 · "List the MCP servers and CLIs you can use, what you'd use each for, and check each one works"
@@ -58,8 +65,9 @@ The chart: `docs/data-flow.md` (before code, then as built).
   *If the secret changed:* the function answers 401 and writes nothing, not even a run, so the page goes **stale**.
 - **Worker → source:** a GET with a real User-Agent and an 8 s timeout. *If ESPN renamed a field* (say `events`): the
   parser throws, the run is recorded `ok = false` with the error, the page says **down** and keeps the last good board.
-  *If adsb.lol says 429:* that airport tries adsb.fi; if both fail, its board is held and marked.
-- **Worker → database:** only changed rows, keyed by `(event_id, player_key)` or `(airport, hex)`. *If a key column
+  *If adsb.lol says 429:* that airport tries adsb.fi; if both fail, its board is held and marked. *If adsbdb is down or
+  says 429:* lookups stop for that run; cached routes still match, so the board keeps working for known flights.
+- **Worker → database:** only changed rows, keyed by `(event_id, player_key)` or `(pair_key, hex)`. *If a key column
   changed:* the upsert fails or duplicates. The tests on saved responses catch the parse side first.
 - **Database → Realtime → page:** each change, if the table is in the publication, `authenticated` has `select`, and a
   select policy allows it. *If any one of the three is missing:* the page gets nothing, with no error.
@@ -80,7 +88,8 @@ also how many Realtime messages each open page will get. `detail` says what happ
 `finished_at` show how long it took; the page counts freshness from `finished_at`.
 - **180:** the 10-second tour tick. The Mexico Open is over (state `post`) and the last real ESPN call was under
   5 minutes ago, so the worker didn't call ESPN at all. It still records an ok run (175 ms), which keeps the page fresh.
-- **178:** a flights tick. At Carlsbad (CLD), 29 planes within 15 nm, answered by adsb.lol (`lol`; it would say `fi` if
+- **178:** a flights tick from the first build (airport boards, since replaced by routes; a route tick today reads
+  `MDW-SAN 1 flight (1 lookups, 1 tracked), ORD-SAN 2 flights (2 lookups, 0 tracked)`). At Carlsbad (CLD), 29 planes within 15 nm, answered by adsb.lol (`lol`; it would say `fi` if
   the fallback answered): 2 new, 2 gone, 18 changed. At O'Hare, 44 planes: 8 new, 5 gone, 16 changed. 2+2+18+8+5+16 = 51.
   The 34 "changed" rows crossed a 1 nm or 1,000 ft line or changed phase; the other planes didn't change and weren't written.
 - **176:** the 5-minute refresh while idle: a real ESPN call, 120 players, and nothing changed, so 0 writes and
@@ -127,19 +136,24 @@ Ask these in order, then the four below.
 4. *What does the page say if Cron stops?* Stale, within 3 intervals (30 s for the leaderboard). Down needs a failed run.
 5. *Why `verify_jwt = false`?* Cron has no user. The Vault secret is the check instead, so no key sits in the cron SQL.
 6. *Why round altitude to 1,000 ft?* So a plane holding steady isn't rewritten (and pushed) every 30 seconds.
-7. *Two golfers follow ORD. How many adsb.lol calls?* One per tick. Calls are per airport, not per golfer.
+7. *Two golfers both plan ORD → SAN (or one ORD → SAN, one SAN → ORD). How many calls?* Two adsb.lol point calls a
+   tick (one per airport) and at most one hex call, shared: calls are per route, not per golfer. adsbdb only for
+   callsigns not already cached.
+8. *Where is my location stored?* Nowhere. The browser turns it into the nearest airport code; only the code is saved
+   (`trips.from_airport`). The airport lookup sends a box snapped to a 2-degree grid, not the point.
 
 ## Step 7 · "Walk me through the free tier limits for each service, and how to set usage limits and alerts"
 | Service | Free limit that matters | Our use | Guard |
 |---|---|---|---|
 | Supabase Edge Functions | 500,000 calls a month | ~346,000 (10 s + 30 s + hourly) | fixed schedules; the fallback runs inside the same call |
-| Supabase Realtime | 2 million messages a month, 200 concurrent connections | ~360/hour per idle Tour page; ~5,000–9,000/hour per Flights page (ORD + CLD) | only changed rows, coarsened; filters per page; pause `poll-flights` if needed |
+| Supabase Realtime | 2 million messages a month, 200 concurrent connections | ~360/hour per idle Tour page; ~150–350/hour per Flights page (one route; the first build's airport boards were ~5,000–9,000) | only changed rows, coarsened; `pair_key=eq.…` per page; hidden tabs pause; pause `poll-flights` if needed |
 | Supabase database | 500 MB | 13 MB | daily trims of `worker_runs` (2 days) and cron history (1 day) |
 | Supabase project | pauses after 7 days without use | in use daily | open the app weekly until grades are back |
 | Vercel Hobby | as in A4 | unchanged | Hobby can't be billed |
 | Clerk development | as in A4 | unchanged | dev keys only |
 | ESPN, OWGR | unpublished | ≤ 8,640 ESPN calls a day (live), 288 idle; 24 OWGR | server-side only, one call for everyone |
-| adsb.lol / adsb.fi | dynamic / 1 request a second | ≤ 6 airports every 30 s | most-followed six; adsb.fi only on failure, spaced 1.1 s |
+| adsb.lol / adsb.fi | dynamic / 1 request a second | ≤ 8 airports + 1 hex call every 30 s (4 routes); none with no trips | most-shared four routes; adsb.fi only on failure, spaced 1.1 s |
+| adsbdb | unpublished | ≤ 30 lookups a run, 150 ms apart; 0–3 once the cache is warm | 7-day cache; cargo and bizjets never looked up; a 429 stops the run's lookups |
 **Usage limits and alerts.** Supabase: the Usage page shows Edge Function calls, Realtime messages and database size
 for the billing period. With no payment method on the Free plan, nothing can be billed; over a quota, Supabase warns by
 email and can restrict the project, it doesn't charge. The spend cap is a Pro setting, so there's nothing to turn on

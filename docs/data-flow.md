@@ -73,28 +73,33 @@ flowchart TB
     direction LR
     ESPN["ESPN leaderboard<br/>~230 KB JSON"]
     OWGR["OWGR ranking<br/>top 200, weekly"]
-    LOL["adsb.lol<br/>aircraft within 15 nm"]
+    LOL["adsb.lol<br/>aircraft within 100 nm<br/>+ known flights by hex"]
     FI["adsb.fi<br/>fallback, 1 call/s"]
+    DBDB["adsbdb<br/>callsign → route<br/>≤ 30 lookups a run"]
   end
   CRON["Supabase Cron, in the database<br/>pg_cron + pg_net<br/>tour every 10 s<br/>rankings hourly at :07<br/>flights every 30 s<br/>x-worker-secret from Vault"]
   subgraph Supabase["Supabase · project rihtmjtzrufkravyunuq · Free plan"]
     TOUR["poll-tour<br/>Edge Function<br/>secret → live round? →<br/>parse → diffRows"]
-    FLY["poll-flights<br/>Edge Function<br/>secret → top 6 + ORD →<br/>parse → diffRows"]
-    SHARED[("Shared tables<br/>tour_events<br/>tour_leaderboard<br/>tour_rankings<br/>airport_flights<br/>worker_runs")]
+    FLY["poll-flights<br/>Edge Function<br/>secret → trips → ≤ 4 pairs →<br/>routes → phase → diffRows"]
+    SHARED[("Shared tables<br/>tour_events<br/>tour_leaderboard<br/>tour_rankings<br/>trip_flights · trip_pairs<br/>worker_runs")]
+    CACHE[("callsign_routes<br/>service_role only<br/>7 days · misses 1 day")]
     RT["Realtime<br/>supabase_realtime<br/>RLS per subscriber"]
-    MINE[("Per-golfer tables<br/>followed_players ≤ 20<br/>followed_airports ≤ 6<br/>RLS: sub = user_id")]
+    MINE[("Per-golfer tables<br/>followed_players ≤ 20<br/>trips: from, to, label<br/>RLS: sub = user_id")]
   end
   subgraph Vercel["Vercel · Next.js · branch live-data"]
     direction LR
     TP["/clubhouse/tour"]
     FP["/clubhouse/flights"]
-    SA["Server Actions<br/>follow-actions.ts"]
+    SA["Server Actions<br/>follow-actions.ts<br/>trip-actions.ts setTrip"]
+    GEO["Browser geolocation<br/>stays in the tab"]
   end
   CLERK["Clerk<br/>sub, role authenticated"]
 
   ESPN -->|"live: every tick<br/>idle: every 5 min"| TOUR
   OWGR -->|hourly| TOUR
-  LOL -->|one call per airport| FLY
+  LOL -->|one call per trip airport| FLY
+  DBDB -->|new callsigns only| FLY
+  FLY <-->|read / cache| CACHE
   FI -.->|"if adsb.lol 429s"| FLY
   CRON -->|POST| TOUR
   CRON -->|POST| FLY
@@ -102,15 +107,17 @@ flowchart TB
   FLY -->|"secret key<br/>changed rows + run row"| SHARED
   SHARED -->|WAL change| RT
   RT -->|"source=eq.tour<br/>event_id=eq.id"| TP
-  RT -->|"source=eq.flights<br/>airport=in.(…)"| FP
+  RT -->|"source=eq.flights<br/>pair_key=eq.MDW-SAN"| FP
+  GEO -->|"lat/lon → nearest airport<br/>(in the browser)"| FP
   TP -->|follow| SA
-  FP -->|follow| SA
+  FP -->|"setTrip(MDW, SAN, label)"| SA
   CLERK -->|getToken| SA
   SA -->|"publishable key<br/>+ Clerk token"| MINE
 ```
 
-`poll-flights` also reads `followed_airports` (which airports to poll) and `airports` (their lat/lon) with the secret
-key. The Flights page reads `airports` to suggest the airport nearest each course. Daily trims at 04:17 and 04:23 UTC
+`poll-flights` also reads `trips` (which routes to watch) and `airports` (their lat/lon) with the secret key. The
+Flights page reads `airports` to suggest the airport near the golfer and near each course (one rule, `src/lib/live/suggest.ts`),
+in the browser: the request is a lat/lon box snapped to a 2-degree grid, and the coordinates are never sent or stored. Daily trims at 04:17 and 04:23 UTC
 keep `worker_runs` to 2 days and `cron.job_run_details` to 1 day.
 
 ## What changed from the plan, and why
@@ -121,7 +128,13 @@ keep `worker_runs` to 2 days and `cron.job_run_details` to 1 day.
 | One `follows` table | Two tables: `followed_players` (≤ 20) and `followed_airports` (≤ 6), limits in before-insert triggers | Different keys (a name key vs an airport code with a foreign key) and different limits. The database enforces the limits, not only the UI. |
 | Flights: adsb.lol only | adsb.lol first, adsb.fi for the same airport when adsb.lol answers 429 or fails (`poll-flights/sources.ts`), adsb.fi calls spaced 1.1 s apart | adsb.lol rate-limits Supabase's shared egress: 2 of the 6 flight runs so far were 429 for every airport (`worker_runs` ids 12 and 47), while the same URL worked from a laptop. |
 | Airports: one seed | 1,955 airports in 4 migration files (~40 KB each) | The seed travels to Supabase as text through the MCP, so it is a compact `code|icao|…` block cut into four ~40 KB pieces, each one small enough to send and check. An md5 of the table matched the generator after applying. |
-| Flights: poll followed airports | Top 6 by number of followers, plus ORD always (it takes 6th place if needed); boards for airports nobody follows are cleared | A new golfer always sees a live board; Edge Function time and adsb.lol calls stay fixed however many golfers follow. |
+| Flights: poll followed airports | *(First build)* top 6 by followers plus ORD always. *(Rebuilt 2026-11-02 evening)* replaced by trips: see the rows below | The user: the board was "way too huge with all the flights", and "+ Home" / "Follow" were confusing. |
+| Flights: a board per followed airport (`airport_flights`, 15 nm) | One board per **route**: `trip_flights` keyed by a sorted pair (`MDW-SAN`), flights flying it in either direction, with phase (departing / en route / arriving / landed) and progress to 5 %. `airport_flights` is no longer written and left the Realtime publication (the table stays) | A golfer wants the flights between where they are and where they're playing, not every plane over an airport. |
+| `followed_airports` (≤ 6) | `trips` (one per golfer: from, to, label), saved by `setTrip`; `followed_airports` and its actions stay, unused by the page | One trip is the whole choice; nothing destructive. |
+| adsb.lol positions only | Plus **adsbdb** (`/v0/callsign/…`) for each airline callsign's route, cached in `callsign_routes` (service_role only, 7 days, misses 1 day), at most 30 lookups a run 150 ms apart, moving aircraft first; flights that left both 100 nm circles are found by hex in one adsb.lol call (≤ 12 per pair) | Positions alone can't say where a flight is going. The cache warmed in ~5 minutes (403 callsigns), after which runs need 0–3 lookups. |
+| (not planned) | `trip_pairs`: one row per watched pair, written on its first check and when the airlines known to fly it change | The page must tell "finding flights…" from "none in the air", and name the airlines, without reading the private cache. |
+| (not planned) | A flight number's other legs are kept off the board: descending into its origin, climbing out of its destination, or at cruise with its track > 100° off the bearing to the destination | Airlines reuse a number all day (WN 3224 MDW→SAN→…) and adsbdb knows one route per callsign: the first live run showed WN 3224 "95% of the way" while climbing out of SAN. |
+| Pairs closer than a drive | Not watched (< 150 mi apart); the page says "You can drive this one" | No board, no calls. |
 | Keep every event | One event at a time: a new week's event deletes last week's (cascade clears its board) | The page shows one event; old rows cost storage and Realtime messages for nothing. |
 | Rankings: replace hourly | Hourly; 0 writes when unchanged; deletes only when OWGR sends a full page (≥ 100 rows) | OWGR changes weekly. A short, broken response must not wipe the table. |
 | Realtime filtered by follows | Inserts/updates filtered (`event_id=eq.…`, `airport=in.(…)`, `source=eq.…`); deletes unfiltered and dropped in the browser | Supabase Realtime can't filter DELETE events. |
@@ -135,3 +148,11 @@ keep `worker_runs` to 2 days and `cron.job_run_details` to 1 day.
 - 104 runs recorded, 90 of them `idle`, 2 failed (both adsb.lol 429s). Tables: 1 event, 120 leaderboard rows,
   200 rankings, 1,955 airports, 56 live flights. Database: 13 MB of 500 MB.
 - Realtime publication: `airport_flights`, `tour_events`, `tour_leaderboard`, `tour_rankings`, `worker_runs`.
+
+## Live numbers after the route rebuild (read-only SQL, 2026-11-03 00:39 UTC)
+- `poll-flights` v6, every 30 s. Two trips (golfer-a MDW → SAN, golfer-b ORD → SAN), so two pairs and three airports.
+- Runs, newest first: `MDW-SAN 0 flights (2 lookups, 0 tracked), ORD-SAN 2 flights (0 lookups, 0 tracked)` (2.0 s);
+  `MDW-SAN 1 flight (1 lookups, 1 tracked), ORD-SAN 2 flights (2 lookups, 0 tracked)` (2.3 s). The first runs on a
+  cold cache spent all 30 lookups (≈ 9 s). 0 failed runs in the last hour; the longest took 9.1 s.
+- `callsign_routes` 403 (373 found), `trip_flights` 2, `trip_pairs` 2 (ORD-SAN: American, United; MDW-SAN: Southwest).
+- Realtime publication: `tour_events`, `tour_leaderboard`, `tour_rankings`, `trip_flights`, `trip_pairs`, `worker_runs`.

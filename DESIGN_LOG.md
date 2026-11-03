@@ -436,3 +436,48 @@ Evidence and contact sheets: `screenshots/a5/review/` (gitignored).
 - **RLS:** `test:rls` now runs the followed_players checks for `followed_airports` too (read, delete, forge, signed out).
   5 passed, twice, against the dev server.
 - Screenshots (gitignored): `screenshots/a5/final/` (both pages at 320–2560, paused/resumed, the column measurements).
+
+## 2026-11-03 · Flights becomes a trip: your location, where you're playing, the flights between
+- **What the user said** (on the airport-board page): "This page at the top should have a get-your-current-location so
+  it can suggest flights if needed. I'm confused by the '+ Home' tag: it makes it look like home isn't suggested but
+  Fairbanks Ranch is. 'Follow' makes it look like follow Fairbanks, not the airport. Not very accurate either: San Diego
+  would be better than Palomar. Make it so you can only use Flights if you enable location. Then the board, which
+  becomes way too huge with all the flights, should just be flights between your location and the airport you're
+  looking at." And on the follow-up: "not super intuitive... confusing about the mix between them, maybe combine. Be
+  creative, but remember less is more."
+- **The page now reads as three short steps.** A location gate first (nothing else renders until a position is known;
+  it asks only when "Use my location" is pressed, unless the browser already says "granted"; denied, no fix / timeout,
+  insecure and unsupported each have their own words; "Your location stays in this browser. We save only the airport
+  code."). Then "You're near MDW · Chicago Midway International · 9 mi", then **one** choice list, "Where are you
+  playing?": the golfer's courses (home first, a plain "Home course" tag) and a last option "Somewhere else" that opens
+  the airport search in place. Then "Flights between MDW and SAN right now", grouped "To San Diego" / "Back to Chicago",
+  or "You can drive this one" (same airport, or under 150 mi straight line). Rejected: keeping Follow buttons on course
+  cards, separate "courses" and "pick an airport" sections, "Your airports" / "Add an airport" headings, ORD always
+  watched, follow counts. The footer credit is one line.
+- **The "+":** the shared gold Tag drew a four-point star that read as "add". Tags are labels, not actions, so the star
+  is gone everywhere (it also marked "Counts" on round cards).
+- **Accurate airports.** `airports.kind` (large/medium, OurAirports' type) and one rule (`src/lib/live/suggest.ts`): the
+  nearest large airport within 75 mi, else any within 75 mi, else a large one within 250 mi. Fairbanks Ranch and
+  Rancho Santa Fe → SAN (not CLD). The Chicago Loop → **MDW**, not ORD: Midway is large and 9 mi away against O'Hare's
+  15, so the rule (tested) picks it; golfer-b, placed by O'Hare, gets ORD. Flagged for the user: Pebble Beach now gets
+  SJC (large, 55 mi) over Monterey (medium, 5 mi); Augusta gets AGS because nothing large is within 75 mi.
+- **The worker watches routes.** `trips` (one per golfer, RLS like hw4) → distinct pairs (A↔B is one), most-shared
+  first, max 4, none under 150 mi. Per airport one 100 nm call; airline callsigns get their route from **adsbdb**
+  (≤ 30 lookups a run, 150 ms apart, moving aircraft first, cached 7 days in a service-role-only table). Flights flying
+  the pair go to `trip_flights` with a phase and progress to 5 %; ones that left both circles are found by hex (adsb.lol
+  takes a comma list, so one call). `trip_pairs` says whether a pair has been checked and which airlines fly it, so the
+  page can say "Finding flights on your route…" and "Southwest flies this route; check back soon." `airport_flights`
+  left the Realtime publication; nothing was dropped.
+- **Caught on the first live runs:** WN 3224 MDW→SAN showed "95% of the way" while climbing out of San Diego. Airlines
+  reuse a flight number all day and adsbdb knows one route per callsign, so it was the next leg. v5 drops a seen-but-
+  off-route flight at once; v6 rejects descending into the origin, climbing out of the destination, and (at cruise,
+  outside both terminal areas) a track more than 100° off the bearing to the destination. Tests pin each rule.
+- **Privacy:** coordinates live only in React state. The airport lookup reads a lat/lon box snapped outward to a
+  2-degree grid, so even the request can't place the golfer closely; `trips` stores two codes and a label.
+- **adsbdb's terms:** the route data's authors ask that it not be "incorporated into other databases" without
+  permission. Our cache is private to the worker and short-lived, and the page shows only each flight's two airports;
+  noted in `docs/credits.md` as an open question for the user.
+- **Proved:** golfer-a picked Rancho Santa Fe by keyboard (Space) from the Loop: "Finding flights…", then WN 3224 arrived
+  by Realtime with no reload; golfer-b chose "Somewhere else" → SAN by O'Hare: waiting, then AA 1543 and UA 2486. Runs
+  after the cache warmed: `MDW-SAN 1 flight (1 lookups, 1 tracked), ORD-SAN 2 flights (2 lookups, 0 tracked)`, 1–5 s.
+  `test:worker` 56 pass; `test:rls` 6 pass (new: trips). Screenshots: `screenshots/a5/trip/`.

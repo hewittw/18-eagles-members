@@ -96,8 +96,9 @@ flowchart TD
 ## Assignment 5: the live system
 
 Two live pages under `/clubhouse`, fed by workers on Supabase: **Tour** (the PGA TOUR leaderboard from ESPN and the
-world ranking from OWGR) and **Flights** ("Getting there": aircraft around the airports a golfer follows, from adsb.lol,
-with adsb.fi as the fallback). Each golfer picks what they follow, and the page updates without a refresh. The
+world ranking from OWGR) and **Flights** ("Getting there": the flights between where the golfer is and where they're playing,
+from adsb.lol with adsb.fi as the fallback, routes from adsbdb). Each golfer picks what they follow or where they're
+going, and the page updates without a refresh. The
 backend chart, as planned and as built, is in `docs/data-flow.md`.
 
 ### 4 · Follow a tour player and watch them live
@@ -125,27 +126,32 @@ flowchart TD
   T9 -- "Unfollow" --> U1["Removed · Undo"]
 ```
 
-### 5 · Follow an airport near my course and watch traffic
+### 5 · Set my location, pick a course, watch flights on my route
 ```mermaid
 flowchart TD
-  A0([Open /clubhouse/flights]) --> A1["Near your courses<br/>Torrey Pines: Fly into SAN, 14 mi"]
-  A1 -- "No course has a map pin" --> A2["None of your courses has a location yet<br/>Browse the courses"]
-  A0 --> A3{"Watching any airports?"}
-  A3 -- "No" --> A4["You're not watching any airports yet<br/>Follow ORD: Chicago is always watched"]
-  A0 --> A5["Add an airport<br/>search by code, city or name"]
-  A1 -- "Follow SAN" --> V1
-  A4 -- "Follow ORD" --> V1
-  A5 -- "Follow" --> V1{"Saved?<br/>Server Action · Clerk token · RLS · limit trigger"}
-  V1 -- "The 7th airport" --> E1["Toast: You're following 6 airports, the most we watch.<br/>Unfollow one to add another."]
-  V1 -- "Unknown code" --> E2["We don't have that airport.<br/>Try a major airport's code, like ORD or SAN."]
-  V1 -- "Yes" --> B1["SAN's board: Waiting for the first check.<br/>A new airport fills in within 30 seconds."]
-  B1 --> B2{"SAN in the last sweep?"}
-  B2 -- "Planes nearby" --> B3["Arriving · departing · on the ground · passing over<br/>arrivals nearest the field first"]
-  B2 -- "Nothing within 15 nm" --> B4["Quiet skies"]
-  B2 -- "Both sources failed" --> B5["SAN didn't answer, or Asked to slow down<br/>the last good board stays, marked"]
-  B2 -- "Not among the 6 most followed" --> B6["Not watched right now<br/>it joins when one drops off"]
-  B3 --> B7["A plane crosses a 1 nm or 1,000 ft line<br/>its row updates and washes once<br/>a plane that left drops off the board"]
-  B7 --> B2
+  A0([Open /clubhouse/flights]) --> G1{"Location already allowed<br/>for this site?"}
+  G1 -- "Yes" --> L1
+  G1 -- "Not yet" --> G2["Turn on your location to plan getting there<br/>Use my location · Your location stays in this browser.<br/>We save only the airport code."]
+  G2 -- "Use my location" --> G3{"The browser asks"}
+  G3 -- "Block" --> E1["Location is turned off for this site<br/>how to allow it again · Reload the page"]
+  G3 -- "No fix, or 15 s timeout" --> E2["We couldn't find where you are · Try again"]
+  G1 -- "Not https" --> E3["Location needs a secure connection"]
+  G3 -- "Allow" --> L1["You're near MDW · Chicago Midway International · 9 mi<br/>nearest large airport within 75 mi · Update location"]
+  L1 --> W1["Where are you playing?<br/>one choice list: your courses, home course first<br/>Rancho Santa Fe · Home course · Fly into SAN · 20 mi"]
+  W1 -- "Somewhere else" --> W2["Find an airport, in place<br/>picking one makes it the choice"]
+  W1 -- "A course" --> S1
+  W2 --> S1{"Saved?<br/>setTrip: two codes + a label<br/>Clerk token · RLS"}
+  S1 -- "Network or database error" --> E4["Toast: Couldn't save your trip."]
+  S1 -- "Yes" --> D1{"Same airport, or<br/>under 150 mi away?"}
+  D1 -- "Yes" --> D2["You can drive this one<br/>Rancho Santa Fe is 21 mi from you, straight line"]
+  D1 -- "No" --> B1["Flights between MDW and SAN right now"]
+  B1 --> B2{"Has the worker checked this pair?"}
+  B2 -- "Not yet" --> B3["Finding flights on your route…<br/>First check within 30 seconds."]
+  B2 -- "None in the air" --> B4["No flights between MDW and SAN in the air right now<br/>Southwest flies this route; check back soon."]
+  B2 -- "Flights" --> B5["To San Diego · Back to Chicago<br/>AA 1543 · American · ORD → SAN · Climbing out of ORD · 9,000 ft<br/>en route: a thin progress line · On approach to SAN"]
+  B3 --> B2
+  B5 --> B6["A flight moves 5 % or 1,000 ft<br/>its row updates and washes once<br/>landed or gone 10 min: it drops off"]
+  B6 --> B2
 ```
 
 ### 6 · Freshness: what each state looks like

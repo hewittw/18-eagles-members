@@ -3,21 +3,23 @@
 ## Assignment 5: Live Data System
 
 18 Eagles now has two live pages. **Tour** shows this week's PGA TOUR leaderboard (ESPN) and the Official World Golf
-Ranking (OWGR), with the players you follow first. **Flights** ("Getting there") suggests the airport nearest each of
-your courses and shows live aircraft around the airports you follow (adsb.lol, with adsb.fi as a fallback). Workers on
+Ranking (OWGR), with the players you follow first. **Flights** ("Getting there") asks for your location, says which
+airport you're near, lets you pick where you're playing (your courses, or any airport), and shows the flights in the
+air between the two right now, or says you can drive (adsb.lol positions with adsb.fi as a fallback, routes from adsbdb). Workers on
 Supabase fetch each source on a schedule, save only what changed, and record every run. Supabase Realtime then pushes
 each change to the open pages, so they update without a refresh. Each golfer chooses what they follow, and row-level
 security keeps those choices private.
 
 - **Tour:** https://18-eagles-live.vercel.app/clubhouse/tour
 - **Flights:** https://18-eagles-live.vercel.app/clubhouse/flights
-- Sign in (any email; your follows are private to you), follow a player or an airport, and leave the page open.
+- Sign in (any email; your follows and your trip are private to you), follow a player or plan a trip, and leave the
+  page open. Flights needs your location; it stays in the browser and only the airport code is saved.
 - Diagrams: [`docs/data-flow.md`](docs/data-flow.md) (the chart drawn before code, and the one as built),
   [`flows.md`](flows.md) (user flows, freshness states, one update traced), also on the site's `/flows` page.
   Talking points for class: [`docs/talking-points.md`](docs/talking-points.md).
 
 ### The system
-![The system as built: ESPN, OWGR, adsb.lol and adsb.fi feed two Edge Functions run by Supabase Cron; they write changed rows to Postgres; Realtime pushes them to the Tour and Flights pages on Vercel; follows go through Server Actions with the Clerk token and RLS.](public/flows/system/flow-2.svg)
+![The system as built: ESPN, OWGR, adsb.lol and adsb.fi and adsbdb feed two Edge Functions run by Supabase Cron; they write changed rows to Postgres; Realtime pushes them to the Tour and Flights pages on Vercel; follows go through Server Actions with the Clerk token and RLS.](public/flows/system/flow-2.svg)
 
 ### How one change travels
 1. **Source.** A player birdies the 7th. ESPN's leaderboard JSON now says -4, thru 7.
@@ -40,8 +42,9 @@ security keeps those choices private.
 |---|---|---|---|---|
 | ESPN leaderboard (`site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga`) | this week's event and every player's position, to par, today, thru | every 10 s during a live round (or within 30 min of the first tee time); otherwise at most every 5 min | unpublished; it blocks default User-Agents | one server-side call per tick for every golfer; a real User-Agent; the small leaderboard endpoint (~230 KB, not the ~700 KB scoreboard); idle runs make no call |
 | OWGR (`apiweb.owgr.com/.../getRankings`, top 200) | rank, last week's rank, average points | hourly at :07 | unpublished | 24 calls a day; 0 writes when nothing changed (it updates weekly) |
-| adsb.lol (`api.adsb.lol/v2/point/{lat}/{lon}/15`) | aircraft within 15 nm of an airport | every 30 s, one call per airport | dynamic; it rate-limits Supabase's shared egress (we saw 429s) | only airports golfers follow: the 6 most-followed plus ORD, shared by everyone; two at a time; a 429 never retries in a loop |
-| adsb.fi (`opendata.adsb.fi/api/v2/lat/{lat}/lon/{lon}/dist/15`) | the same data, same field names | only when adsb.lol answers 429 or fails, for that airport | 1 request a second | calls spaced 1.1 s apart within a run |
+| adsb.lol (`api.adsb.lol/v2/point/{lat}/{lon}/100`, `/v2/hex/{hex,hex…}`) | aircraft within 100 nm of each trip airport; known route flights by hex once they leave both circles | every 30 s: one call per airport in the watched pairs, plus one hex call | dynamic; it rate-limits Supabase's shared egress (we saw 429s) | only the 4 most-shared routes (A↔B is one route), so at most 8 point calls and 1 hex call a run, shared by everyone; no trips = no calls; a 429 never retries in a loop |
+| adsb.fi (`opendata.adsb.fi/api/v2/lat/{lat}/lon/{lon}/dist/100`, `/api/v2/hex/{hex}`) | the same data, same field names | only when adsb.lol answers 429 or fails | 1 request a second | calls spaced 1.1 s apart within a run; at most 4 hex fallbacks |
+| adsbdb (`api.adsbdb.com/v0/callsign/{CALLSIGN}`) | a callsign's route: origin and destination IATA codes, airline, flight number | only for airline callsigns with no cached answer | unpublished; keyless | at most 30 a run, 150 ms apart, climbing/descending aircraft first; cached in `callsign_routes` for 7 days (a miss for 1 day). After the first ~5 minutes runs needed 0–3 lookups. Cargo and business jets are never looked up. |
 | OurAirports | 1,955 airports (code, name, lat/lon) | once, as a seed migration | none (public domain) | it's a table, so the page never calls it |
 
 ### Free-tier budget
@@ -53,12 +56,11 @@ security keeps those choices private.
   - An open Tour page gets 1 `worker_runs` message every 10 s (360 an hour) plus changed leaderboard rows. With no live
     round, that is about 360 an hour. In a live round, about 120 players × 18 holes = ~2,200 row updates over a ~10 h
     day, plus position shifts: roughly 500 more an hour, so **~900 an hour** per open page.
-  - An open Flights page following ORD and Carlsbad (CLD, McClellan-Palomar) gets 120 run messages an hour plus flight rows. The live
-    worker changed 40 and 74 rows per run on those two airports (`worker_runs` 54 and 67). That's **~5,000–9,000 an hour**
-    per open page, because moving planes really do cross the 1 nm and 1,000 ft lines.
-  - So 2 million is about 250–400 hours of one Flights page, or ~2,000 hours of a Tour page on a live day. A class of 28
-    each watching for 15 minutes uses ~50,000. The risk is a Flights tab left open all month (~5 million). If that
-    happens: coarsen to 2 nm bands, or pause the `poll-flights` job (below).
+  - An open Flights page now gets 120 run messages an hour plus only its own route's rows (`pair_key=eq.MDW-SAN`):
+    a handful of flights, each changing when it moves 5 % along the route or 1,000 ft. The live runs changed 0–2 rows
+    each, so **~150–350 an hour** per open page. (The first build's airport boards cost ~5,000–9,000 an hour.)
+  - So 2 million is about 6,000 hours of one Flights page, or ~2,000 hours of a Tour page on a live day. Tabs nobody is
+    looking at stop listening (useLivePause). If it ever runs hot: pause the `poll-flights` job (below).
 - **Database (Free: 500 MB).** 13 MB used. `worker_runs` grows ~11,500 rows a day and a daily job keeps 2 days;
   `cron.job_run_details` keeps 1 day. Live tables stay small (one event, ~120 players, 200 rankings, a few hundred planes).
 - Vercel Hobby and Clerk's development instance: unchanged from Assignment 4. No payment method anywhere.
@@ -87,24 +89,26 @@ Each state has its own drawn mark (dot, ring, struck ring, dashed ring), never c
   (`SUPABASE_SECRET_KEYS`, or `SUPABASE_SERVICE_ROLE_KEY`). It isn't in the code, the repo, Vercel, or the Next.js
   app. The app uses the publishable key plus the golfer's Clerk token, in the browser (`src/lib/live/browser.ts`) and
   in Server Actions (`src/lib/server/follow-actions.ts`).
-- **Follows are private.** `followed_players` and `followed_airports` have RLS on, with four policies requiring
+- **Follows and trips are private.** `followed_players`, `followed_airports` and `trips` have RLS on, with four policies requiring
   `(select auth.jwt())->>'sub' = user_id`. The limits (20 players, 6 airports) are before-insert triggers.
-- **Shared tables are read-only.** `tour_*`, `airport_flights`, `airports` and `worker_runs`: RLS on, one select
+- **Shared tables are read-only.** `tour_*`, `trip_flights`, `trip_pairs`, `airports` and `worker_runs`: RLS on, one select
   policy for `authenticated`, `grant select` only. Only the worker's role (`service_role`) can write.
-- **anon gets nothing.** Every new table has `revoke all ... from anon`. Browsers never call ESPN, OWGR, adsb.lol or adsb.fi.
+- **anon gets nothing.** Every new table has `revoke all ... from anon`. Browsers never call ESPN, OWGR, adsb.lol, adsb.fi or adsbdb. `callsign_routes` (the adsbdb cache) has RLS on and no policies or grants for anyone but service_role.
 
 ### Tests
 `npm run test:worker` runs the worker's pure code on saved real responses (`supabase/functions/tests/fixtures/`,
-saved 2026-11-02) with Node's test runner. 44 tests pass today.
+saved 2026-11-02) with Node's test runner. 56 tests pass today.
 | File | What it checks |
 |---|---|
 | `diff.test.ts` | `diffRows`: the same rows twice give 0 upserts and 0 deletes; a first run saves everything; A then B upserts only new and changed rows and deletes the missing one; deletes can be turned off; only listed fields count; composite keys; duplicate keys; database round-trips (`"12.5"` vs `12.5`, `Z` vs `+00:00`) aren't changes |
 | `keys.test.ts` | `playerKey`: lowercase dash-joined keys, accents and letters like ø folded, punctuation collapsed, database length limits; the saved ESPN and OWGR responses join on it; the app's copy and the worker's agree on every saved name |
 | `tour.test.ts` | ESPN parse on the saved Mexico Open final: event fields, 120 rows, the winner (Andrew Novak, -25), ties ("T2"), a cut player, a withdrawal with no score, no event this week, a changed API throws; a live-round shape; OWGR parse (#1 Scottie Scheffler, points rounded) and a changed API throws; the ESPN-OWGR join; the same response twice writes nothing, one change writes one row; adaptive polling: live fetches every tick, idle waits 5 minutes, the first run fetches, the first tee time beats ESPN's midnight date |
-| `flights.test.ts` | adsb.lol parse on two saved O'Hare responses 66 s apart: one row per positioned aircraft, registration when there's no callsign, all four phases, phase boundaries (12,000 ft, ±300 ft/min, ground), coarsening to 1,000 ft and 1 nm, airlines from callsigns; A→A writes nothing, A→B writes exactly the new/changed planes and deletes the ones that left; bad rows skipped; `selectAirports` dedupes, ranks, caps at 6, always ORD. The adsb.fi fallback comes with its own saved response (`adsbfi-ord.json`). |
+| `flights.test.ts` | The route board on saved real responses (adsb.lol 100 nm around ORD and SAN, adsbdb's answer for UAL1234 and its "unknown callsign" 404): only airline callsigns (no N-numbers, cargo or bizjets); one sighting per aircraft; adsbdb parse ("UA 1234", EWR → ORD) and misses; cache lifetimes (7 days, 1 day); pair normalisation (ORD→SAN = SAN→ORD, most-shared first, max 4, drives skipped); route match both ways; phase and progress (departing, en route, arriving, landed, rounded to 5 %; another leg of the same flight number is rejected by climb, descent or track); the lookup budget (≤ 30, unique, cached skipped, moving aircraft first); the whole board on real aircraft, a quiet second run writing nothing, tracking by hex, drops after 10 minutes, landed after 5; adsb.lol → adsb.fi fallback and its 1.1 s spacing. |
+| `trip.test.ts` | The suggestion rule on the real airport seed: Fairbanks Ranch and Rancho Santa Fe fly into SAN (not CLD); the Chicago Loop gets MDW (large, 9 mi; ORD is 15); Augusta falls back to AGS (no large airport within 75 mi); Pebble Beach gets SJC over MRY (a large airport within 75 mi wins); far places get a large airport within 250 mi or nothing. |
 
-`npm run test:rls` (Playwright, the Clerk test users) adds one test to Assignment 4's: golfer-b follows a player;
-golfer-a can't see it, can't delete it, and can't insert a follow in golfer-b's name; a signed-out caller gets nothing.
+`npm run test:rls` (Playwright, the Clerk test users) adds three tests to Assignment 4's: followed players, followed
+airports, and trips. golfer-a can't see golfer-b's rows, change or delete them, or write one in golfer-b's name (for
+trips, neither as an insert nor as an upsert); a signed-out caller gets nothing. 6 passed on 2026-11-03.
 
 ### Operating it
 Read-only checks in the Supabase SQL editor (or the MCP's `execute_sql`):
@@ -120,7 +124,8 @@ from cron.job_run_details d join cron.job j using (jobid) order by d.start_time 
 select source, count(*) filter (where not ok) as failed, count(*) as runs
 from public.worker_runs where started_at > now() - interval '1 hour' group by source;
 -- Row counts and the database size.
-select (select count(*) from public.tour_leaderboard) as board, (select count(*) from public.airport_flights) as flights,
+select (select count(*) from public.tour_leaderboard) as board, (select count(*) from public.trip_flights) as flights,
+       (select count(*) from public.callsign_routes) as cached_routes,
        pg_size_pretty(pg_database_size(current_database())) as db;
 ```
 Pause and resume a job (a change to the schedule, so do it as a migration or by hand in the dashboard's Cron page):
