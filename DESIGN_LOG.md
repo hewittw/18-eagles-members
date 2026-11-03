@@ -530,7 +530,12 @@ Evidence and contact sheets: `screenshots/a5/review/` (gitignored).
   per leg, then the leg whose phase fits the climb/descent, then the one it's nearest the line of). Flight numbers
   print from a static ICAO→IATA map (UAL2486 → "UA 2486"). Migration `20261102160000` added `source`/`route`/`stops`
   and deleted every adsbdb-derived row. The run detail now ends `routes adsb.im 162/200 found in 2 calls, traffic lol×3`.
-- **adsb.lol / adsb.fi health** (the user's priority): the 60 runs before the change had no 429, fallback or timeout,
-  p95 3.3 s over 24 h; the only 429s (2) were before the adsb.fi fallback existed. So the 100 nm circles and the one
-  comma-list hex call stay. One guard added: on a tick where adsb.lol already said 429, the hex lookup skips adsb.lol
-  and goes straight to adsb.fi (≤ 4, spaced 1.1 s), so a rate-limited tick isn't asked twice.
+- **adsb.lol / adsb.fi health** (the user's priority): the 60 runs before the change showed no 429 and no failure
+  (p95 3.3 s over 24 h), but v6's detail never said which source answered, so a fallback was invisible. v8's detail
+  does (`traffic fi×3 (lol 429×3)`): in the first 14 runs after the switch, 6 fell back to adsb.fi because adsb.lol said
+  429 (Supabase's shared egress), all ok, 1.5–4.5 s; adsb.im never failed. That's 3 point calls and at most one hex call
+  a tick, so our own volume isn't the cause and the 100 nm circles stay. One guard added: on a tick where adsb.lol
+  already said 429, the hex lookup skips adsb.lol and goes straight to adsb.fi (≤ 4, spaced 1.1 s with the circle calls).
+- **Live after v8:** UA 1779 (adsb.im route SAN-ORD-BOS) on the ORD-SAN board as SAN → ORD arriving: the multi-leg pick
+  working on a real flight. 300 cached routes, all `source = 'adsb.im'`, 0 adsbdb rows. MDW-SAN: no flight in the air yet;
+  adsb.im called SWA3224 ONT-PHX (implausible over Chicago) where adsbdb said MDW-SAN, so Southwest coverage may differ.
