@@ -306,7 +306,7 @@ function DealCard({ d, flashAt, fresh }: { d: Deal; flashAt?: number; fresh: boo
           )}
         </div>
         <div className="grid min-w-0 gap-1.5 p-3 sm:p-4">
-          <p className="caps truncate text-label text-gold-ink">{brand}</p>
+          <p className="caps text-label text-gold-ink [overflow-wrap:anywhere]">{brand}</p>
           <h3 className="line-clamp-2 font-serif text-[1rem] font-bold leading-snug text-ink group-hover:underline group-data-[force~=hover]:underline sm:text-[1.08rem]">{d.title}</h3>
           <p className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className={cx("font-numeral text-[1.35rem] font-semibold leading-none tabular-nums sm:text-[1.55rem]", out ? "text-ink-2" : "text-ink")}>{usd(d.price)}</span>
