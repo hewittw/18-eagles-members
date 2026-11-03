@@ -481,3 +481,32 @@ Evidence and contact sheets: `screenshots/a5/review/` (gitignored).
   by Realtime with no reload; golfer-b chose "Somewhere else" → SAN by O'Hare: waiting, then AA 1543 and UA 2486. Runs
   after the cache warmed: `MDW-SAN 1 flight (1 lookups, 1 tracked), ORD-SAN 2 flights (2 lookups, 0 tracked)`, 1–5 s.
   `test:worker` 56 pass; `test:rls` 6 pass (new: trips). Screenshots: `screenshots/a5/trip/`.
+
+## 2026-11-03 · Airport alternatives, and a faster Tour load
+- **What the user said:** the automatic airport was surprising: the Chicago Loop gets MDW when they expected ORD, and
+  Pebble Beach gets SJC (55 mi) though MRY is 5 mi away. The rule stays. Following "less is more", the page now offers
+  up to **two alternatives** beside each pick: "You're near MDW · … · 9 mi / or [ORD 16 mi] [GYY 21 mi]", and under the
+  chosen course "Or fly into [MRY 6 mi] …" (the card already names the airport in use, so the line doesn't repeat it).
+  Each is a real quiet Button named "Use ORD, Chicago O'Hare International, 16 miles instead". After a swap, focus goes
+  to the line or card that changed (the pressed button is gone). `nearbyAlternatives` (suggest.ts, pure): every
+  airport within 75 mi except the pick, large first, then nearest. Tested on the seed: Loop → MDW, ORD offered first;
+  Pebble Beach → SJC, MRY offered.
+- **Remembering the choice:** the chosen codes go in the trip row (`from_airport`, `to_airport`); nothing about
+  coordinates is stored. A saved origin wins while it is still one of the airports offered for where the golfer is now.
+  (A trip saved at Pebble Beach with MRY, opened from Chicago, falls back to MDW.) That's how we check "still the same
+  automatic pick" without storing the pick. Rejected: a separate "choose your airport" control, a dropdown of all
+  airports, and badges on the course cards. Flagged: from Rancho Santa Fe the alternatives are TIJ (Tijuana, large) and
+  SNA. The rule puts a cross-border airport second.
+- **Tour load, measured** (Playwright, signed in, time to the first leaderboard row, `screenshots/a5/alt/measure.mjs`):
+  dev median **1472 → 955 ms**; production build median **1399 → 928 ms** (spread 908–1904 → 913–968). Three causes:
+  (1) `useWorkerHealth` made two `worker_runs` reads per source (latest, latest ok), so 4 per load. Now there's one
+  shared store per source (one channel, one snapshot for every caller), and a second read only when the latest run
+  failed: **2 reads**. (2) The leaderboard's channel and read waited for the event's read. Now the event and board
+  channels subscribe together, and once both say SUBSCRIBED, **one** embedded read returns the newest event with its
+  board (`tour_events?select=…,tour_leaderboard(…)`). The board channel no longer filters by event. The table holds one
+  event, so the messages are the same, and other events' rows are dropped client-side. Subscribe first, then snapshot,
+  is unchanged. (3) `listFollows` was a Server Action, and Next dispatches those one at a time, so it queued behind
+  `loadClub`. The follow list is now a browser read through RLS. Follow and unfollow stay Server Actions. Flights had
+  one worker-health caller (no duplication), but it shares the one-read change, and its `getTrip` read moved to the
+  browser for the same queueing reason. Realtime: Tour still joins 5 channels, all "Subscribed to PostgreSQL".
+- Screenshots (gitignored): `screenshots/a5/alt/` (Chicago and Pebble Beach at 320/390/1280/2560, swaps, focus ring, Tour).
